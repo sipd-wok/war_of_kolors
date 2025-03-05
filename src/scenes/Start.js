@@ -2,29 +2,52 @@
 
 export class Start extends Phaser.Scene {
     constructor() {
-        super('Start');
+    
+        super('Start')  
+        
+    }
+    
+    preload() {
+        this.load.image('character1', '/assets/images.jpeg')
+        this.load.image('character2', '/assets/images.jpeg')
+        this.load.image('character3', '/assets/images.jpeg')
+        this.load.image('character4', '/assets/images.jpeg')
+        this.load.image('character5', '/assets/images.jpeg')
+        this.load.image('character6', '/assets/images.jpeg')
     }
 
     create() {
 
-        //Responsive
-        var cameraX = this.cameras.main.width / 2
+         //Responsive
+        this.cameraX = this.cameras.main.width / 2
 
-        var cameraY = this.cameras.main.height / 2
-
+        this.cameraY = this.cameras.main.height / 2
+           
         //Players Logs || Waiting Other Player Logs
-        var playersLogs = [
-            {name: "Player 1", color: 0xff0000, luck: 4, lifePoints: 10, bet: 2000},
-            {name: "Player 2", color: 0xffff00, luck: 5, lifePoints: 10, bet: 2000},
-            {name: "Player 3", color: 0x00ff00, luck: 5, lifePoints: 10, bet: 2000},
-            {name: "Player 4", color: 0xffffff, luck: 4, lifePoints: 10, bet: 2000},
-            {name: "Player 5", color: 0x0000ff, luck: 6, lifePoints: 10, bet: 2000},
-            {name: "Player 6", color: 0xff00ff, luck: 6, lifePoints: 10, bet: 2000},
-        ]        
-
+        this.playersLogs = [
+            {name: "Player 1", color: 0xff0000, luck: 4, bet: 2000},
+            {name: "Player 2", color: 0xffff00, luck: 5, bet: 2000},
+            {name: "Player 3", color: 0x00ff00, luck: 5, bet: 2000},
+            {name: "Player 4", color: 0xffffff, luck: 4, bet: 2000},
+            {name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000},
+            {name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000},
+        ]     
+        
+        
+        this.Img = [
+            'character1',
+            'character2',
+            'character3',
+            'character4',
+            'character5',
+            'character6'
+        ]
+        
+        this.lifePoints = [10, 10, 10, 10, 10, 10] // Life Points
+        
         //Text, Elements, Colors, and prizes
         
-        var totalBet = playersLogs.reduce((sum, player) => sum + player.bet, 0);
+        var totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
 
         var prizeWOK = totalBet
 
@@ -46,271 +69,18 @@ export class Start extends Phaser.Scene {
             {color: 0xff00ff},
         ]
 
-        //GamePlay System && Rules
-
-        setInterval(() => { // Elemination
-            if (playersLogs[0].lifePoints <= 0) {
-                playersLogs[0].lifePoints = elemenated
-                playersLogs[0].luck = 0
-                playersLogs[0].name = "--+--"
-            }
-            if (playersLogs[1].lifePoints <= 0) {
-                playersLogs[1].lifePoints = elemenated
-                playersLogs[1].luck = 0
-                playersLogs[1].name = "--+--"
-            }
-            if (playersLogs[2].lifePoints <= 0) {
-                playersLogs[2].lifePoints = elemenated
-                playersLogs[2].luck = 0
-                playersLogs[2].name = "--+--"
-            }
-            if (playersLogs[3].lifePoints <= 0) {
-                playersLogs[3].lifePoints = elemenated
-                playersLogs[3].luck = 0
-                playersLogs[3].name = "--+--"
-            }
-            if (playersLogs[4].lifePoints <= 0) {
-                playersLogs[4].lifePoints = elemenated
-                playersLogs[4].luck = 0
-                playersLogs[4].name = "--+--"
-            }
-            if (playersLogs[5].lifePoints <= 0) {
-                playersLogs[5].lifePoints = elemenated
-                playersLogs[5].luck = 0
-                playersLogs[5].name = "--+--"
-            }
-
-
-            if (playersLogs[0].lifePoints >= 20) {
-                alert("Congratulation too " + playersLogs[0].name)
-                this.game.destroy(true)
-                window.location.reload()
-            }
-            if (playersLogs[1].lifePoints >= 20) {
-                alert("Congratulation too " + playersLogs[1].name)
-                this.game.destroy(true)
-                window.location.reload()
-            }
-            if (playersLogs[2].lifePoints >= 20) {
-                alert("Congratulation too " + playersLogs[2].name)
-                this.game.destroy(true)
-                window.location.reload()
-            }
-            if (playersLogs[3].lifePoints >= 20) {
-                alert("Congratulation too " + playersLogs[3].name)
-                this.game.destroy(true)
-                window.location.reload()
-            }
-            if (playersLogs[4].lifePoints >= 20) {
-                alert("Congratulation too " + playersLogs[4].name)
-                this.game.destroy(true)
-                window.location.reload()
-            }
-            if (playersLogs[5].lifePoints >= 20) {
-                alert("Congratulation too " + playersLogs[5].name)
-                this.game.destroy(true)
-                window.location.reload()
-            }
-
+        //GamePlay System && Rules   
             
-        }, 2000)
-
-        var totalLuck = playersLogs.reduce((sum, player) => sum + player.luck, 0);
-
-        setTimeout(() => {
-            setInterval(() => {
-            
-            let boxResult = [RandomColors(), RandomColors(), RandomColors()]
-
-            box1.fillColor = boxResult[0]
-            box2.fillColor = boxResult[1]
-            box3.fillColor = boxResult[2]
-
-            console.log(box1.fillColor)
-            //Player 1
-
-             if (playersLogs[0].color === boxResult[0] ||
-             playersLogs[0].color === boxResult[1] ||
-             playersLogs[0].color === boxResult[2]) {
-                playersLogs[0].lifePoints += 1
-            } else {
-                playersLogs[0].lifePoints -= 1
-            }
-            
-            if (playersLogs[0].color === boxResult[0] &&
-            playersLogs[0].color === boxResult[1] ||
-            playersLogs[0].color === boxResult[0] &&
-            playersLogs[0].color === boxResult[2]
-                ||playersLogs[0].color === boxResult[1] &&
-                playersLogs[0].color === boxResult[2]) {
-                playersLogs[0].lifePoints += 1
-            } 
-            
-            if (playersLogs[0].color === boxResult[0] && 
-            playersLogs[0].color === boxResult[1] && 
-            playersLogs[0].color === boxResult[2]) {
-                playersLogs[0].lifePoints += 1
-            }
-
-            //Player 2
-
-             if (playersLogs[1].color === boxResult[0] ||
-             playersLogs[1].color === boxResult[1] ||
-             playersLogs[1].color === boxResult[2]) {
-                playersLogs[1].lifePoints += 1
-            } else {
-                playersLogs[1].lifePoints -= 1
-            }
-            
-            if (playersLogs[1].color === boxResult[0] && 
-            playersLogs[1].color === boxResult[1] || 
-            playersLogs[1].color === boxResult[0] && 
-            playersLogs[1].color === boxResult[2]
-            || playersLogs[1].color === boxResult[1] && 
-            playersLogs[1].color === boxResult[2]) {
-            playersLogs[1].lifePoints += 1
-            } 
-            
-            if (playersLogs[1].color === boxResult[0] && 
-            playersLogs[1].color === boxResult[1] && 
-            playersLogs[1].color === boxResult[2]) {
-                playersLogs[1].lifePoints += 1
-            }
-
-            //Player 3
-            if (playersLogs[2].color === boxResult[0] || 
-            playersLogs[2].color === boxResult[1] || 
-            playersLogs[2].color === boxResult[2]) {
-                playersLogs[2].lifePoints += 1
-            } else {
-                playersLogs[2].lifePoints -= 1
-            }
-            
-            if (playersLogs[2].color === boxResult[0] && 
-            playersLogs[2].color === boxResult[1] || 
-            playersLogs[2].color === boxResult[0] && 
-            playersLogs[2].color === boxResult[2]
-            || playersLogs[2].color === boxResult[1] && 
-            playersLogs[2].color === boxResult[2]) {
-                playersLogs[2].lifePoints += 1
-            } 
-            
-            if (playersLogs[2].color === boxResult[0] && playersLogs[2].color === boxResult[1] && playersLogs[2].color === boxResult[2]) {
-                playersLogs[2].lifePoints += 1
-            }
-
-
-            //Player 4
-           if (playersLogs[3].color === boxResult[0] || 
-           playersLogs[3].color === boxResult[1] || 
-           playersLogs[3].color === boxResult[2]) {
-                playersLogs[3].lifePoints += 1
-            } else {
-                playersLogs[3].lifePoints -= 1
-            }
-            
-            if (playersLogs[3].color === boxResult[0] && 
-            playersLogs[3].color === boxResult[1] || 
-            playersLogs[3].color === boxResult[0] && 
-            playersLogs[3].color === boxResult[2]
-                || playersLogs[3].color === boxResult[1] &&
-                 playersLogs[3].color === boxResult[2]) {
-                playersLogs[3].lifePoints += 1
-            } 
-            
-            if (playersLogs[3].color === boxResult[0] && 
-            playersLogs[3].color === boxResult[1] && 
-            playersLogs[3].color === boxResult[2]) {
-                playersLogs[3].lifePoints += 1
-            }
-
-            //Player 5
-           if (playersLogs[4].color === boxResult[0] || 
-           playersLogs[4].color === boxResult[1] || 
-           playersLogs[4].color === boxResult[2]) {
-                playersLogs[4].lifePoints += 1
-            } else {
-                playersLogs[4].lifePoints -= 1
-            }
-            
-            if (playersLogs[4].color === boxResult[0] && 
-            playersLogs[4].color === boxResult[1] || 
-            playersLogs[4].color === boxResult[0] && 
-            playersLogs[4].color === boxResult[2]
-                || 
-                playersLogs[4].color === boxResult[1] && 
-                playersLogs[4].color === boxResult[2]) {
-                playersLogs[4].lifePoints += 1
-            } 
-            
-            if (playersLogs[4].color === boxResult[0] && 
-            playersLogs[4].color === boxResult[1] && 
-            playersLogs[4].color === boxResult[2]) {
-                playersLogs[4].lifePoints += 1
-            }
-
-            //Player 6
-           if (playersLogs[5].color === boxResult[0] || 
-           playersLogs[5].color === boxResult[1] || 
-           playersLogs[5].color === boxResult[2]) {
-                playersLogs[5].lifePoints += 1
-            } else {
-                playersLogs[5].lifePoints -= 1
-            }
-            
-            if (playersLogs[5].color === boxResult[0] && 
-            playersLogs[5].color === boxResult[1] || 
-            playersLogs[5].color === boxResult[0] && 
-            playersLogs[5].color === boxResult[2]
-                || 
-                playersLogs[5].color === boxResult[1] && 
-                playersLogs[5].color === boxResult[2]) {
-                playersLogs[5].lifePoints += 1
-            } 
-            
-            if (playersLogs[5].color === boxResult[0] && 
-            playersLogs[5].color === boxResult[1] && 
-            playersLogs[5].color === boxResult[2]) {
-                playersLogs[5].lifePoints += 1
-            }
-             
-
-            }, 3000) // Set Every 3 Second
-        }, 5000)
-            
-
-        
-        
-
-        
-
-        function RandomColors() {
-
-            var random = Math.random() * 100
-
-            var cumu = 0
-
-            for (var i = 0; i < playersLogs.length; i++) {
-                cumu += (playersLogs[i].luck / totalLuck) * 100
-                if (random < cumu) {
-                    return defualtColor[i].color
-                }
-            }
-
-            return defualtColor[0].color
-
-        }
-
-        // Main Board
+    // Main Board
         var container = this.add.rectangle(
-            cameraX,
-            cameraY,
+            this.cameraX,
+            this.cameraY,
             500,
             300,
             0x161b22
             )
 
-        var container_prize_pool = this.add.text(cameraX, cameraY - 100, [
+        var container_prize_pool = this.add.text(this.cameraX, this.cameraY - 100, [
             'TOTAL PRIZE = ' + prizeWOK
         ], {
             fontSize: '28px',
@@ -320,7 +90,7 @@ export class Start extends Phaser.Scene {
 
         var count = 5
         
-        var container_countdown_respin = this.add.text(cameraX, cameraY + 90, [
+        var container_countdown_respin = this.add.text(this.cameraX, this.cameraY + 90, [
             'Re - rolling in ' + count + ' sec...'
         ], {
             fontSize: '24px',
@@ -348,186 +118,228 @@ export class Start extends Phaser.Scene {
         })
 
 
+        //Box Dice...
+         var box1 = this.add.rectangle(
+            this.cameraX - 130,
+            this.cameraY, 
+            90, 
+            90, 
+            this.playersLogs[0].color
+            )
+
+        var box2 = this.add.rectangle(
+            this.cameraX,
+            this.cameraY, 
+            90, 
+            90, 
+            this.playersLogs[0].color
+            )
+
+        var box3 = this.add.rectangle(
+            this.cameraX + 130,
+            this.cameraY, 
+            90, 
+            90, 
+            this.playersLogs[0].color
+            )
+
+       
+         var totalLuck = this.playersLogs.reduce((sum, player) => sum + player.luck, 0);
+
+        
+        const RandomColors = () => {
+
+            var random = Math.random() * 100
+
+            var cumu = 0
+
+            for (var i = 0; i < this.playersLogs.length; i++) {
+                cumu += (this.playersLogs[i].luck / totalLuck) * 100
+                if (random < cumu) {
+                    return defualtColor[i].color
+                }
+            }
+
+            return defualtColor[0].color
+
+        } 
+        
+        
+        const setColors = () => {
+            let boxResult = [RandomColors(), RandomColors(), RandomColors()]
+
+            box1.fillColor = boxResult[0]
+            box2.fillColor = boxResult[1]
+            box3.fillColor = boxResult[2]
+
+            for (let i = 0; i < this.playersLogs.length; i++) {
+                
+          if (
+             this.playersLogs[i].color === boxResult[0] ||
+             this.playersLogs[i].color === boxResult[1] ||
+             this.playersLogs[i].color === boxResult[2]) {
+             this.lifePoints[i] += 1
+            } else {
+             this.lifePoints[i] -= 1
+            }
+            
+            if (
+            this.playersLogs[i].color === boxResult[0] &&
+            this.playersLogs[i].color === boxResult[1] ||
+            this.playersLogs[i].color === boxResult[0] &&
+            this.playersLogs[i].color === boxResult[2] || 
+            this.playersLogs[i].color === boxResult[1] &&
+            this.playersLogs[i].color === boxResult[2]) {
+            this.lifePoints[i] += 1
+            } 
+            
+            if (
+            this.playersLogs[i].color === boxResult[0] && 
+            this.playersLogs[i].color === boxResult[1] && 
+            this.playersLogs[i].color === boxResult[2]) {
+            this.lifePoints[i] += 1
+            }
+               
+            
+            if (this.lifePoints[i] <= 0) {
+                this.lifePoints[i] = "NaN".toString()
+                this.playersLogs[i].luck = 0
+                this.playersLogs[i].name = "Eliminated"
+            } else if (this.lifePoints[i] >= 20){
+                
+                setTimeout(() => {
+                    
+                    this.scene.pause()
+                    this.scene.destroy()
+                    setTimeout(() => {
+                        alert("Congratulations " + this.playersLogs[i].name)
+                window.location.reload()
+                    }, 1000)
+                    
+                }, 2000)
+                
+            }
+                
+            }
+        }
+            setTimeout(() => {
+                setInterval(setColors, 3000)
+            }, 3000)
             
 
         
 
-        //Box Dice...
-         var box1 = this.add.rectangle(
-            cameraX - 130,
-            cameraY, 
-            90, 
-            90, 
-            playersLogs[1].color
-            )
-
-        var box2 = this.add.rectangle(
-            cameraX,
-            cameraY, 
-            90, 
-            90, 
-            playersLogs[1].color
-            )
-
-        var box3 = this.add.rectangle(
-            cameraX + 130,
-            cameraY, 
-            90, 
-            90, 
-            playersLogs[1].color
-            )
-
-
-
         //Other Player
-
        
-
-         setInterval(() => {
+       this.player_info_p = [
+           {x: this.cameraX - 210, y: this.cameraY + 270},
+           {x: this.cameraX - 530, y: this.cameraY + 140},
+           {x: this.cameraX + 400, y: this.cameraY + 140},
+           {x: this.cameraX + 400, y: this.cameraY - 220},
+           {x: this.cameraX - 530, y: this.cameraY - 220},
+           {x: this.cameraX - 50, y: this.cameraY - 270},
+           
+       ]
+       
+       
+       let player_info = [
+           {x: this.cameraX - 450, y: this.cameraY + 180, width: 220, height: 120},
+           {x: this.cameraX - 450, y: this.cameraY + 180, width: 220, height: 120},
+           {x: this.cameraX + 450, y: this.cameraY + 180, width: 220, height: 120},
+           {x: this.cameraX + 450, y: this.cameraY - 180, width: 220, height: 120},
+           {x: this.cameraX - 450, y: this.cameraY - 180, width: 220, height: 120},
+           {x: this.cameraX + 20, y: this.cameraY - 240, width: 220, height: 120},
+       ]
+       
+       
+       
+       let player_ar = [
+           {x: this.cameraX - 530, y: this.cameraY + 140},
+           {x: this.cameraX - 330, y: this.cameraY + 120},
+           {x: this.cameraX + 330, y: this.cameraY + 120},
+           {x: this.cameraX + 330, y: this.cameraY - 120},
+           {x: this.cameraX - 330, y: this.cameraY - 120},
+           {x: this.cameraX - 120, y: this.cameraY - 230},
+       ]
+       
+       
+       for (let i = 1; i < this.playersLogs.length; i++){
+           
+           let player_info_rect = this.add.rectangle(
+               player_info[i].x,
+               player_info[i].y,
+               player_info[i].width,
+               player_info[i].height,
+               colorb1
+           )
+           
+       }
+       
+       this.text_value = []
+       
+       
+       for (let i = 1; i < this.playersLogs.length; i++) {
+           
+           let info_text = this.add.text(
+               this.player_info_p[i].x,
+               this.player_info_p[i].y,
+               
+               
+               this.playersLogs[i].name + '\n' +
+               'LUCK - ' + this.playersLogs[i].luck + '\n' +
+               
+               'Life - ' + this.lifePoints[i]
+               
+               ,
+               
+               {
+                   fontSize: '24px',
+                   color: '#fff',
+                   fontStyle: 'bold'
+               }
+               
+               
+           )
+          
+         this.text_value.push(info_text)           
+           
+       }
+       
         
-            var player_2_info = this.add.rectangle(
-            cameraX - 450,
-            cameraY + 180,
-            220,
-            120,
-            colorb1
-        )
-
-        var player_2_info_text = this.add.text(cameraX - 530, cameraY + 140, [
-            playersLogs[1].name,
-            'Luck - ' + playersLogs[1].luck,
-            'LIFE - ' + playersLogs[1].lifePoints
-        ], {
-            fontSize: '24px',
-            color: text_color,
-            fontStyle: 'bold'
-        })
+       
         
-        var player_2 = this.add.rectangle(
-            cameraX - 330,
-            cameraY + 120,
-            112,
-            112,
-            playersLogs[1].color
-        )
-
-        var player_3_info = this.add.rectangle(
-            cameraX + 450,
-            cameraY + 180,
-            220,
-            120,
-            colorb1
-        )
-        
-        var player_3_info_text = this.add.text(cameraX + 400, cameraY + 140, [
-            playersLogs[2].name,
-            'LUCK - ' + playersLogs[2].luck,
-            'LIFE - ' + playersLogs[2].lifePoints
-        ], {
-            fontSize: '24px',
-            color: text_color,
-            fontStyle: 'bold'
-        })
-
-        var player_3 = this.add.rectangle(
-            cameraX + 330,
-            cameraY + 120,
-            112,
-            112,
-            playersLogs[2].color
-        )
-        
-        var player_4_info = this.add.rectangle(
-            cameraX + 450,
-            cameraY - 180,
-            220,
-            120,
-            colorb1
-        )
-        
-        var player_4_info_text = this.add.text(cameraX + 400, cameraY - 220, [
-            playersLogs[3].name,
-            'LUCK - ' + playersLogs[3].luck,
-            'LIFE - ' + playersLogs[3].lifePoints
-        ], {
-            fontSize: '24px',
-            color: text_color,
-            fontStyle: 'bold'
-        })
-
-        var player_4 = this.add.rectangle(
-            cameraX + 330,
-            cameraY - 120,
-            112,
-            112,
-            playersLogs[3].color
-        )
-
-        var player_5_info = this.add.rectangle(
-            cameraX - 450,
-            cameraY - 180,
-            220,
-            120,
-            colorb1
-        )
-
-        var player_5_info_text = this.add.text(cameraX - 530, cameraY - 220, [
-            playersLogs[4].name,
-            'LUCK - ' + playersLogs[4].luck,
-            'LIFE - ' + playersLogs[4].lifePoints
-        ], {
-            fontSize: '24px',
-            color: text_color,
-            fontStyle: 'bold'
-        })
-        
-        var player_5 = this.add.rectangle(
-            cameraX - 330,
-            cameraY - 120,
-            112,
-            112,
-            playersLogs[4].color
-        )
-        
-        var player_6_info = this.add.rectangle(
-            cameraX + 20,
-            cameraY - 240,
-            220,
-            120,
-            colorb1
-        )
-
-        var player_6_info_text = this.add.text(cameraX - 50, cameraY - 270, [
-            playersLogs[5].name,
-            'LUCK - ' + playersLogs[5].luck,
-            'LIFE - ' + playersLogs[5].lifePoints
-        ], {
-            fontSize: '24px',
-            color: text_color,
-            fontStyle: 'bold'
-        })
-
-        var player_6 = this.add.rectangle(
-            cameraX - 120,
-            cameraY - 230,
-            112,
-            112,
-            playersLogs[5].color
-        )
+        for (let i = 1; i < this.playersLogs.length; i++) {
+            
+            var player_ar_rect = this.add.rectangle(
+                player_ar[i].x,
+                player_ar[i].y,
+                122,
+                122,
+                this.playersLogs[i].color 
+                
+            )
+            
+            let images = this.add.image(
+                player_ar[i].x,
+                player_ar[i].y,
+                this.Img[i]
+            ).setDisplaySize(100, 100)
+           
+        }
 
         //Player Main Info
 
         var mainplayerinfo = this.add.rectangle(
-            cameraX,
-            cameraY + 300,
-            cameraX - 150,
-            cameraY - 260,
+            this.cameraX,
+            this.cameraY + 300,
+            this.cameraX - 150,
+            this.cameraY - 260,
             colorb1,
         )
 
-        var mainplayerinfo_text = this.add.text(cameraX - 210, cameraY + 270, [
-            playersLogs[0].name + ' - LUCK ' + playersLogs[0].luck,
-            playersLogs[0].lifePoints + ' LIFE POINTS'
+        this.mainplayerinfo_text = this.add.text(this.cameraX - 210, this.cameraY + 270,
+     [       this.playersLogs[0].name + ' - LUCK ' + this.playersLogs[0].luck +
+            this.lifePoints[0] + ' LIFE POINTS'
         ], {
             fontSize: '24px',
             color: text_color,
@@ -535,26 +347,48 @@ export class Start extends Phaser.Scene {
         })
 
         var profilePic = this.add.rectangle(
-            cameraX + 140,
-            cameraY + 250,
-            cameraX - 490,
-            cameraY - 220,
-            playersLogs[0].color
+            this.cameraX + 140,
+            this.cameraY + 250,
+            this.cameraX - 490,
+            this.cameraY - 220,
+            this.playersLogs[0].color
         )
-
-        }, 1000)
-
-
         
-
-
-       
-
-        
-
-        
+        let images = this.add.image(
+                this.cameraX + 140,
+                this.cameraY + 250,
+                this.Img[0]
+            ).setDisplaySize(115, 115)
             
     }
+               
+        
+  update() {
+    
+    this.mainplayerinfo_text.setText(
+    [
+            this.playersLogs[0].name + ' - LUCK ' + this.playersLogs[0].luck,
+            this.lifePoints[0] + ' LIFE POINTS'
+        ])
+    
+    
+    for (let i = 1; i < this.playersLogs.length; i++) {
+        if (this.text_value[i - 1]) {
+            this.text_value[i - 1].setText(
+                
+                this.playersLogs[i].name + '\n' +
+               'LUCK - ' + this.playersLogs[i].luck + '\n' +
+               
+               'Life - ' + this.lifePoints[i]
+                
+                
+            )
+            
+            
+        }
+    }
 
-
+    
+    
 }
+            }
