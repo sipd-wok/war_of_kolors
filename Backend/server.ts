@@ -15,6 +15,13 @@ interface Room {
 
 const rooms: { [key: string]: Room } = {};
 
+interface GuestRoom {
+  roomID: string;
+  guests: string[];
+}
+
+const guestRooms: GuestRoom[] = [];
+
 // Create express app
 const app = express();
 app.use(express.json());
@@ -56,16 +63,25 @@ io.on("connection", (socket) => {
     callback(roomList);
   });
 
-  // Create a new room
-  socket.on("createRoom", (playerID, callback) => {
+  // Create a new room for guests
+  // himo random room id
+  // add ang new room sa guest rooms
+  socket.on("createGuestRoom", (guestID, callback) => {
     const roomId = uuidv4(); // Generate a unique room ID
-    rooms[roomId] = {
-      players: { [socket.id]: { playerID: playerID, currentGuess: 0 } },
+    const newRoom: GuestRoom = {
+      roomID: roomId,
+      guests: [guestID],
     };
-    socket.join(roomId); // Join the Socket.IO room
-    callback(roomId); // Send the room ID back to the client
+    guestRooms.push(newRoom);
 
-    console.log(`Room created: ${roomId}, Player: ${playerID}`);
+    callback(roomId); // Send the room ID back to the client
+    // ngitaun ang gn himo nga room
+    const createdRoom = guestRooms.find((room) => room.roomID === roomId);
+    if (createdRoom) {
+      console.log(`Room created: ${createdRoom.roomID}`);
+    } else {
+      console.log("Room creation failed: Room not found");
+    }
   });
 
   // Join an existing room

@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { EventBus } from "../EventBus";
 
 export class MainMenu extends Scene {
   constructor() {
@@ -7,6 +8,8 @@ export class MainMenu extends Scene {
 
   create() {
     // diri ka create sprites or mga objects
+
+    EventBus.emit("current-scene-ready", this);
   }
 
   update(): void {

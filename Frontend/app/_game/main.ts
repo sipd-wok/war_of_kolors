@@ -7,7 +7,8 @@ import { AUTO, Game } from "phaser";
 import { Preloader } from "./_scenes/Preloader";
 import { Room } from "./_scenes/Room";
 import { RoomList } from "./_scenes/RoomList";
-import { Shop} from "./_scenes/Shop"; 
+import { WaitingRoom } from "./_scenes/WaitingRoom";
+import { Shop } from "./_scenes/Shop";
 // impert ang mga scenes diri
 
 //  Find out more information about the Game Config at:
@@ -27,7 +28,8 @@ const config: Phaser.Types.Core.GameConfig = {
     GameOver2,
     Room,
     RoomList,
-    Shop
+    WaitingRoom,
+    Shop,
     // butang d ang scene mo
   ],
 };
