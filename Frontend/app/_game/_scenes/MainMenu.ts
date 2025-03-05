@@ -13,11 +13,7 @@ export class MainMenu extends Scene {
   constructor() {
     super("MainMenu");
 
-<<<<<<< HEAD
-    this.socket = io("http://localhost:3001");
-=======
     this.socket = io(`http://localhost:3000`);
->>>>>>> 69e593f5cff5e013c93fb084a371408e48393a0d
   }
 
   create() {
