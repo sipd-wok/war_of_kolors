@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef } from 'react';
 import StartGame from './main';
 import { EventBus } from './EventBus';
+import { useWallet } from '@/context/WalletContext';
 
 export interface IRefPhaserGame
 {
@@ -16,13 +17,13 @@ interface IProps
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame({ currentActiveScene }, ref)
 {
     const game = useRef<Phaser.Game | null>(null!);
-
+    const {buyCharacter} = useWallet();
     useLayoutEffect(() =>
     {
         if (game.current === null)
         {
 
-            game.current = StartGame("game-container");
+            game.current = StartGame("game-container",buyCharacter);
 
             if (typeof ref === 'function')
             {
@@ -45,7 +46,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 }
             }
         }
-    }, [ref]);
+    }, [ref, buyCharacter]);
 
     useEffect(() =>
     {

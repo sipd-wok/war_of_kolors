@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { IRefPhaserGame } from "../_game/PhaserGame";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
+import { WalletProvider } from "@/context/WalletContext";
 
 // Dynamically import PhaserGame with SSR disabled
 const PhaserGame = dynamic(
@@ -19,6 +20,7 @@ export default function GameClient(props: { username: string }) {
   };
 
   return (
+    <WalletProvider>
     <div id="app" className="relative">
       <div className="absolute top-0 left-0 z-50">
         <p>{props.username}</p>
@@ -28,5 +30,6 @@ export default function GameClient(props: { username: string }) {
       </div>
       <PhaserGame ref={phaserRef} />
     </div>
+    </WalletProvider>
   );
 }

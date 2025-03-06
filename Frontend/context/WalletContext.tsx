@@ -4,12 +4,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { getProvider, getSigner } from "@/utils/ethersProvider";
 import { getContract } from "@/utils/contract";
-
 interface WalletContextType {
   walletAddress: string | null;
   balance: string;
   connectWallet: () => Promise<void>;
   sendTokens: (recipient: string, amount: string) => Promise<void>;
+  buyCharacter: (amount: string) =>Promise<void>
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -75,10 +75,30 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       alert("Transaction Failed!");
     }
   };
-
+  const buyCharacter = async (amount: string) => {
+    try {
+      if (!walletAddress) throw new Error("Wallet not connected");
+      const devWallet = process.env.NEXT_PUBLIC_WALLET_ADDRESS;
+      if (!devWallet) throw new Error("Developer wallet address is not set");
+  
+      const signer = await getSigner();
+      const contract = getContract(signer);
+      const tx = await contract.transfer(devWallet, ethers.parseUnits(amount, 18));
+      await tx.wait();
+  
+      alert("Character purchased successfully!");
+      fetchBalance(walletAddress); 
+    } catch (error) {
+      console.error("Character purchase failed:", error);
+      alert("Character purchase failed!");
+    }
+  };
+  
+  
+  
   return (
     <WalletContext.Provider
-      value={{ walletAddress, balance, connectWallet, sendTokens }}
+      value={{ walletAddress, balance, connectWallet, sendTokens, buyCharacter }}
     >
       {children}
     </WalletContext.Provider>

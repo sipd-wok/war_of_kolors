@@ -1,13 +1,13 @@
 import { ethers } from "ethers";
 import contractABI from "../contracts/WokToken.json"; // Adjust path if needed
 
-const contractAddress = "0x6EE3DdE20B0982f12232616B7EB84c11e353DBaA"; // Replace with actual address
+const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS; 
 
 export const getContract = (
   providerOrSigner: ethers.Provider | ethers.Signer,
 ) => {
   return new ethers.Contract(
-    contractAddress,
+    contractAddress as string,
     contractABI.abi,
     providerOrSigner,
   );

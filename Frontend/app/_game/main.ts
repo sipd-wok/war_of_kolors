@@ -34,8 +34,14 @@ const config: Phaser.Types.Core.GameConfig = {
   ],
 };
 
-const StartGame = (parent: string) => {
-  return new Game({ ...config, parent });
+const StartGame = (parent: string, buyCharacter: (amount: string) => Promise<void>) => {
+  const game = new Game({ ...config, parent });
+
+  // Store buyCharacter in the game registry so scenes can access it
+  game.registry.set("buyCharacter", buyCharacter);
+
+  return game;
 };
 
 export default StartGame;
+
