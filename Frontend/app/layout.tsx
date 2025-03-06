@@ -3,6 +3,7 @@ import { SessionProvider } from "next-auth/react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { WalletProvider } from "@/context/WalletContext";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -26,9 +27,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen bg-gray-100`}
       >
         <SessionProvider>
-          {/* <WalletProvider> */}
+          <WalletProvider>
           {children}
-          {/* </WalletProvider> */}
+          </WalletProvider>
         </SessionProvider>
       </body>
     </html>

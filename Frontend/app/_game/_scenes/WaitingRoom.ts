@@ -10,7 +10,7 @@ export class WaitingRoom extends Scene {
   constructor() {
     super("WaitingRoom");
 
-    this.socket = io("http://localhost:3000");
+    this.socket = io("http://localhost:3001");
 
     this.socket.on("connect", () => {
       console.log("Connected with ID:", this.socket.id);
