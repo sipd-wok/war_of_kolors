@@ -25,6 +25,8 @@ export class Shop extends Scene {
     "Red Ninja", "Pink Ninja", "Green Ninja", "Yellow Ninja", "Blue Ninja", "White Ninja",
     // Tribal Chief
     "Blue Tribal Chief", "Green Tribal Chief", "Yellow Tribal Chief", "White Tribal Chief", "Red Tribal Chief", "Pink Tribal Chief",
+    // Great Elder
+    "White Great Elder", "Pink Great Elder", "Yellow Great Elder", "Red Great Elder", "Green Great Elder", "Blue Great Elder",
   ];
 
 
@@ -102,6 +104,12 @@ export class Shop extends Scene {
     this.load.image('characterSprite58', 'assets/char_58.png');
     this.load.image('characterSprite59', 'assets/char_59.png');
     this.load.image('characterSprite60', 'assets/char_60.png');
+    this.load.image('characterSprite61', 'assets/char_61.png');
+    this.load.image('characterSprite62', 'assets/char_62.png');
+    this.load.image('characterSprite63', 'assets/char_63.png');
+    this.load.image('characterSprite64', 'assets/char_64.png');
+    this.load.image('characterSprite65', 'assets/char_65.png');
+    this.load.image('characterSprite66', 'assets/char_66.png');
   }
 
   create(): void {
@@ -180,12 +188,12 @@ export class Shop extends Scene {
 
     // Define sprite options based on color
     const spriteOptions: Record<string, number[]> = {
-      "Red": [1, 7, 15, 20, 26, 33, 38, 46, 49, 59],
-      "Blue": [2, 9, 13, 21, 28, 32, 42, 43, 53, 55],
-      "Yellow": [6, 8, 18, 23, 25, 36, 41, 45, 52, 57],
-      "Green": [3, 12, 14, 24, 30, 31, 37, 47, 51, 56],
-      "Pink": [4, 11, 16, 22, 27, 34, 39, 48, 50, 60],
-      "White": [5, 10, 17, 19, 29, 35, 40, 44, 54, 54],
+      "Red": [1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64],
+      "Blue": [2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66],
+      "Yellow": [6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63],
+      "Green": [3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65],
+      "Pink": [4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62],
+      "White": [5, 10, 17, 19, 29, 35, 40, 44, 54, 54, 61],
     };
 
     
