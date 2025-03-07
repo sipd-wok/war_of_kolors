@@ -15,7 +15,7 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({ setWalletConnected }) =
 
   useEffect(() => {
     const checkIfWalletIsConnected = async () => {
-      if (window.ethereum) {
+      if (typeof window !== "undefined" && window.ethereum) {
         try {
           const accounts = await window.ethereum.request({
             method: "eth_accounts",
@@ -38,7 +38,7 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({ setWalletConnected }) =
     setError(null);
 
     try {
-      if (!window.ethereum) {
+      if (typeof window === "undefined" || !window.ethereum) {
         setError(
           "MetaMask not installed. Please install MetaMask to continue.",
         );

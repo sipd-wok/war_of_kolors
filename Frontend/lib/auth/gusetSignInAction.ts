@@ -8,10 +8,10 @@ export async function guestSignInAction() {
   return await executeAction({
     actionFn: async () => {
       await signIn("credentials", {
-        userID: uuidv4(),
+        user_id: uuidv4(),
         username: `guest-${uuidv4()}`,
         password: uuidv4(),
-        role: "guest",
+        role_id: "1",
       });
     },
   });

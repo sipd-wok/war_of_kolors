@@ -1,23 +1,42 @@
-import { GameObjects, Scene } from "phaser";
+import { Scene } from "phaser";
 import { io, Socket } from "socket.io-client";
 import { EventBus } from "../EventBus";
 
+// Define player log interface for type safety
+interface PlayerLog {
+  name: string;
+  color: number;
+  luck: number;
+  bet: number;
+}
+
 export class Room extends Scene {
-  background!: GameObjects.Image;
-  title!: GameObjects.Text;
-  image!: GameObjects.Image;
-  player!: GameObjects.Rectangle;
-  opponent1!: GameObjects.Rectangle;
-  opponent2!: GameObjects.Rectangle;
-  opponent3!: GameObjects.Rectangle;
-  colorButtonRed!: GameObjects.Text;
-  colorButtonYellow!: GameObjects.Text;
-  colorButtonBlue!: GameObjects.Text;
-  readyButton!: GameObjects.Text;
+  // Leva GUI properties
+  levaControlsEnabled: boolean = true;
+  levaSubscriptions: Array<() => void> = [];
+
+  // Room properties
   socket!: Socket;
-  win!: GameObjects.Text;
-  lose!: GameObjects.Text;
-  roomID!: string;
+  roomId!: string;
+
+  // Camera position
+  cameraX!: number;
+  cameraY!: number;
+  visualViewportWidth!: number;
+
+  // Game data
+  playersLogs!: PlayerLog[];
+  lifePoints!: (number | string)[];
+  Img!: string[];
+
+  // UI elements
+  player_info_p!: Array<{ x: number; y: number }>;
+  text_value!: Phaser.GameObjects.Text[];
+  mainplayerinfo_text!: Phaser.GameObjects.Text;
+  die1!: Phaser.GameObjects.Image;
+  die2!: Phaser.GameObjects.Image;
+  die3!: Phaser.GameObjects.Image;
+  slash!: Phaser.GameObjects.Image;
 
   constructor() {
     super("Room");
@@ -26,234 +45,438 @@ export class Room extends Scene {
     this.socket.on("connect", () => {
       console.log("Connected with ID:", this.socket.id);
     });
-
-    this.socket.on("test", () => {
-      this.changePlayerColor(0x0cce6b);
-    });
-
-    this.socket.on("correctGuess", (socketId) => {
-      if (socketId === this.socket.id) {
-        this.changePlayerColor(0xffffff);
-        this.title.setText("You Win!");
-        this.nextRound();
-      } else {
-        this.title.setText("You Lose!");
-        this.changePlayerColor(0xffffff);
-        this.nextRound();
-      }
-    });
   }
 
-  // Add this method after constructor
+  // Renamed from roomID to roomId for consistency
   init(data: { roomID: string }) {
-    this.roomID = data.roomID;
-    console.log("Room initialized with roomId:", this.roomID);
+    this.roomId = data.roomID;
+    console.log("Room initialized with roomId:", this.roomId);
   }
 
   create() {
-    this.background = this.add.image(512, 384, "background");
+    //Responsive
+    this.cameraX = this.cameras.main.width / 2;
+    this.cameraY = this.cameras.main.height / 2;
+    this.visualViewportWidth = window.visualViewport?.width || 1024;
 
-    this.title = this.add
-      .text(512, 460, this.roomID, {
-        fontFamily: "Arial Black",
-        fontSize: 38,
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 8,
-        align: "center",
+    // responsivve condigurations
+    const wokArenaConfig = {
+      width: this.visualViewportWidth! + 50,
+      height: this.visualViewportWidth! * (3000 / 4200) + 50,
+      rotation: 0,
+    };
+    const dieConfig = {
+      size: 90,
+      spaceBetween: 100,
+    };
+
+    if (
+      this.visualViewportWidth !== undefined &&
+      this.visualViewportWidth < 928
+    ) {
+      wokArenaConfig.width = this.visualViewportWidth! * 2.1;
+      wokArenaConfig.height =
+        this.visualViewportWidth! * (3000 / 4200) * 2.1 + 20;
+      dieConfig.size = 60;
+      dieConfig.spaceBetween = 70;
+    }
+
+    //Players Logs || Waiting Other Player Logs
+    this.playersLogs = [
+      { name: "Player 1", color: 0xff0000, luck: 4, bet: 2000 },
+      { name: "Player 2", color: 0xffff00, luck: 5, bet: 2000 },
+      { name: "Player 3", color: 0x00ff00, luck: 5, bet: 2000 },
+      { name: "Player 4", color: 0xffffff, luck: 4, bet: 2000 },
+      { name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000 },
+      { name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000 },
+    ];
+
+    this.Img = [
+      "character1",
+      "character2",
+      "character3",
+      "character4",
+      "character5",
+      "character6",
+    ];
+
+    this.lifePoints = [10, 10, 10, 10, 10, 10]; // Life Points
+
+    //Text, Elements, Colors, and prizes
+    const totalBet = this.playersLogs.reduce(
+      (sum: number, player: PlayerLog) => sum + player.bet,
+      0,
+    );
+
+    const prizeWOK = totalBet;
+    const colorb1 = 0x30363d;
+    const text_color = "#c9d1d9";
+
+    //Free For All Mode
+    const defualtColor = [
+      { color: 0xff0000 },
+      { color: 0xffff00 },
+      { color: 0x00ff00 },
+      { color: 0xffffff },
+      { color: 0x0000ff },
+      { color: 0xff00ff },
+    ];
+
+    //GamePlay System && Rules
+
+    // Add black background
+    this.cameras.main.setBackgroundColor(0x161b22);
+
+    // Main Board
+    this.add
+      .image(this.cameraX, this.cameraY, "wokArena")
+      .setDisplaySize(wokArenaConfig.width, wokArenaConfig.height);
+
+    this.add
+      .text(this.cameraX, this.cameraY - 100, ["TOTAL PRIZE = " + prizeWOK], {
+        fontSize: "28px",
+        color: text_color,
+        fontStyle: "bold",
       })
-      .setOrigin(0.5)
-      .setDepth(100);
+      .setOrigin(0.5);
 
-    this.opponent1 = this.add.rectangle(612, 384, 50, 50, 0xffffff);
-    this.opponent2 = this.add.rectangle(512, 384, 50, 50, 0xffffff);
-    this.opponent3 = this.add.rectangle(412, 384, 50, 50, 0xffffff);
-    this.player = this.add.rectangle(512, 584, 50, 50, 0xffffff);
+    // Dices
+    this.die1 = this.add
+      .image(this.cameraX - dieConfig.spaceBetween, this.cameraY, "die-1")
+      .setDisplaySize(dieConfig.size, dieConfig.size);
+    this.die2 = this.add
+      .image(this.cameraX, this.cameraY, "die-2")
+      .setDisplaySize(dieConfig.size, dieConfig.size);
+    this.die3 = this.add
+      .image(this.cameraX + dieConfig.spaceBetween, this.cameraY, "die-3")
+      .setDisplaySize(dieConfig.size, dieConfig.size);
+    this.time.addEvent({
+      delay: 800,
+      callback: () => {
+        this.die1.setTexture(`die-${Math.floor(Math.random() * 6) + 1}`);
+        this.tweens.add({
+          targets: this.die1,
+          y: this.die1.y - 16,
+          duration: 340,
+          ease: "Power2",
+          yoyo: true,
+        });
 
-    this.colorButtonRed = this.add
-      .text(362, 684, "red", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "red",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.changePlayerColor(0xff0000))
-      .on("pointerover", () =>
-        this.colorButtonRed.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.colorButtonRed.setStyle({ backgroundColor: "#333333" }),
-      );
+        this.die2.setTexture(`die-${Math.floor(Math.random() * 6) + 1}`);
+        this.tweens.add({
+          targets: this.die2,
+          y: this.die2.y - 16,
+          duration: 400,
+          ease: "Power2",
+          yoyo: true,
+        });
 
-    this.colorButtonYellow = this.add
-      .text(512, 684, "yellow", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "yellow",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.changePlayerColor(0xffff00))
-      .on("pointerover", () =>
-        this.colorButtonYellow.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.colorButtonYellow.setStyle({ backgroundColor: "#333333" }),
-      );
-
-    this.colorButtonBlue = this.add
-      .text(662, 684, "blue", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "blue",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.changePlayerColor(0x0000ff))
-      .on("pointerover", () =>
-        this.colorButtonBlue.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.colorButtonBlue.setStyle({ backgroundColor: "#333333" }),
-      );
-
-    this.readyButton = this.add
-      .text(662, 84, "ready", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "blue",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.playerReady())
-      .on("pointerover", () =>
-        this.readyButton.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.readyButton.setStyle({ backgroundColor: "#333333" }),
-      );
-
-    this.background = this.add.image(512, 384, "background");
-    this.background.setAlpha(0.5);
-
-    const colors = [0xffff00, 0xff0000, 0x0000ff, 0x00ff00, 0xff00ff, 0x800080];
-
-    const chances = [0.1, 40, 20, 30, 50, 80];
-
-    const box1 = this.add.rectangle(300, 300, 200, 200, colors[1]);
-    const box2 = this.add.rectangle(600, 300, 200, 200, colors[1]);
-    const box3 = this.add.rectangle(900, 300, 200, 200, colors[1]);
-
-    this.add.rectangle(600, 500, 200, 100, 0xffffff);
-    this.add.text(525, 485, "Random Colors", {
-      fontSize: "24px",
-      color: "#ff0000",
-      fontFamily: "Arial",
+        this.die3.setTexture(`die-${Math.floor(Math.random() * 6) + 1}`);
+        this.tweens.add({
+          targets: this.die3,
+          y: this.die3.y - 16,
+          duration: 320,
+          ease: "Power2",
+          yoyo: true,
+        });
+      },
+      loop: true,
     });
 
-    setInterval(() => {
-      box1.fillColor = RandomColors();
-      box2.fillColor = RandomColors();
-      box3.fillColor = RandomColors();
-    }, 500);
+    // this.slash = this.add
+    //   .image(this.cameraX, this.cameraY, "slash")
+    //   .setDisplaySize(800, 800)
+    //   .setAlpha(0.8); // Start with slightly transparent
 
-    function RandomColors() {
+    // this.time.addEvent({
+    //   delay: 600,
+    //   callback: () => {
+    //     // Create a diagonal slashing animation from top-right to bottom-left
+    //     // Position at top-right of screen
+    //     this.slash.setPosition(this.cameraX + 400, this.cameraY - 800);
+
+    //     this.tweens.add({
+    //       targets: this.slash,
+    //       x: this.cameraX - 500, // Move to bottom-left
+    //       y: this.cameraY + 800,
+    //       alpha: 1, // Fade in during slash
+    //       scale: { from: 2, to: 1.5 },
+    //       duration: 500,
+    //       ease: "Power2",
+    //     });
+    //   },
+    //   loop: true,
+    // });
+
+    let count = 5;
+
+    const container_countdown_respin = this.add
+      .text(
+        this.cameraX,
+        this.cameraY + 90,
+        ["Re - rolling in " + count + " sec..."],
+        {
+          fontSize: "24px",
+          color: text_color,
+          fontStyle: "bold",
+        },
+      )
+      .setOrigin(0.5);
+
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        count -= 1;
+        container_countdown_respin.setText(
+          "Re - rolling in " + count + " sec...",
+        );
+
+        if (count <= 0) {
+          container_countdown_respin.setText("Rerolling.... ");
+        }
+      },
+
+      loop: true,
+    });
+
+    const totalLuck = this.playersLogs.reduce(
+      (sum: number, player: PlayerLog) => sum + player.luck,
+      0,
+    );
+
+    const RandomColors = () => {
       const random = Math.random() * 100;
-
       let cumu = 0;
 
-      for (let i = 0; i < colors.length; i++) {
-        cumu += chances[i];
+      for (let i = 0; i < this.playersLogs.length; i++) {
+        cumu += (this.playersLogs[i].luck / totalLuck) * 100;
         if (random < cumu) {
-          return colors[i];
+          return defualtColor[i].color;
         }
       }
 
-      return colors[0];
+      return defualtColor[0].color;
+    };
+
+    const setColors = () => {
+      const boxResult = [RandomColors(), RandomColors(), RandomColors()];
+
+      for (let i = 0; i < this.playersLogs.length; i++) {
+        if (
+          this.playersLogs[i].color === boxResult[0] ||
+          this.playersLogs[i].color === boxResult[1] ||
+          this.playersLogs[i].color === boxResult[2]
+        ) {
+          this.lifePoints[i] = Number(this.lifePoints[i]) + 1;
+        } else {
+          this.lifePoints[i] = Number(this.lifePoints[i]) - 1;
+        }
+
+        if (
+          (this.playersLogs[i].color === boxResult[0] &&
+            this.playersLogs[i].color === boxResult[1]) ||
+          (this.playersLogs[i].color === boxResult[0] &&
+            this.playersLogs[i].color === boxResult[2]) ||
+          (this.playersLogs[i].color === boxResult[1] &&
+            this.playersLogs[i].color === boxResult[2])
+        ) {
+          this.lifePoints[i] = Number(this.lifePoints[i]) + 1;
+        }
+
+        if (
+          this.playersLogs[i].color === boxResult[0] &&
+          this.playersLogs[i].color === boxResult[1] &&
+          this.playersLogs[i].color === boxResult[2]
+        ) {
+          this.lifePoints[i] = Number(this.lifePoints[i]) + 1;
+        }
+
+        if (Number(this.lifePoints[i]) <= 0) {
+          this.lifePoints[i] = "NaN";
+          this.playersLogs[i].luck = 0;
+          this.playersLogs[i].name = "Eliminated";
+        } else if (Number(this.lifePoints[i]) >= 20) {
+          setTimeout(() => {
+            this.scene.pause();
+            // Fixed the destroy method - use stop() instead
+            this.scene.stop();
+            setTimeout(() => {
+              this.add.rectangle(
+                this.cameraX,
+                this.cameraY,
+                500,
+                300,
+                0x161b22,
+              );
+
+              this.add
+                .text(
+                  this.cameraX,
+                  this.cameraY - 100,
+                  ["TOTAL PRIZE = " + prizeWOK],
+                  {
+                    fontSize: "28px",
+                    color: text_color,
+                    fontStyle: "bold",
+                  },
+                )
+                .setOrigin(0.5);
+
+              this.add
+                .text(
+                  this.cameraX,
+                  this.cameraY + 100,
+                  ["The Winner is " + this.playersLogs[i].name],
+                  {
+                    fontSize: "28px",
+                    color: text_color,
+                    fontStyle: "bold",
+                  },
+                )
+                .setOrigin(0.5);
+
+              this.add
+                .image(this.cameraX, this.cameraY, this.Img[i])
+                .setDisplaySize(100, 100);
+            }, 1000);
+          }, 2000);
+        }
+      }
+    };
+
+    setTimeout(() => {
+      setInterval(setColors, 3000);
+    }, 3000);
+
+    //Other Player
+    this.player_info_p = [
+      { x: this.cameraX - 210, y: this.cameraY + 270 },
+      { x: this.cameraX - 530, y: this.cameraY + 140 },
+      { x: this.cameraX + 400, y: this.cameraY + 140 },
+      { x: this.cameraX + 400, y: this.cameraY - 220 },
+      { x: this.cameraX - 530, y: this.cameraY - 220 },
+      { x: this.cameraX - 50, y: this.cameraY - 270 },
+    ];
+
+    const player_info = [
+      { x: this.cameraX - 450, y: this.cameraY + 180, width: 220, height: 120 },
+      { x: this.cameraX - 450, y: this.cameraY + 180, width: 220, height: 120 },
+      { x: this.cameraX + 450, y: this.cameraY + 180, width: 220, height: 120 },
+      { x: this.cameraX + 450, y: this.cameraY - 180, width: 220, height: 120 },
+      { x: this.cameraX - 450, y: this.cameraY - 180, width: 220, height: 120 },
+      { x: this.cameraX + 20, y: this.cameraY - 240, width: 220, height: 120 },
+    ];
+
+    const player_ar = [
+      { x: this.cameraX - 530, y: this.cameraY + 140 },
+      { x: this.cameraX - 330, y: this.cameraY + 120 },
+      { x: this.cameraX + 330, y: this.cameraY + 120 },
+      { x: this.cameraX + 330, y: this.cameraY - 120 },
+      { x: this.cameraX - 330, y: this.cameraY - 120 },
+      { x: this.cameraX - 120, y: this.cameraY - 230 },
+    ];
+
+    for (let i = 1; i < this.playersLogs.length; i++) {
+      this.add.rectangle(
+        player_info[i].x,
+        player_info[i].y,
+        player_info[i].width,
+        player_info[i].height,
+        colorb1,
+      );
     }
+
+    this.text_value = [];
+
+    for (let i = 1; i < this.playersLogs.length; i++) {
+      const info_text = this.add.text(
+        this.player_info_p[i].x,
+        this.player_info_p[i].y,
+
+        this.playersLogs[i].name +
+          "\n" +
+          "LUCK - " +
+          this.playersLogs[i].luck +
+          "\n" +
+          "Life - " +
+          this.lifePoints[i],
+
+        {
+          fontSize: "24px",
+          color: "#fff",
+          fontStyle: "bold",
+        },
+      );
+
+      this.text_value.push(info_text);
+    }
+
+    for (let i = 1; i < this.playersLogs.length; i++) {
+      this.add.rectangle(
+        player_ar[i].x,
+        player_ar[i].y,
+        122,
+        122,
+        this.playersLogs[i].color,
+      );
+
+      this.add
+        .image(player_ar[i].x, player_ar[i].y, this.Img[i])
+        .setDisplaySize(100, 100);
+    }
+
+    //Player Main Info
+    this.add.rectangle(
+      this.cameraX,
+      this.cameraY + 300,
+      this.cameraX - 150,
+      this.cameraY - 260,
+      colorb1,
+    );
+
+    this.mainplayerinfo_text = this.add.text(
+      this.cameraX - 210,
+      this.cameraY + 270,
+      [
+        this.playersLogs[0].name +
+          " - LUCK " +
+          this.playersLogs[0].luck +
+          this.lifePoints[0] +
+          " LIFE POINTS",
+      ],
+      {
+        fontSize: "24px",
+        color: text_color,
+        fontStyle: "bold",
+      },
+    );
+
+    this.add.rectangle(
+      this.cameraX + 140,
+      this.cameraY + 250,
+      this.cameraX - 490,
+      this.cameraY - 220,
+      this.playersLogs[0].color,
+    );
+
+    this.add
+      .image(this.cameraX + 140, this.cameraY + 250, this.Img[0])
+      .setDisplaySize(115, 115);
+
+    // Connect to Leva GUI if it's enabled
+    this.setupLevaControlListeners();
 
     EventBus.emit("current-scene-ready", this);
   }
 
-  playerReady() {
-    this.colorButtonBlue.destroy();
-    this.colorButtonRed.destroy();
-    this.colorButtonYellow.destroy();
-    this.socket.emit("player-ready", this.socket.id);
-  }
+  update(): void {}
 
-  nextRound() {
-    this.colorButtonRed = this.add
-      .text(362, 684, "red", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "red",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.changePlayerColor(0xff0000))
-      .on("pointerover", () =>
-        this.colorButtonRed.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.colorButtonRed.setStyle({ backgroundColor: "#333333" }),
-      );
+  // Add the setupLevaControlListeners method
+  setupLevaControlListeners() {
+    if (!this.levaControlsEnabled) return;
 
-    this.colorButtonYellow = this.add
-      .text(512, 684, "yellow", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "yellow",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.changePlayerColor(0xffff00))
-      .on("pointerover", () =>
-        this.colorButtonYellow.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.colorButtonYellow.setStyle({ backgroundColor: "#333333" }),
-      );
-
-    this.colorButtonBlue = this.add
-      .text(662, 684, "blue", {
-        fontFamily: "Arial",
-        fontSize: 24,
-        color: "white",
-        backgroundColor: "blue",
-        padding: { x: 10, y: 5 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.changePlayerColor(0x0000ff))
-      .on("pointerover", () =>
-        this.colorButtonBlue.setStyle({ backgroundColor: "#555555" }),
-      )
-      .on("pointerout", () =>
-        this.colorButtonBlue.setStyle({ backgroundColor: "#333333" }),
-      );
-    this.readyButton.setStyle({ backgroundColor: "blue" });
-  }
-
-  changePlayerColor(color: number = 0xfff) {
-    this.player.setFillStyle(color);
-  }
-
-  changeScene() {
-    // para mang change scenes
-    this.scene.start("Room");
+    // Here you would add your event listeners for Leva
+    // This is just a placeholder as the actual implementation will depend on your Leva integration
+    console.log("Leva control listeners set up");
   }
 }

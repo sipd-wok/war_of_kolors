@@ -1,3 +1,5 @@
+"use client";
+
 import { Boot } from "./_scenes/Boot";
 import { GameOver } from "./_scenes/GameOver";
 import { GameOver2 } from "./_scenes/GameOver2";

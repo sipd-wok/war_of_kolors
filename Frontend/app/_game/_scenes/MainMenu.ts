@@ -6,7 +6,6 @@ export class MainMenu extends Scene {
   background!: GameObjects.Image;
   title!: GameObjects.Text;
   createRoomBttn!: GameObjects.Text;
-  joinRoomBttn!: GameObjects.Text;
   openShop!: GameObjects.Text;
   socket!: Socket;
 
@@ -52,14 +51,21 @@ export class MainMenu extends Scene {
     });
 
     this.createRoomBttn.on("pointerdown", () => {
-      this.socket.emit("createGuestRoom", "testID", (roomID: string) => {
-        console.log("Room created: " + roomID);
-        this.scene.start("WaitingRoom", { roomID: roomID });
+      let roomToJoin = "";
+
+      this.socket.emit("createGuestRoom", (roomID: string) => {
+        roomToJoin = roomID;
+
+        console.log("Room created: " + roomToJoin);
+
+        this.scene.start("WaitingRoom", {
+          roomID: roomToJoin,
+        });
       });
     });
 
     // --- Join Lobby Button ---
-    this.joinRoomBttn = this.add
+    const joinRoomBttn = this.add
       .text(512, 350, "Join Room", {
         fontFamily: "Arial",
         fontSize: 32,
@@ -70,16 +76,24 @@ export class MainMenu extends Scene {
       .setOrigin(0.5)
       .setInteractive();
 
-    this.joinRoomBttn.on("pointerover", () => {
-      this.joinRoomBttn.setStyle({ color: "#ffff00" });
+    joinRoomBttn.on("pointerover", () => {
+      joinRoomBttn.setStyle({ color: "#ffff00" });
     });
 
-    this.joinRoomBttn.on("pointerout", () => {
-      this.joinRoomBttn.setStyle({ color: "#ffffff" });
+    joinRoomBttn.on("pointerout", () => {
+      joinRoomBttn.setStyle({ color: "#ffffff" });
     });
 
-    this.joinRoomBttn.on("pointerdown", () => {
-      this.scene.start("RoomList", { socket: this.socket }); // Added changeScene() call for demo.
+    joinRoomBttn.on("pointerdown", () => {
+      console.log("Joining room...");
+
+      this.socket.emit("getAvailableRoom", (roomID: string) => {
+        let roomtoJoin = "";
+        roomtoJoin = roomID;
+        console.log("Joining room: " + roomtoJoin);
+
+        this.scene.start("WaitingRoom", { roomID: roomID });
+      });
     });
 
     EventBus.emit("current-scene-ready", this);

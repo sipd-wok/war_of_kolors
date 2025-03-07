@@ -16,15 +16,15 @@ export async function metaMaskSignInAction(address: string) {
 
       if (data) {
         await signIn("credentials", {
-          userID: address,
+          user_id: address,
           password: data.password,
-          role: "player",
+          role_id: "2",
         });
       } else if (!data || error) {
         await signIn("credentials", {
-          userID: address,
+          user_id: address,
           password: uuidv4(),
-          role: "player",
+          role_id: "2",
         });
       } else {
         throw new Error("Error signing in.");

@@ -10,10 +10,10 @@ import {
 // Extend the NextAuth User type with your additional properties
 declare module "next-auth" {
   interface User {
-    userID: string;
+    user_id: string;
     username: string;
     password: string;
-    role: string;
+    role_id: string;
   }
 }
 
@@ -21,29 +21,35 @@ export const { auth, signIn, handlers } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        userID: { label: "User ID", type: "text" },
+        user_id: { label: "User ID", type: "text" },
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
-        role: { label: "Account Type", type: "text" },
+        role_id: { label: "Account Type", type: "text" },
       },
       authorize: async (credentials): Promise<User | null> => {
-        if (!credentials.userID) {
+        if (!credentials.user_id) {
+          console.log("No user ID provided.");
           return null;
         }
 
+        // check if user exists
         const { data, error } = await supabase
           .from("users_tbl")
           .select()
-          .eq("user_id", credentials.userID)
+          .eq("user_id", credentials.user_id)
           .eq("password", credentials.password)
           .single();
 
+        // mahimo new yser if wala user sa dabaaase
         if (!data) {
+          console.log("No user found.");
+
           // ma check sng role
+          console.log("Checking role...");
           const { data, error: roleError } = await supabase
             .from("roles_tbl")
             .select()
-            .eq("role", credentials.role)
+            .eq("id", credentials.role_id)
             .single();
 
           if (roleError || !data) {
@@ -51,8 +57,9 @@ export const { auth, signIn, handlers } = NextAuth({
           }
 
           // create new user
+          console.log("Creating new user...");
           const { error } = await supabase.from("users_tbl").insert({
-            user_id: credentials.userID,
+            user_id: credentials.user_id,
             username: credentials.username,
             password: credentials.password,
             role_id: data.id,
@@ -63,10 +70,10 @@ export const { auth, signIn, handlers } = NextAuth({
           }
 
           return {
-            userID: credentials.userID,
+            user_id: credentials.user_id,
             username: credentials.username,
             password: credentials.password,
-            role: credentials.role,
+            role_id: credentials.role_id,
           } as User;
         }
 
@@ -74,6 +81,8 @@ export const { auth, signIn, handlers } = NextAuth({
           throw new Error("Somethind is wrong.");
         }
 
+        console.log("User found.");
+        console.log(data);
         return data as User;
       },
     }),
@@ -85,9 +94,9 @@ export const { auth, signIn, handlers } = NextAuth({
         token.credentials = true;
         // Add user data to the token if available
         if (user) {
-          token.userID = user.userID;
+          token.user_id = user.user_id;
           token.username = user.username;
-          token.role = user.role;
+          token.role_id = user.role_id;
         }
       }
       return token;
@@ -97,9 +106,9 @@ export const { auth, signIn, handlers } = NextAuth({
       if (token) {
         session.user = {
           ...session.user,
-          userID: token.userID as string,
+          user_id: token.user_id as string,
           username: token.username as string,
-          role: token.role as string,
+          role_id: token.role_id as string,
         };
       }
       return session;

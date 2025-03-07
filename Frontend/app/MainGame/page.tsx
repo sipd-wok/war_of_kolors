@@ -4,10 +4,21 @@ import { redirect } from "next/navigation";
 
 const MainGame = async () => {
   const session = await auth();
-  if (!session) redirect("/signIn");
-  console.log(session);
+  if (!session) {
+    redirect("/signIn");
+  } else {
+    console.log("Session found at /MainGame");
+    console.log(session);
+    console.log("user_id: " + session.user?.user_id);
+  }
 
-  return <GameClient username={session.user?.username as string} />;
+  // Pass both username and userID to the client component
+  return (
+    <GameClient
+      username={session.user?.username as string}
+      user_id={session.user?.user_id as string}
+    />
+  );
 };
 
 export default MainGame;

@@ -3,13 +3,17 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { getProvider, getSigner } from "@/utils/ethersProvider";
-import { getContract } from "@/utils/contract";
+import { getTokenContract } from "@/utils/tokencontract";
+import { sendTokens as SendTokens, buyCharacter as BuyCharacter } from "@/app/transactions/tokenTransactions";
+import { mintNFT as MintNFT, transferNFT as TransferNFT } from "@/app/transactions/nftTransactions";
 interface WalletContextType {
   walletAddress: string | null;
   balance: string;
   connectWallet: () => Promise<void>;
   sendTokens: (recipient: string, amount: string) => Promise<void>;
   buyCharacter: (amount: string) =>Promise<void>
+  mintNFT: (walletAddress: string,metadataURI: string) => Promise<void>;
+  transferNFT: (to: string, tokenId: string) => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -23,7 +27,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     checkWalletConnection();
   }, []);
-
   const checkWalletConnection = async () => {
     try {
       const provider = getProvider();
@@ -36,7 +39,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Error checking wallet connection:", error);
     }
   };
-
   const connectWallet = async () => {
     try {
       const provider = getProvider();
@@ -51,7 +53,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchBalance = async (address: string) => {
     try {
       const signer = await getSigner();
-      const contract = getContract(signer);
+      const contract = getTokenContract(signer);
       const balanceRaw = await contract.balanceOf(address);
       setBalance(ethers.formatUnits(balanceRaw, 18));
     } catch (error) {
@@ -59,46 +61,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const sendTokens = async (recipient: string, amount: string) => {
-    try {
-      const signer = await getSigner();
-      const contract = getContract(signer);
-      const tx = await contract.transfer(
-        recipient,
-        ethers.parseUnits(amount, 18),
-      );
-      await tx.wait();
-      alert("Transaction Successful!");
-      fetchBalance(walletAddress!);
-    } catch (error) {
-      console.error("Transaction failed:", error);
-      alert("Transaction Failed!");
-    }
-  };
-  const buyCharacter = async (amount: string) => {
-    try {
-      if (!walletAddress) throw new Error("Wallet not connected");
-      const devWallet = process.env.NEXT_PUBLIC_WALLET_ADDRESS;
-      if (!devWallet) throw new Error("Developer wallet address is not set");
-  
-      const signer = await getSigner();
-      const contract = getContract(signer);
-      const tx = await contract.transfer(devWallet, ethers.parseUnits(amount, 18));
-      await tx.wait();
-  
-      alert("Character purchased successfully!");
-      fetchBalance(walletAddress); 
-    } catch (error) {
-      console.error("Character purchase failed:", error);
-      alert("Character purchase failed!");
-    }
-  };
-  
-  
-  
+  // TOKENS
+  const sendTokens = (recipient: string, amount: string) => SendTokens(recipient, amount, walletAddress!, fetchBalance);
+  const buyCharacter = (amount: string) => BuyCharacter(amount, walletAddress!, fetchBalance);
+  // NFTS
+  const mintNFT= (walletAddress: string,metadataURI: string) => MintNFT(walletAddress!, metadataURI);
+  const transferNFT = (to: string, tokenId: string) => TransferNFT(walletAddress!, to, tokenId);
   return (
     <WalletContext.Provider
-      value={{ walletAddress, balance, connectWallet, sendTokens, buyCharacter }}
+      value={{ walletAddress, balance, 
+        connectWallet, sendTokens, buyCharacter, 
+        mintNFT, transferNFT }}
     >
       {children}
     </WalletContext.Provider>
