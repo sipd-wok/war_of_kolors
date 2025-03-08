@@ -49,12 +49,7 @@ export class Start extends Phaser.Scene {
 
         var prizeWOK = totalBet
 
-        var colorb1 = 0x30363d
-
         var text_color = "#c9d1d9"
-
-        var elemenated = "Drop"
-
 
         //Free For All Mode
         var defualtColor = [
