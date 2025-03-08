@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import Phaser from "../utils/phaser"; // Import Phaser
+import Phaser from "@/utils/phaser";
 import { Start } from '../components/Start';
 
 export default function Home() {
