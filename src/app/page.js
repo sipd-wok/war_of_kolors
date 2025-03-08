@@ -13,6 +13,7 @@ export default function Home() {
         width: 1296,
         height: 926,
         scene: [Start],
+        backgroundColor: '#87CEEB',
         scale: {
           mode: Phaser.Scale.FIT,
           autoCenter: Phaser.Scale.CENTER_BOTH,

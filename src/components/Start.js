@@ -16,13 +16,12 @@ export class Start extends Phaser.Scene {
         this.load.image('red', '/red.png')
         this.load.image('green', '/green.png')
         
-        this.load.image("sky", "https://labs.phaser.io/assets/skies/space3.png");
         
     }
 
     create() {
             
-         this.add.image(window.innerWidth / 2, window.innerHeight / 2, "sky").setScale(2)
+         
          //Responsive
         this.cameraX = this.cameras.main.width / 2
 
@@ -33,12 +32,12 @@ export class Start extends Phaser.Scene {
            
         //Players Logs || Waiting Other Player Logs
         this.playersLogs = [
-            {name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red'},
-            {name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow'},
-            {name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green'},
-            {name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white'},
-            {name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue'},
-            {name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink'},
+            {name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0.5},
+            {name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0.2},
+            {name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0.5},
+            {name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0.8},
+            {name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0.3},
+            {name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0.6},
         ]     
         
         this.lifePoints = [10, 10, 10, 10, 10, 10] // Life Points
@@ -49,7 +48,7 @@ export class Start extends Phaser.Scene {
 
         var prizeWOK = totalBet
 
-        var text_color = "#c9d1d9"
+        var text_color = "#000"
 
         //Free For All Mode
         var defualtColor = [
@@ -64,19 +63,46 @@ export class Start extends Phaser.Scene {
         //GamePlay System && Rules   
             
     // Main Board
+        
+        var container = this.add.rectangle(
+            this.cameraX + 450,
+            this.cameraY - 430,
+            450,
+            90,
+            0x693701
+            )
+        
+        var WokCoins = this.add.text(
+            this.cameraX + 450,
+            this.cameraY - 430,
+            ' Wok Coins ()',
+            {
+                fontSize: '28px',
+                color: '#fff',
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5)
+        
+        var container = this.add.rectangle(
+            this.cameraX,
+            this.cameraY,
+            510,
+            360,
+            0x000000
+            )
         var container = this.add.rectangle(
             this.cameraX,
             this.cameraY,
             500,
             350,
-            0xff0000
+            0xb0c4de
             )
         var containerS2 = this.add.rectangle(
             this.cameraX,
             this.cameraY,
             450,
             250,
-            0x161b22
+            0x4682b4
             )
 
         var container_prize_pool = this.add.text(this.cameraX, this.cameraY - 100, [
@@ -214,12 +240,20 @@ export class Start extends Phaser.Scene {
                     this.scene.destroy()
                     setTimeout(() => {
                
+               var containerBg1 = this.add.rectangle(
+            this.cameraX,
+            this.cameraY,
+            560,
+            310,
+            0x000000
+            )
+               
                 var container2 = this.add.rectangle(
             this.cameraX,
             this.cameraY,
-            500,
+            550,
             300,
-            0x161b22
+            0xffffff
             )
                
                         
@@ -261,24 +295,24 @@ export class Start extends Phaser.Scene {
         //Other Player
        
        this.player_info_p = [
-           {x: this.cameraX - 210, y: this.cameraY + 270},
-           {x: this.cameraX - 530, y: this.cameraY + 140},
-           {x: this.cameraX + 400, y: this.cameraY + 140},
-           {x: this.cameraX + 400, y: this.cameraY - 220},
-           {x: this.cameraX - 530, y: this.cameraY - 220},
-           {x: this.cameraX - 50, y: this.cameraY - 270},
+           {x: this.cameraX - 590, y: this.cameraY - 70},
+           {x: this.cameraX - 570, y: this.cameraY + 70},
+           {x: this.cameraX - 300, y: this.cameraY + 220},
+           {x: this.cameraX + 190, y: this.cameraY + 220},
+           {x: this.cameraX + 460, y: this.cameraY + 70},
+           {x: this.cameraX + 460, y: this.cameraY - 140},
            
        ]
        
        
        
        let player_ar = [
-           {x: this.cameraX - 530, y: this.cameraY + 140},
-           {x: this.cameraX - 330, y: this.cameraY + 120},
-           {x: this.cameraX + 330, y: this.cameraY + 120},
-           {x: this.cameraX + 330, y: this.cameraY - 120},
-           {x: this.cameraX - 330, y: this.cameraY - 120},
-           {x: this.cameraX - 120, y: this.cameraY - 230},
+           {x: this.cameraX - 360, y: this.cameraY - 100},
+           {x: this.cameraX - 360, y: this.cameraY + 100},
+           {x: this.cameraX - 90, y: this.cameraY + 260},
+           {x: this.cameraX + 90, y: this.cameraY + 260},
+           {x: this.cameraX + 360, y: this.cameraY + 100},
+           {x: this.cameraX + 360, y: this.cameraY - 100},
        ]
        
        
@@ -293,15 +327,15 @@ export class Start extends Phaser.Scene {
                
                
                this.playersLogs[i].name + '\n' +
-               'LUCK - ' + this.playersLogs[i].luck + '\n' +
+               'LM - ' + this.playersLogs[i].LM + '\n' +
                
-               'Life - ' + this.lifePoints[i]
+               'LP - ' + this.lifePoints[i]
                
                ,
                
                {
                    fontSize: '24px',
-                   color: '#fff',
+                   color: text_color,
                    fontStyle: 'bold'
                }
                
@@ -315,13 +349,13 @@ export class Start extends Phaser.Scene {
         
        
         
-        for (let i = 1; i < this.playersLogs.length; i++) {
+        for (let i = 0; i < this.playersLogs.length; i++) {
             
             var player_ar_rect = this.add.rectangle(
                 player_ar[i].x,
                 player_ar[i].y,
-                122,
-                122,
+                150,
+                150,
                 this.playersLogs[i].color 
                 
             )
@@ -330,34 +364,34 @@ export class Start extends Phaser.Scene {
                 player_ar[i].x,
                 player_ar[i].y,
                 this.playersLogs[i].img
-            ).setDisplaySize(118, 118)
+            ).setDisplaySize(140, 140)
            
         }
 
         //Player Main
 
-        this.mainplayerinfo_text = this.add.text(this.cameraX - 210, this.cameraY + 270,
-     [       this.playersLogs[0].name + ' - LUCK ' + this.playersLogs[0].luck +
+        this.mainplayerinfo_text = this.add.text(this.cameraX - 430, this.cameraY - 420,
+     [       this.playersLogs[0].name + '\n - LUCK Multiplayer - ' +
             this.lifePoints[0] + ' LIFE POINTS'
         ], {
-            fontSize: '24px',
+            fontSize: '34px',
             color: text_color,
             fontStyle: 'bold'
         })
 
         var profilePic = this.add.rectangle(
-            this.cameraX + 140,
-            this.cameraY + 250,
-            130,
-            130,
+            this.cameraX - 540,
+            this.cameraY - 340,
+            190,
+            190,
             this.playersLogs[0].color
         )
         
         let images = this.add.image(
-                this.cameraX + 140,
-                this.cameraY + 250,
+                this.cameraX - 540, 
+                this.cameraY - 340,
                 this.playersLogs[0].img
-            ).setDisplaySize(125, 125)
+            ).setDisplaySize(180, 180)
             
     }
                
@@ -366,8 +400,8 @@ export class Start extends Phaser.Scene {
     
     this.mainplayerinfo_text.setText(
     [
-            this.playersLogs[0].name + ' - LUCK ' + this.playersLogs[0].luck,
-            this.lifePoints[0] + ' LIFE POINTS'
+            this.playersLogs[0].name + '\nLUCK Multiplayer - ' + this.playersLogs[0].LM +
+            '\nLIFE POINTS - ' + this.lifePoints[0]
         ])
     
     
@@ -376,9 +410,9 @@ export class Start extends Phaser.Scene {
             this.text_value[i - 1].setText(
                 
                 this.playersLogs[i].name + '\n' +
-               'LUCK - ' + this.playersLogs[i].luck + '\n' +
+               'LM - ' + this.playersLogs[i].LM + '\n' +
                
-               'Life - ' + this.lifePoints[i]
+               'LP - ' + this.lifePoints[i]
                 
                 
             )
