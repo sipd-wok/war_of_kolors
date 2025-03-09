@@ -177,17 +177,20 @@ export class Shop extends Scene {
     this.load.image("GoldDoor", "assets/golddoor.png");
     this.load.image("RainbowDoor", "assets/rainbowdoor.png");
 
-    // Potions
-    this.load.image("devilsPotion", "assets/devilsPotion.png");
-    this.load.image("leprechaunsPotion", "assets/leprechaunsPotion.png");
-    this.load.image("healthPotion", "assets/healthPotion.png");
+    // Characters
+    // 💬[vincent]: gn move ko sa preloader.ts
+    //   for (let i = 1; i <= 104; i++) {
+    //     this.load.image(`characterSprite${i}`, `assets/char_${i}.png`);
+    // }
   }
 
   create(): void {
     const centerX = this.cameras.main.centerX;
     const centerY = this.cameras.main.centerY;
 
-    const backButton = this.add
+    this.add.image(centerX, centerY, "background");
+
+    this.add
       .text(centerX, centerY + 300, "Back", {
         fontFamily: "Arial",
         fontSize: 32,
@@ -200,10 +203,6 @@ export class Shop extends Scene {
       .on("pointerdown", () => {
         this.scene.start("MainMenu");
       });
-
-    backButton.on("pointerdown", () => {
-      this.scene.start("Game");
-    });
 
     this.buyCharacter = this.registry.get("buyCharacter");
     // Title
@@ -278,7 +277,7 @@ export class Shop extends Scene {
       .text(x, y - 80, name, {
         fontFamily: "Arial",
         fontSize: 24,
-        color: "#ffffff",
+        color: "#000000",
       })
       .setOrigin(0.5);
 
@@ -286,7 +285,7 @@ export class Shop extends Scene {
       .text(x, y + 80, `Price: ${price}`, {
         fontFamily: "Arial",
         fontSize: 20,
-        color: "#ffffff",
+        color: "#000000",
       })
       .setOrigin(0.5);
 
@@ -306,6 +305,20 @@ export class Shop extends Scene {
       await this.buyCharacter(price.toString()); // Reusing the buyCharacter method for purchasing potions
       buyPotion();
       this.showPotionModal(potionName, potionSprite);
+      try {
+        await fetch("/api/inventory/addPotion", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            potionName,
+            quantity: 1,
+          }),
+        });
+      } catch (error) {
+        console.error("Error adding potion:", error);
+      }
     } catch (error) {
       console.error(`Failed to purchase ${potionName}:`, error);
     }
@@ -352,7 +365,6 @@ export class Shop extends Scene {
       )
       .setOrigin(0.5)
       .setDisplaySize(100, 100);
-      
 
     const luckText = this.add
       .text(
@@ -365,10 +377,10 @@ export class Shop extends Scene {
           fontFamily: "Arial",
           fontSize: 20,
           color: "#000000",
-        }
+        },
       )
       .setOrigin(0.5);
-    
+
     const closeButton = this.add
       .text(
         this.cameras.main.centerX,
@@ -377,7 +389,7 @@ export class Shop extends Scene {
         {
           fontFamily: "Arial",
           fontSize: 24,
-          color: "#ffffff",
+          color: "#000000",
           backgroundColor: "#4e342e",
           padding: { x: 20, y: 10 },
         },
@@ -448,14 +460,14 @@ export class Shop extends Scene {
       .text(x, y - 120, tier, {
         fontFamily: "Arial",
         fontSize: 24,
-        color: "#ffffff",
+        color: "#000000",
       })
       .setOrigin(0.5);
     this.add
       .text(x, y + 130, `Price: ${price}`, {
         fontFamily: "Arial",
         fontSize: 20,
-        color: "#ffffff",
+        color: "#000000",
       })
       .setOrigin(0.5);
 
@@ -620,7 +632,7 @@ export class Shop extends Scene {
         {
           fontFamily: "Arial",
           fontSize: 24,
-          color: "#ffffff",
+          color: "#000000",
           backgroundColor: "#4e342e",
           padding: { x: 20, y: 10 },
         },

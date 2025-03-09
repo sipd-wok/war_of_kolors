@@ -12,6 +12,13 @@ export class MainMenu extends Scene {
   characterFrame!: GameObjects.Image;
   characterImage!: GameObjects.Image;
   banner!: GameObjects.Image;
+  user!: { id: string; user_id: string; username: string };
+  potions!: {
+    id: string;
+    devil: number;
+    leprechaun: number;
+    hp: number;
+  };
   characters: {
     id: number;
     name: string;
@@ -35,11 +42,15 @@ export class MainMenu extends Scene {
   ui_frame!: string;
   characterNameText!: GameObjects.Text;
   luckText!: GameObjects.Text;
+  joinRoomBttn!: GameObjects.Text;
+  devilPottionText!: GameObjects.Text;
+  hpPottionText!: GameObjects.Text;
+  lePottionText!: GameObjects.Text;
 
   constructor() {
     super("MainMenu");
 
-    this.socket = io(`http://localhost:3000`);
+    this.socket = io(process.env.SOCKET_HOST || "http://localhost:3000");
   }
 
   private updateCharacterBasedUI() {
@@ -108,6 +119,30 @@ export class MainMenu extends Scene {
 
   async init() {
     try {
+      const response = await fetch("/api/getUser", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to fetch user:", errorData);
+      } else {
+        const data = await response.json();
+        console.log("User fetched successfully: ", data);
+        this.user = data.user;
+        console.log("User: ", this.user);
+
+        // Emit event to notify that characters are loaded
+        this.events.emit("user-loaded");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+
+    try {
       const response = await fetch("/api/getCharacters", {
         method: "GET",
         headers: {
@@ -130,6 +165,30 @@ export class MainMenu extends Scene {
     } catch (error) {
       console.error("Error fetching characters:", error);
     }
+
+    try {
+      const response = await fetch("/api/inventory/getPotionInventory", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to get inventory:", errorData);
+      } else {
+        const data = await response.json();
+        console.log("inventory fetched successfully: ", data);
+        this.potions = data.potions;
+        console.log("Potions: ", this.potions);
+
+        // Emit event to notify that characters are loaded
+        this.events.emit("potions-loaded");
+      }
+    } catch (error) {
+      console.error("Error fetching characters:", error);
+    }
   }
 
   create() {
@@ -141,6 +200,8 @@ export class MainMenu extends Scene {
     console.log("Camera Y: ", cameraY);
     const visualViewportWidth = window.visualViewport?.width || 1024;
     const visualViewportHeight = window.visualViewport?.height || 768;
+
+    this.background = this.add.image(cameraX, cameraY, "background");
 
     const canvasFrameConfig = {
       width: visualViewportWidth + 300,
@@ -157,18 +218,16 @@ export class MainMenu extends Scene {
 
     if (visualViewportWidth !== undefined && visualViewportWidth < 1024) {
       canvasFrameConfig.width = visualViewportWidth + 80;
-      bannerConfig.posX = (1024 - visualViewportWidth) / 2 + 150;
       this.canvasFrame.setDisplaySize(
         canvasFrameConfig.width,
         visualViewportHeight + 200,
       );
     }
-    this.background = this.add.image(cameraX, cameraY, "background");
 
     this.title = this.add
-      .text(cameraX, 100, "War of Colors", {
+      .text(cameraX, 130, "War of Colors", {
         fontFamily: "Arial Black",
-        fontSize: 40,
+        fontSize: 24,
         color: "#ffffff",
         stroke: "#000000",
         strokeThickness: 8,
@@ -265,16 +324,17 @@ export class MainMenu extends Scene {
         this.selectedIndex = this.characters.length > 0 ? 0 : 0;
         this.selectedCharacter = this.characters[this.selectedIndex];
 
-        this.canvasFrame = this.add
-          .image(cameraX, cameraY - 10, "toy-frame-silver")
-          .setDisplaySize(canvasFrameConfig.width, visualViewportHeight + 200);
+        this.canvasFrame.setDisplaySize(
+          canvasFrameConfig.width,
+          visualViewportHeight + 200,
+        );
         this.characterFrame = this.add
           .image(cameraX, cameraY - 100, "")
           .setScale(0.21, 0.25)
           .setDepth(200);
         this.banner = this.add
           .image(bannerConfig.posX, 0, "banner-silver")
-          .setScale(0.15)
+          .setScale(0.1)
           .setOrigin(0)
           .setDepth(50);
         this.characterImage = this.add
@@ -336,7 +396,59 @@ export class MainMenu extends Scene {
               this.updateCharacterBasedUI();
             }
           });
+
+        this.createRoomBttn.setInteractive();
+        this.joinRoomBttn.setInteractive();
       }
+    });
+
+    this.add
+      .image(visualViewportWidth - 70, 50, "devilsPotion")
+      .setDisplaySize(60, 60)
+      .setAbove(this.canvasFrame);
+    this.devilPottionText = this.add
+      .text(visualViewportWidth - 70, 60, "0", {
+        fontFamily: "Arial",
+        fontSize: 18,
+        color: "#000000",
+        strokeThickness: 4,
+        stroke: "#ffffff",
+        align: "center",
+      })
+      .setAbove(this.canvasFrame);
+    this.add
+      .image(visualViewportWidth - 125, 50, "healthPotion")
+      .setDisplaySize(60, 60)
+      .setAbove(this.canvasFrame);
+    this.hpPottionText = this.add
+      .text(visualViewportWidth - 125, 60, "0", {
+        fontFamily: "Arial",
+        fontSize: 18,
+        color: "#000000",
+        strokeThickness: 4,
+        stroke: "#ffffff",
+        align: "center",
+      })
+      .setAbove(this.canvasFrame);
+    this.add
+      .image(visualViewportWidth - 180, 50, "leprechaunsPotion")
+      .setDisplaySize(60, 60)
+      .setAbove(this.canvasFrame);
+    this.lePottionText = this.add
+      .text(visualViewportWidth - 180, 60, "0", {
+        fontFamily: "Arial",
+        fontSize: 18,
+        color: "#000000",
+        strokeThickness: 4,
+        stroke: "#ffffff",
+        align: "center",
+      })
+      .setAbove(this.canvasFrame);
+
+    this.events.once("potions-loaded", () => {
+      this.devilPottionText.setText(this.potions.devil.toString());
+      this.hpPottionText.setText(this.potions.hp.toString());
+      this.lePottionText.setText(this.potions.leprechaun.toString());
     });
 
     // --- Create Lobby Button ---
@@ -349,32 +461,31 @@ export class MainMenu extends Scene {
         padding: { x: 20, y: 10 },
       })
       .setOrigin(0.5)
-      .setInteractive();
+      .on("pointerover", () => {
+        this.createRoomBttn.setStyle({ color: "#ffff00" }); // Change color on hover
+      })
+      .on("pointerout", () => {
+        this.createRoomBttn.setStyle({ color: "#ffffff" }); // Reset color on mouse out
+      })
+      .on("pointerdown", () => {
+        let roomToJoin = "";
 
-    this.createRoomBttn.on("pointerover", () => {
-      this.createRoomBttn.setStyle({ color: "#ffff00" }); // Change color on hover
-    });
+        this.socket.emit("createPlayerRoom", (roomID: string) => {
+          roomToJoin = roomID;
 
-    this.createRoomBttn.on("pointerout", () => {
-      this.createRoomBttn.setStyle({ color: "#ffffff" }); // Reset color on mouse out
-    });
+          console.log("Room created: " + roomToJoin);
 
-    this.createRoomBttn.on("pointerdown", () => {
-      let roomToJoin = "";
-
-      this.socket.emit("createGuestRoom", (roomID: string) => {
-        roomToJoin = roomID;
-
-        console.log("Room created: " + roomToJoin);
-
-        this.scene.start("WaitingRoom", {
-          roomID: roomToJoin,
+          this.scene.start("WaitingRoom", {
+            roomID: roomToJoin,
+            user: this.user,
+            character: this.selectedCharacter,
+            potions: this.potions,
+          });
         });
       });
-    });
 
     // --- Join Lobby Button ---
-    const joinRoomBttn = this.add
+    this.joinRoomBttn = this.add
       .text(cameraX, cameraY + 220, "Join Room", {
         fontFamily: "Arial",
         fontSize: 32,
@@ -383,27 +494,35 @@ export class MainMenu extends Scene {
         padding: { x: 20, y: 10 },
       })
       .setOrigin(0.5)
-      .setInteractive();
+      .on("pointerover", () => {
+        this.joinRoomBttn.setStyle({ color: "#ffff00" });
+      })
+      .on("pointerout", () => {
+        this.joinRoomBttn.setStyle({ color: "#ffffff" });
+      })
+      .on("pointerdown", () => {
+        console.log("Joining room...");
 
-    joinRoomBttn.on("pointerover", () => {
-      joinRoomBttn.setStyle({ color: "#ffff00" });
-    });
+        this.socket.emit(
+          "getAvailableRoom",
+          this.selectedCharacter?.color.toLowerCase(),
+          (roomID: string, colorRepresentativesIndex: string) => {
+            let roomtoJoin = "";
+            roomtoJoin = roomID;
+            if (this.selectedCharacter) {
+              this.selectedCharacter.color = colorRepresentativesIndex;
+            }
+            console.log("Joining room: " + roomtoJoin);
 
-    joinRoomBttn.on("pointerout", () => {
-      joinRoomBttn.setStyle({ color: "#ffffff" });
-    });
-
-    joinRoomBttn.on("pointerdown", () => {
-      console.log("Joining room...");
-
-      this.socket.emit("getAvailableRoom", (roomID: string) => {
-        let roomtoJoin = "";
-        roomtoJoin = roomID;
-        console.log("Joining room: " + roomtoJoin);
-
-        this.scene.start("WaitingRoom", { roomID: roomID });
+            this.scene.start("WaitingRoom", {
+              roomID: roomID,
+              user: this.user,
+              character: this.selectedCharacter,
+              potions: this.potions,
+            });
+          },
+        );
       });
-    });
 
     EventBus.emit("current-scene-ready", this);
 

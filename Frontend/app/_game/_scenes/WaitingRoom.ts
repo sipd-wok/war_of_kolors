@@ -2,301 +2,563 @@ import { GameObjects, Scene } from "phaser";
 import { io, Socket } from "socket.io-client";
 import { EventBus } from "../EventBus";
 
+// Define player interface to replace 'any' types
+interface Player {
+  socketID: string;
+  user: {
+    id: string;
+    user_id: string;
+    username: string;
+  } | null;
+  potions: {
+    id: string;
+    devil: number;
+    leprechaun: number;
+  } | null;
+  character: {
+    id: number;
+    name: string;
+    sprite: string;
+    created_at: string;
+    tier: string;
+    color: string;
+    luck?: number;
+  } | null;
+}
+
 export class WaitingRoom extends Scene {
   socket!: Socket;
   roomLabel!: GameObjects.Text;
   roomID!: string;
-  player!: GameObjects.Rectangle;
-  readyButton!: GameObjects.Rectangle;
-  user_id!: string;
+
+  skipButton!: GameObjects.Rectangle;
   opponents: GameObjects.Rectangle[] = [];
-  playerText!: GameObjects.Text;
-  connectTedPlayers!: number;
+
+  connectedPlayers!: number;
   playersReady: number = 0;
   playersReadyText!: GameObjects.Text;
+
+  // players
+  characterName!: GameObjects.Text;
+  playerName!: GameObjects.Text;
+  playerBox!: GameObjects.Rectangle;
+  opponentBox1!: GameObjects.Rectangle;
+  opponentBox2!: GameObjects.Rectangle;
+  opponentBox3!: GameObjects.Rectangle;
+  opponentBox4!: GameObjects.Rectangle;
+  opponentBox5!: GameObjects.Rectangle;
+  opponentName1!: GameObjects.Text;
+  opponentName2!: GameObjects.Text;
+  opponentName3!: GameObjects.Text;
+  opponentName4!: GameObjects.Text;
+  opponentName5!: GameObjects.Text;
+  oppCharacterName1!: GameObjects.Text;
+  oppCharacterName2!: GameObjects.Text;
+  oppCharacterName3!: GameObjects.Text;
+  oppCharacterName4!: GameObjects.Text;
+  oppCharacterName5!: GameObjects.Text;
+  characterImage1!: GameObjects.Image;
+  characterImage2!: GameObjects.Image;
+  characterImage3!: GameObjects.Image;
+  characterImage4!: GameObjects.Image;
+  characterImage5!: GameObjects.Image;
+  characterImage6!: GameObjects.Image;
+
+  //  player information
+  user!: { id: string; user_id: string; username: string };
+  potions!: {
+    id: string;
+    devil: number;
+    leprechaun: number;
+  };
+  character!: {
+    id: number;
+    name: string;
+    sprite: string;
+    created_at: string;
+    tier: string;
+    color: string;
+    luck?: number;
+  };
 
   constructor() {
     super("WaitingRoom");
   }
 
-  init(data: { roomID: string }) {
-    this.socket = io("http://localhost:3000");
+  preload() {
+    this.load.setPath("assets");
+
+    this.load.image("campfire", "/waitingRoom/campfire.jpg");
+    this.load.image("logo", "logo.png");
+  }
+
+  init(data: {
+    roomID: string;
+    user: { id: string; user_id: string; username: string };
+    character: {
+      id: number;
+      name: string;
+      sprite: string;
+      created_at: string;
+      tier: string;
+      color: string;
+      luck?: number;
+    };
+    potions: { id: string; devil: number; leprechaun: number };
+  }) {
+    this.roomID = data.roomID;
+    this.user = data.user;
+    this.character = data.character;
+    this.potions = data.potions;
+
+    this.socket = io(process.env.SOCKET_HOST || "http://localhost:3000");
 
     this.socket.on("connect", () => {
       console.log("Connected with ID:", this.socket.id);
 
-      this.roomID = data.roomID;
-      console.log("Joined room: " + this.roomID);
+      // Join the waiting room when socket connects
+      this.socket.emit(
+        "joinWaitingRoom",
+        this.roomID,
+        this.socket.id,
+        this.user,
+        this.character,
+        this.potions,
+      );
+    });
 
-      this.socket.emit("joinRoom", this.roomID, this.socket.id);
+    // Set up socket listeners in init to prevent duplication
+    this.setupSocketListeners();
+  }
+
+  setupSocketListeners() {
+    // Listen for playerJoinedWaitingRoom events
+    this.socket.on("playerJoinedWaitingRoom", (players: Player[]) => {
+      console.log("Players in the room updated: ", players);
+      this.connectedPlayers = players.length;
+
+      // Enable skip button if enough players
+      if (players.length > 2) {
+        if (this.skipButton) {
+          this.skipButton.setInteractive();
+        }
+      }
+
+      // Update current player information
+      this.updatePlayerInfo(players);
+
+      // Update opponents information
+      this.updateOpponentInfo(players);
+    });
+
+    // Listen for player left events
+    this.socket.on(
+      "playerLeft",
+      (roomID: string, playerID: string, numPlayers: number) => {
+        console.log(
+          `Player ${playerID} left room ${roomID}. ${numPlayers} players remaining.`,
+        );
+
+        // Request updated players list after someone leaves
+        this.socket.emit(
+          "getUpdatedPlayers",
+          this.roomID,
+          (playerIDs: string[]) => {
+            console.log("Updated players after leave:", playerIDs);
+
+            // If needed, request full player data after receiving IDs
+            if (playerIDs.length > 0) {
+              console.log("Players still in room: ", playerIDs.length);
+            }
+          },
+        );
+      },
+    );
+  }
+
+  updatePlayerInfo(players: Player[]) {
+    // Find the current player in the players array
+    const currentPlayer = players.find(
+      (player) => player.socketID === this.socket.id,
+    );
+
+    if (currentPlayer) {
+      console.log("Current player information:", currentPlayer);
+
+      // Add null checks for all properties
+      if (currentPlayer.character) {
+        this.characterName.setText(currentPlayer.character.name || "Unknown");
+
+        // Set character texture if sprite exists
+        if (currentPlayer.character.sprite) {
+          this.characterImage1
+            .setTexture(currentPlayer.character.sprite)
+            .setAlpha(1);
+        }
+
+        // Update box color if color exists
+        if (currentPlayer.character.color) {
+          this.updateBoxColor(this.playerBox, currentPlayer.character.color);
+        }
+      }
+
+      // Set username with null check
+      if (currentPlayer.user && currentPlayer.user.username) {
+        this.playerName.setText(currentPlayer.user.username);
+      } else {
+        this.playerName.setText("(Unknown Player)");
+      }
+    }
+  }
+
+  updateOpponentInfo(players: Player[]) {
+    // Filter out the current player to get opponents
+    const otherPlayers = players.filter(
+      (player) => player.socketID !== this.socket.id,
+    );
+    console.log("Other players in room:", otherPlayers);
+
+    // Arrays of opponent UI elements
+    const opponentBoxes = [
+      this.opponentBox1,
+      this.opponentBox2,
+      this.opponentBox3,
+      this.opponentBox4,
+      this.opponentBox5,
+    ];
+    const opponentNames = [
+      this.opponentName1,
+      this.opponentName2,
+      this.opponentName3,
+      this.opponentName4,
+      this.opponentName5,
+    ];
+    const oppCharacterNames = [
+      this.oppCharacterName1,
+      this.oppCharacterName2,
+      this.oppCharacterName3,
+      this.oppCharacterName4,
+      this.oppCharacterName5,
+    ];
+    const characterImages = [
+      this.characterImage2,
+      this.characterImage3,
+      this.characterImage4,
+      this.characterImage5,
+      this.characterImage6,
+    ];
+
+    // Reset all opponent slots first
+    for (let i = 0; i < opponentBoxes.length; i++) {
+      opponentNames[i].setText("(Player Name)");
+      oppCharacterNames[i].setText("Character Name");
+      characterImages[i].setAlpha(0);
+      opponentBoxes[i].setStrokeStyle(4, 0xa9a9a9);
+    }
+
+    // Update with new opponent information
+    otherPlayers.forEach((player, index) => {
+      if (index < opponentBoxes.length) {
+        // Add null checks for all properties
+        if (player.user) {
+          opponentNames[index].setText(player.user.username || "(Player Name)");
+        }
+
+        if (player.character) {
+          oppCharacterNames[index].setText(
+            player.character.name || "Character Name",
+          );
+
+          if (player.character.sprite) {
+            characterImages[index]
+              .setTexture(player.character.sprite)
+              .setAlpha(1);
+          }
+
+          if (player.character.color) {
+            this.updateBoxColor(opponentBoxes[index], player.character.color);
+          }
+        }
+      }
     });
   }
 
-  create() {
-    const visualViewportWidth = window.visualViewport?.width;
-    console.log("Viewport width: ", visualViewportWidth);
+  updateBoxColor(box: GameObjects.Rectangle, color: string) {
+    switch (color.toLowerCase()) {
+      case "red":
+        box.setStrokeStyle(4, 0xff0000);
+        break;
+      case "blue":
+        box.setStrokeStyle(4, 0x0000ff);
+        break;
+      case "green":
+        box.setStrokeStyle(4, 0x00ff00);
+        break;
+      case "yellow":
+        box.setStrokeStyle(4, 0xffff00);
+        break;
+      case "purple":
+        box.setStrokeStyle(4, 0x800080);
+        break;
+      case "orange":
+        box.setStrokeStyle(4, 0xffa500);
+        break;
+      case "pink":
+        box.setStrokeStyle(4, 0xffc0cb);
+        break;
+      case "brown":
+        box.setStrokeStyle(4, 0xa52a2a);
+        break;
+      case "black":
+        box.setStrokeStyle(4, 0x000000);
+        break;
+      case "white":
+        box.setStrokeStyle(4, 0xffffff);
+        break;
+      default:
+        box.setStrokeStyle(4, 0x000000);
+    }
+  }
 
+  create() {
+    const cameraX = this.cameras.main.width / 2;
+    const cameraY = this.cameras.main.height / 2;
     const canvasWidth = this.sys.game.config.width as number;
     const canvasHeight = this.sys.game.config.height as number;
+    const visualViewportWidth = window.visualViewport?.width;
+
+    console.log("Viewport width: ", visualViewportWidth);
+
+    this.add.image(cameraX - 3, cameraY, "campfire").setScale(0.2);
+    this.cameras.main.setBackgroundColor(0x000000);
+
     const boxSize = 100;
-    const spacing = 10;
 
-    // Calculate the total width of the boxes and spacing
-    const totalWidth = 5 * boxSize + 4 * spacing;
-
-    // Center the boxes horizontally
-    const startX = 50 + (canvasWidth - totalWidth) / 2;
-    const startY = 150; // Adjusted Y position to match the image
-
-    // Create Opponent boxes
-    // Create Opponent boxes
-    for (let j = 0; j < 5; j++) {
-      const x = startX + 10 + j * (boxSize + spacing);
-      const y = startY;
-
-      // Store in array instead of dynamic properties
-      this.opponents[j] = this.add
-        .rectangle(x, y, boxSize, boxSize, 0x007bff, 0.2) // Semi-transparent blue fill
-        .setStrokeStyle(4, 0xffffff)
-        .setOrigin(0.5); // White outline
-    }
-
-    // Create Player box
-    const playerBoxX = canvasWidth / 2;
-    const playerBoxY = startY + boxSize + spacing + 50; // Position below Opponent boxes
-
-    this.player = this.add
-      .rectangle(playerBoxX, playerBoxY, boxSize, boxSize, 0x007bff, 0.2)
-      .setStrokeStyle(4, 0xffffff);
-
-    this.playerText = this.add
-      .text(playerBoxX, playerBoxY, "Player", {
+    this.playerBox = this.add
+      .rectangle(cameraX, cameraY + 135, boxSize, boxSize, 0x007bff, 0.2)
+      .setStrokeStyle(4, 0xa9a9a9);
+    this.characterImage1 = this.add
+      .image(cameraX, cameraY + 135, "logo")
+      .setDisplaySize(200 - 4, 200 - 4)
+      .setAlpha(0);
+    this.characterName = this.add
+      // cameray + 135 +69
+      .text(cameraX, cameraY + 204, "Character Name", {
         fontFamily: "Arial",
-        color: "#000000",
+        color: "#ffffff",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+    this.playerName = this.add
+      //// cameray + 204 + 16
+      .text(cameraX, cameraY + 220, "(Player Name)", {
+        fontFamily: "Arial",
+        color: "#ADADAD",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+
+    this.opponentBox1 = this.add
+      .rectangle(
+        cameraX - 130,
+        cameraY + 60,
+        boxSize - 5,
+        boxSize - 5,
+        0x007bff,
+        0.2,
+      )
+      .setStrokeStyle(4, 0xa9a9a9);
+    this.characterImage2 = this.add
+      .image(cameraX - 130, cameraY + 60, "logo")
+      .setDisplaySize(200 - 4 - 5, 200 - 4 - 5)
+      .setAlpha(0);
+    this.oppCharacterName1 = this.add
+      .text(cameraX - 130, cameraY + 129, "Character Name", {
+        fontFamily: "Arial",
+        color: "#ffffff",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+    this.opponentName1 = this.add
+      .text(cameraX - 130, cameraY + 145, "(Player Name)", {
+        fontFamily: "Arial",
+        color: "#ADADAD",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+
+    this.opponentBox2 = this.add
+      .rectangle(
+        cameraX + 130,
+        cameraY + 60,
+        boxSize - 5,
+        boxSize - 5,
+        0x007bff,
+        0.2,
+      )
+      .setStrokeStyle(4, 0xa9a9a9);
+    this.characterImage3 = this.add
+      .image(cameraX + 130, cameraY + 60, "logo")
+      .setDisplaySize(200 - 4 - 5, 200 - 4 - 5)
+      .setAlpha(0);
+    this.oppCharacterName2 = this.add
+      .text(cameraX + 130, cameraY + 129, "Character Name", {
+        fontFamily: "Arial",
+        color: "#ffffff",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+    this.opponentName2 = this.add
+      .text(cameraX + 130, cameraY + 145, "(Player Name)", {
+        fontFamily: "Arial",
+        color: "#ADADAD",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+
+    this.opponentBox3 = this.add
+      .rectangle(
+        cameraX - 125,
+        cameraY - 100,
+        boxSize - 10,
+        boxSize - 10,
+        0x007bff,
+        0.2,
+      )
+      .setStrokeStyle(4, 0xa9a9a9);
+    this.characterImage4 = this.add
+      .image(cameraX - 125, cameraY - 100, "logo")
+      .setDisplaySize(200 - 4 - 10, 200 - 4 - 10)
+      .setAlpha(0);
+    this.oppCharacterName3 = this.add
+      .text(cameraX - 125, cameraY - 31, "Character Name", {
+        fontFamily: "Arial",
+        color: "#ffffff",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+    this.opponentName3 = this.add
+      .text(cameraX - 125, cameraY - 15, "(Player Name)", {
+        fontFamily: "Arial",
+        color: "#ADADAD",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+
+    this.opponentBox4 = this.add
+      .rectangle(
+        cameraX + 125,
+        cameraY - 100,
+        boxSize - 10,
+        boxSize - 10,
+        0x007bff,
+        0.2,
+      )
+      .setStrokeStyle(4, 0xa9a9a9);
+    this.characterImage5 = this.add
+      .image(cameraX + 125, cameraY - 100, "logo")
+      .setDisplaySize(200 - 4 - 10, 200 - 4 - 10)
+      .setAlpha(0);
+    this.oppCharacterName4 = this.add
+      .text(cameraX + 125, cameraY - 31, "Character Name", {
+        fontFamily: "Arial",
+        color: "#ffffff",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+    this.opponentName4 = this.add
+      .text(cameraX + 125, cameraY - 15, "(Player Name)", {
+        fontFamily: "Arial",
+        color: "#ADADAD",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+
+    this.opponentBox5 = this.add
+      .rectangle(
+        cameraX,
+        cameraY - 125,
+        boxSize - 15,
+        boxSize - 15,
+        0x007bff,
+        0.2,
+      )
+      .setStrokeStyle(4, 0xa9a9a9);
+    this.characterImage6 = this.add
+      .image(cameraX, cameraY - 125, "logo")
+      .setDisplaySize(200 - 4 - 15, 200 - 4 - 15)
+      .setAlpha(0);
+    this.oppCharacterName5 = this.add
+      .text(cameraX, cameraY - 205, "Character Name", {
+        fontFamily: "Arial",
+        color: "#ffffff",
+        fontSize: "14px",
+      })
+      .setOrigin(0.5);
+    this.opponentName5 = this.add
+      .text(cameraX, cameraY - 189, "(Player Name)", {
+        fontFamily: "Arial",
+        color: "#ADADAD",
+        fontSize: "14px",
       })
       .setOrigin(0.5);
 
     // Create READY button (as a rectangle with text)
-    this.readyButton = this.add
-      .rectangle(
-        canvasWidth / 2,
-        playerBoxY + boxSize + spacing + 50,
-        160,
-        50,
-        0x007bff,
-        0.2,
-      )
+    this.skipButton = this.add
+      .rectangle(cameraX, this.cameras.main.height - 80, 160, 50, 0x007bff, 0.2)
       .setStrokeStyle(2, 0xffffff)
-      .setInteractive(
-        new Phaser.Geom.Rectangle(0, 0, 160, 50),
-        Phaser.Geom.Rectangle.Contains,
-      ) // Make it clickable!
       .on("pointerdown", () => {
         console.log("Ready button clicked by: " + this.socket.id);
 
         this.socket.emit("playerReady", this.roomID, this.socket.id);
 
-        this.readyButton.destroy();
-        readyText.destroy();
+        this.skipButton.destroy();
+        skipText.destroy();
+      })
+      .on("pointerover", () => {
+        this.skipButton.setFillStyle(0x007bff, 0.5);
+      })
+      .on("pointerout", () => {
+        this.skipButton.setFillStyle(0x007bff, 0.2);
       });
-
-    const readyText = this.add
-      .text(canvasWidth / 2, playerBoxY + boxSize + spacing + 50, "READY", {
+    const skipText = this.add
+      .text(cameraX, this.cameras.main.height - 80, "Skip Waiting", {
         fontFamily: "Arial",
         color: "#ffffff",
-        fontSize: "20px",
+        fontSize: "18px",
       })
       .setOrigin(0.5);
-
-    this.playersReady = 0;
-    this.playersReadyText = this.add
-      .text(
-        canvasWidth / 2,
-        canvasHeight - 200,
-        `Players Ready: ${this.playersReady}`,
-        {
-          fontFamily: "Arial",
-          fontSize: "32px",
-          color: "#ffffff",
-        },
-      )
-      .setOrigin(0.5, 0.5);
-
-    const connectedPlayerText = this.add
-      .text(
-        canvasWidth / 2,
-        canvasHeight - 100,
-        `Connected players: ${this.connectTedPlayers}`,
-        {
-          fontFamily: "Arial",
-          fontSize: "32px",
-          color: "#ffffff",
-        },
-      )
-      .setOrigin(0.5, 0.5);
-
-    // Add "Waiting for other players..." text
+    const votesToSkip = 0;
+    const neededVotes = this.connectedPlayers - 1 || 2;
     this.add
       .text(
         canvasWidth / 2,
-        canvasHeight - 50,
-        "Waiting for other players...",
+        canvasHeight - 120,
+        `Need ${votesToSkip}/${neededVotes} to skip waiting.`,
         {
           fontFamily: "Arial",
-          fontSize: "16px",
+          fontSize: "14px",
           color: "#ffffff",
         },
       )
+      .setOrigin(0.5, 0.5)
+      .setAlpha(0);
+
+    this.add
+      .text(canvasWidth / 2, cameraY - 300, "Waiting for other players...", {
+        fontFamily: "Arial",
+        fontSize: "24px",
+        color: "#ffffff",
+      })
       .setOrigin(0.5, 0.5);
 
-    //
-    // adjust and canvas ang ang objects para responsive
-    //
-    if (visualViewportWidth !== undefined && visualViewportWidth < 580) {
-      // Adjust the layout of opponent boxes
-      const startX =
-        150 + ((this.sys.game.config.width as number) - (5 * 100 + 4 * 10)) / 2;
-      const startY = 100;
-      const boxSize = 100;
-      const spacing = 10;
-      const topRowY = startY;
-      const bottomRowY = startY + boxSize + spacing;
-
-      for (let j = 0; j < 3; j++) {
-        const x = startX + 10 + j * (boxSize + spacing);
-        this.opponents[j].setPosition(x, topRowY);
-      }
-
-      for (let j = 3; j < 5; j++) {
-        const x = startX + 60 + (j - 3) * (boxSize + spacing);
-        this.opponents[j].setPosition(x, bottomRowY);
-      }
-
-      this.player.setPosition(1024 / 2, 350);
-      this.playerText.setPosition(1024 / 2, 350);
-    } else {
-      const canvasWidth = this.sys.game.config.width as number;
-      const boxSize = 100;
-      const spacing = 10;
-
-      // Calculate the total width of the boxes and spacing
-      const totalWidth = 5 * boxSize + 4 * spacing;
-
-      // Center the boxes horizontally
-      const startX = 50 + (canvasWidth - totalWidth) / 2;
-      const startY = 150; // Adjusted Y position to match the image
-
-      for (let j = 0; j < 5; j++) {
-        const x = startX + 10 + j * (boxSize + spacing);
-        const y = startY;
-
-        // Set position of existing opponent boxes
-        this.opponents[j].setPosition(x, y);
-      }
-
-      this.player.setPosition(canvasWidth / 2, startY + boxSize + spacing + 50);
-      this.playerText.setPosition(
-        canvasWidth / 2,
-        startY + boxSize + spacing + 50,
-      );
-    }
-
     // +---------------------------+
+    // |     CREATE UI ELEMENTS    |
     // +---------------------------+
-    // |    🔊 SOCKET LISTERNS    |
-    // +---------------------------+
-    // +---------------------------+
-    this.socket.on("aPlayerJoined", (roomID, socketID, numOfPlayers) => {
-      // A function that runs when a player joins the room
-      console.log("Player joined: " + socketID);
 
-      if (roomID === this.roomID) {
-        console.log("Player joined: " + socketID);
-        console.log(`Room ${roomID} has ${numOfPlayers} players`);
-        connectedPlayerText.setText(`Connected players: ${numOfPlayers}`);
+    // ... existing UI creation code...
 
-        // if na max na ang players, proceed na sa gameroom
-        // adjust sa 2 ang max anay for testing
-        const maxPlayers = 2;
-        if (numOfPlayers >= maxPlayers) {
-          this.scene.start("Room", { roomID: this.roomID });
-        }
-      }
-    });
-
-    // Handle player disconnection
-    this.socket.on("playerLeft", (roomID, socketID, numOfPlayers) => {
-      if (roomID === this.roomID) {
-        console.log("Player left: " + socketID);
-        console.log(`Room ${roomID} has ${numOfPlayers} players remaining`);
-
-        // Update the connected players count and is ready count
-        this.playersReady--;
-        connectedPlayerText.setText(`Connected players: ${numOfPlayers}`);
-
-        // Find out if the disconnected player was ready
-        // If they were, we need to update the ready players count
-        this.socket.emit(
-          "checkIfPlayerWasReady",
-          roomID,
-          socketID,
-          (wasReady: boolean) => {
-            if (wasReady && this.playersReady > 0) {
-              this.playersReady--;
-              this.playersReadyText.setText(
-                `Players Ready: ${this.playersReady}`,
-              );
-            }
-          },
-        );
-
-        // Reset opponent visualization
-        // Since we don't know which exact box belongs to which player,
-        // we'll rely on the server to send updated player information
-        this.socket.emit("getUpdatedPlayers", roomID, (players: string[]) => {
-          // Reset all opponent boxes
-          this.opponents.forEach((box) => {
-            box.setFillStyle(0x007bff, 0.2);
-          });
-
-          // Then highlight those who are still ready
-          this.socket.emit(
-            "getReadyPlayers",
-            roomID,
-            (readyPlayers: string[]) => {
-              readyPlayers.forEach((player) => {
-                const index = players.indexOf(player);
-                if (index >= 0 && index < this.opponents.length) {
-                  this.opponents[index].setFillStyle(0x00ff00);
-                }
-              });
-            },
-          );
-        });
-      }
-    });
-
-    // other web socket events
-    // 1. update sng mga players nga ready
-    this.socket.on("updatePlayersReady", (data) => {
-      if (data.roomID === this.roomID) {
-        console.log("Player ready: " + data.readyPlayerID);
-
-        // Update the player box if it's the current player
-        if (data.readyPlayerID === this.socket.id) {
-          this.player.setFillStyle(0x00ff00);
-        } else {
-          // Find the index of this player in the opponents
-          const index = data.allReadyPlayers.indexOf(data.readyPlayerID);
-          if (index >= 0 && index < this.opponents.length) {
-            this.opponents[index].setFillStyle(0x00ff00);
-          }
-        }
-
-        this.playersReady++;
-        this.playersReadyText.setText(`Players Ready: ${this.playersReady}`);
-      }
-    });
+    // Don't set up socket listeners here to avoid duplication
 
     EventBus.emit("current-scene-ready", this);
   }

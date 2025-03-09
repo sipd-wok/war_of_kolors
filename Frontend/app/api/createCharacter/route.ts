@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const { error } = await supabase.from("characters_tbl").insert({
       owner_id: user.id,
       tier,
-      color,
+      color: color.toLowerCase(),
       luck,
       sprite,
       name,

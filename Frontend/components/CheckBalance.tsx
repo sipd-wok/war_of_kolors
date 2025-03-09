@@ -8,7 +8,7 @@ const CheckBalance: React.FC = () => {
     <div className="w-full  flex items-center flex-col">
       <p>Wallet: {walletAddress || "Not connected"}</p>
       <p>Your Balance: {balance} WOK</p>
-      <SendTokens/>
+      <SendTokens />
     </div>
   );
 };

@@ -4,15 +4,21 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { getProvider, getSigner } from "@/utils/ethersProvider";
 import { getTokenContract } from "@/utils/tokencontract";
-import { sendTokens as SendTokens, buyCharacter as BuyCharacter } from "@/app/transactions/tokenTransactions";
-import { mintNFT as MintNFT, transferNFT as TransferNFT } from "@/app/transactions/nftTransactions";
+import {
+  sendTokens as SendTokens,
+  buyCharacter as BuyCharacter,
+} from "@/app/transactions/tokenTransactions";
+import {
+  mintNFT as MintNFT,
+  transferNFT as TransferNFT,
+} from "@/app/transactions/nftTransactions";
 interface WalletContextType {
   walletAddress: string | null;
   balance: string;
   connectWallet: () => Promise<void>;
   sendTokens: (recipient: string, amount: string) => Promise<void>;
-  buyCharacter: (amount: string) =>Promise<void>
-  mintNFT: (walletAddress: string,metadataURI: string) => Promise<void>;
+  buyCharacter: (amount: string) => Promise<void>;
+  mintNFT: (walletAddress: string, metadataURI: string) => Promise<void>;
   transferNFT: (to: string, tokenId: string) => Promise<void>;
 }
 
@@ -62,16 +68,26 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // TOKENS
-  const sendTokens = (recipient: string, amount: string) => SendTokens(recipient, amount, walletAddress!, fetchBalance);
-  const buyCharacter = (amount: string) => BuyCharacter(amount, walletAddress!, fetchBalance);
+  const sendTokens = (recipient: string, amount: string) =>
+    SendTokens(recipient, amount, walletAddress!, fetchBalance);
+  const buyCharacter = (amount: string) =>
+    BuyCharacter(amount, walletAddress!, fetchBalance);
   // NFTS
-  const mintNFT= (walletAddress: string,metadataURI: string) => MintNFT(walletAddress!, metadataURI);
-  const transferNFT = (to: string, tokenId: string) => TransferNFT(walletAddress!, to, tokenId);
+  const mintNFT = (walletAddress: string, metadataURI: string) =>
+    MintNFT(walletAddress!, metadataURI);
+  const transferNFT = (to: string, tokenId: string) =>
+    TransferNFT(walletAddress!, to, tokenId);
   return (
     <WalletContext.Provider
-      value={{ walletAddress, balance, 
-        connectWallet, sendTokens, buyCharacter, 
-        mintNFT, transferNFT }}
+      value={{
+        walletAddress,
+        balance,
+        connectWallet,
+        sendTokens,
+        buyCharacter,
+        mintNFT,
+        transferNFT,
+      }}
     >
       {children}
     </WalletContext.Provider>

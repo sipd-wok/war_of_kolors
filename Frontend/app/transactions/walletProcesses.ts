@@ -2,7 +2,10 @@ import { ethers } from "ethers";
 import { getProvider, getSigner } from "@/utils/ethersProvider";
 import { getTokenContract } from "@/utils/tokencontract";
 
-export const checkWalletConnection = async (setWalletAddress: (address: string) => void, fetchBalance: (address: string) => void) => {
+export const checkWalletConnection = async (
+  setWalletAddress: (address: string) => void,
+  fetchBalance: (address: string) => void,
+) => {
   try {
     const provider = getProvider();
     const accounts = await provider.send("eth_accounts", []);
@@ -15,7 +18,10 @@ export const checkWalletConnection = async (setWalletAddress: (address: string) 
   }
 };
 
-export const connectWallet = async (setWalletAddress: (address: string) => void, fetchBalance: (address: string) => void) => {
+export const connectWallet = async (
+  setWalletAddress: (address: string) => void,
+  fetchBalance: (address: string) => void,
+) => {
   try {
     const provider = getProvider();
     const accounts = await provider.send("eth_requestAccounts", []);
@@ -26,7 +32,10 @@ export const connectWallet = async (setWalletAddress: (address: string) => void,
   }
 };
 
-export const fetchBalance = async (address: string, setBalance: (balance: string) => void) => {
+export const fetchBalance = async (
+  address: string,
+  setBalance: (balance: string) => void,
+) => {
   try {
     const signer = await getSigner();
     const contract = getTokenContract(signer);
@@ -36,4 +45,3 @@ export const fetchBalance = async (address: string, setBalance: (balance: string
     console.error("Failed to fetch balance:", error);
   }
 };
-

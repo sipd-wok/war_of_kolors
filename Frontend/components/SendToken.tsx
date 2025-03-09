@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useWallet } from "../context/WalletContext";
 
 const SendTokens: React.FC = () => {
-  const { buyCharacter} = useWallet();
+  const { buyCharacter } = useWallet();
   const [amount, setAmount] = useState("");
 
   return (
