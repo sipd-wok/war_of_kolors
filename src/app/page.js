@@ -10,8 +10,8 @@ export default function Home() {
       const config = {
         type: Phaser.AUTO,
         parent: "game-container",
-        width: 1296,
-        height: 926,
+        width: window.innerWidth,
+        height: window.innerHeight,
         scene: [Start],
         backgroundColor: '#87CEEB',
         scale: {

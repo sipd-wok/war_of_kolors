@@ -32,7 +32,24 @@ export class Start extends Phaser.Scene {
 
     create() {
             
-        this.scale.startFullscreen();
+         // Detect mobile device
+         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+         if (isMobile) {
+             // Force Fullscreen
+             if (!this.scale.isFullscreen) {
+                 this.scale.startFullscreen();
+             }
+ 
+             // Force Landscape
+             this.scale.orientation = Phaser.Scale.LANDSCAPE;
+             this.scale.on('orientationchange', this.handleOrientationChange, this);
+         }
+ 
+         // Handle Screen Resize
+         this.scale.on('resize', (gameSize) => {
+             this.scale.resize(gameSize.width, gameSize.height);
+         });
 
          //Responsive
         this.cameraX = this.cameras.main.width / 2
