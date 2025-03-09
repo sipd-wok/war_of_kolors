@@ -11,22 +11,22 @@ export class Start extends Phaser.Scene {
     preload() {
         
         //Characters
-        this.load.image('blue', '../img/blue.png')
-        this.load.image('yellow', '../img/yellow.png')
-        this.load.image('pink', '../img/boky.png')
-        this.load.image('white', '../img/white.png')
-        this.load.image('red', '../img/red.png')
-        this.load.image('green', '../img/green.png')
+        this.load.image('blue', '/img/blue.png')
+        this.load.image('yellow', '/img/yellow.png')
+        this.load.image('pink', '/img/boky.png')
+        this.load.image('white', '/img/white.png')
+        this.load.image('red', '/img/red.png')
+        this.load.image('green', '/img/green.png')
 
         //Wok Accessories
-        this.load.image('wok_coins', '../img/WokCoin.png')
-        this.load.image('dpotion', '../img/dpotion.png')
-        this.load.image('leppot', '../img/leppot.png')
-        this.load.image('bag1', '../img/bag1.png')
-        this.load.image('bag2', '../img/bag2.png')
+        this.load.image('wok_coins', '/img/WokCoin.png')
+        this.load.image('dpotion', '/img/dpotion.png')
+        this.load.image('leppot', '/img/leppot.png')
+        this.load.image('bag1', '/img/bag1.png')
+        this.load.image('bag2', '/img/bag2.png')
 
         //Wok Buttons
-        this.load.image('whitesrc', '../img/whitesqr.png')
+        this.load.image('whitesrc', '/img/whitesqr.png')
 
     }
 
