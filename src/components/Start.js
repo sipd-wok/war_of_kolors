@@ -500,7 +500,6 @@ export class Start extends Phaser.Scene {
 
         this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
         
-        
        if (this.playersLogs[0].dpotion >= 1) {
            
            this.playersLogs[0].dpotion -= 1
@@ -522,7 +521,7 @@ export class Start extends Phaser.Scene {
         
        
             
-            if (this.playersLogs[0].LM === 0) {
+            if (this.playersLogs[0].LM >= 0) {
                 
                 var Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10
                 if (this.playersLogs[0].leppot >= 1) {
@@ -530,6 +529,10 @@ export class Start extends Phaser.Scene {
                this.playersLogs[0].LM += Value
                 this.playersLogs[0].leppot -= 1
                 this.playersLogs[0].luck += Value
+                    
+                }else if (this.playersLogs[0].LM >= 1) {
+                    
+                    alert("1 time only")
                     
                 } else {
                     
@@ -539,11 +542,7 @@ export class Start extends Phaser.Scene {
                     
                 }
                 
-                if (this.playersLogs[0].LM >= 1) {
-                    
-                    alert("1 time only")
-                    
-                }
+                
                 
                 
             }
