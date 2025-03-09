@@ -36,29 +36,5 @@ html, body {
   background-color: black; /* Prevents white flickers */
 }
 
-#game-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-@media screen and (orientation: portrait) {
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: black; /* Helps prevent white screen */
-  }
-
-  #game-container {
-    width: 100vh; /* Swap width & height */
-    height: 100vw;
-    transform: rotate(90deg);
-    transform-origin: center;
-  }
-}
-
 
 
