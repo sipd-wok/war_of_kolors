@@ -7,14 +7,12 @@ export default function Home() {
 
   useEffect(() => {
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
     if (!window.game) {
       const config = {
         type: Phaser.AUTO,
         parent: "game-container",
-        width: isMobile ? window.innerWidth : 1296, // Fullscreen only on mobile
-        height: isMobile ? window.innerHeight : 926,
+        width: 1296, // Fullscreen only on mobile
+        height: 926,
         scene: [Start],
         backgroundColor: '#87CEEB',
         scale: {
