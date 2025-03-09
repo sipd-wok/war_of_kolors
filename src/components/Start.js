@@ -1,5 +1,4 @@
 
-import Phaser from "@/utils/phaser"
 
 export class Start extends Phaser.Scene {
 
@@ -12,21 +11,29 @@ export class Start extends Phaser.Scene {
     preload() {
         
         //Characters
-        this.load.image('blue', '/blue.png')
-        this.load.image('yellow', '/yellow.png')
-        this.load.image('pink', '/boky.png')
-        this.load.image('white', '/white.png')
-        this.load.image('red', '/red.png')
-        this.load.image('green', '/green.png')
-        this.load.image('wok_coins', '/WokCoin.png')
-        this.load.image('dpotion', '/dpotion.png')
-        this.load.image('leppot', '/leppot.png')
-        
+        this.load.image('blue', '../img/blue.png')
+        this.load.image('yellow', '../img/yellow.png')
+        this.load.image('pink', '../img/boky.png')
+        this.load.image('white', '../img/white.png')
+        this.load.image('red', '../img/red.png')
+        this.load.image('green', '../img/green.png')
+
+        //Wok Accessories
+        this.load.image('wok_coins', '../img/WokCoin.png')
+        this.load.image('dpotion', '../img/dpotion.png')
+        this.load.image('leppot', '../img/leppot.png')
+        this.load.image('bag1', '../img/bag1.png')
+        this.load.image('bag2', '../img/bag2.png')
+
+        //Wok Buttons
+        this.load.image('whitesrc', '../img/whitesqr.png')
+
     }
 
     create() {
             
-         
+        this.scale.startFullscreen();
+
          //Responsive
         this.cameraX = this.cameras.main.width / 2
 
@@ -204,7 +211,10 @@ export class Start extends Phaser.Scene {
 
         } 
         
-        
+        this.imageDead = []
+
+        this.imageShake = []
+
         const setColors = () => {
             let boxResult = [RandomColors(), RandomColors(), RandomColors()]
 
@@ -221,6 +231,8 @@ export class Start extends Phaser.Scene {
              this.lifePoints[i] += 1
             } else {
              this.lifePoints[i] -= 1
+             this.shakeDmg(i)
+
             }
             
             if (
@@ -239,12 +251,17 @@ export class Start extends Phaser.Scene {
             this.playersLogs[i].color === boxResult[2]) {
             this.lifePoints[i] += 1
             }
-               
+            
+
             
             if (this.lifePoints[i] <= 0) {
-                this.lifePoints[i] = "NaN".toString()
+
+                this.lifePoints[i] = NaN
                 this.playersLogs[i].luck = 0
                 this.playersLogs[i].name = "Eliminated"
+
+                this.imageDead[i].setVisible(false)
+
             } else if (this.lifePoints[i] >= 30){
                 
                 setTimeout(() => {
@@ -319,7 +336,7 @@ export class Start extends Phaser.Scene {
        
        
        
-       let player_ar = [
+       this.player_ar = [
            {x: this.cameraX - 360, y: this.cameraY - 100},
            {x: this.cameraX - 360, y: this.cameraY + 100},
            {x: this.cameraX - 90, y: this.cameraY + 260},
@@ -358,15 +375,12 @@ export class Start extends Phaser.Scene {
          this.text_value.push(info_text)           
            
        }
-       
-        
-       
-        
+
         for (let i = 0; i < this.playersLogs.length; i++) {
             
             var player_ar_rect = this.add.rectangle(
-                player_ar[i].x,
-                player_ar[i].y,
+                this.player_ar[i].x,
+                this.player_ar[i].y,
                 150,
                 150,
                 this.playersLogs[i].color 
@@ -374,11 +388,15 @@ export class Start extends Phaser.Scene {
             )
             
             let images = this.add.image(
-                player_ar[i].x,
-                player_ar[i].y,
+                this.player_ar[i].x,
+                this.player_ar[i].y,
                 this.playersLogs[i].img
             ).setDisplaySize(140, 140)
            
+           this.imageShake.push({ image: images, originalX: images.x, originalY: images.y })
+
+           this.imageDead.push(images)
+
         }
 
         //Player Main
@@ -406,13 +424,13 @@ export class Start extends Phaser.Scene {
                 this.playersLogs[0].img
             ).setDisplaySize(180, 180)
             
-        var potions = this.add.rectangle(
+        var potionsbg = this.add.rectangle(
             this.cameraX,
             this.cameraY + 340,
             520,
             370,
             0x000000
-            )
+            ).setVisible(false)
               
         var potions = this.add.rectangle(
             this.cameraX,
@@ -420,7 +438,7 @@ export class Start extends Phaser.Scene {
             510,
             360,
             0xffffff
-            )
+            ).setVisible(false)
            
         var potion_img1 = this.add.image(
             this.cameraX - 100,
@@ -428,12 +446,12 @@ export class Start extends Phaser.Scene {
             'dpotion'
         ).setDisplaySize(140, 140)
          .setInteractive()
-         
+         .setVisible(false)
          potion_img1.on('pointerdown', () => {
             this.buttonClick1();
         });
        
-        var potion_name = this.add.text(
+        var potion_name_1 = this.add.text(
             this.cameraX - 140,
             this.cameraY + 370,
             'Dpotion',
@@ -442,7 +460,7 @@ export class Start extends Phaser.Scene {
                 color: '#000',
                 fontStyle: 'bold'
             }
-        )
+        ).setVisible(false)
         
             this.dpotion = this.add.text(
             this.cameraX - 70,
@@ -453,7 +471,7 @@ export class Start extends Phaser.Scene {
                 color: '#000',
                 fontStyle: 'bold'
             }
-        )
+        ).setVisible(false)
         
          let potion_img2 = this.add.image(
             this.cameraX + 100,
@@ -461,10 +479,13 @@ export class Start extends Phaser.Scene {
             'leppot'
         )
         .setDisplaySize(140, 140)
-        .setInteractive();
+        .setInteractive()
+        .setVisible(false)
 
         potion_img2.on('pointerdown', () => {
             this.buttonClick2();
+
+            potion_img2.disableInteractive()
         });
         
             this.leppot = this.add.text(
@@ -476,10 +497,10 @@ export class Start extends Phaser.Scene {
                 color: '#000',
                 fontStyle: 'bold'
             }
-        )
+        ).setVisible(false)
         
         
-        var potion_name = this.add.text(
+        var potion_name_2 = this.add.text(
             this.cameraX + 60,
             this.cameraY + 370,
             'Leppot',
@@ -488,7 +509,47 @@ export class Start extends Phaser.Scene {
                 color: '#000',
                 fontStyle: 'bold'
             }
+        ).setVisible(false)
+
+        var bag = this.add.image(
+            this.cameraX + 540,
+            this.cameraY + 370,
+            'bag2'
         )
+        .setDisplaySize(110, 120)
+        .setInteractive()
+        
+        let isOpen = false
+
+        bag.on('pointerdown', () => {
+
+            if (isOpen) {
+                bag.setTexture('bag2')
+                potions.setVisible(false)
+                potionsbg.setVisible(false)
+                potion_img1.setVisible(false)
+                potion_img2.setVisible(false)
+                potion_name_1.setVisible(false)
+                potion_name_2.setVisible(false)
+                this.leppot.setVisible(false)
+                this.dpotion.setVisible(false)
+            } else {
+                bag.setTexture('bag1')
+                potions.setVisible(true)
+                potionsbg.setVisible(true)
+                potion_img1.setVisible(true)
+                potion_img2.setVisible(true)
+                potion_name_1.setVisible(true)
+                potion_name_2.setVisible(true)
+                this.leppot.setVisible(true)
+                this.dpotion.setVisible(true)
+            }
+
+            isOpen = !isOpen
+
+        })
+
+        
         
     }
   
@@ -528,8 +589,6 @@ export class Start extends Phaser.Scene {
                this.playersLogs[0].LM += Value
                 this.playersLogs[0].leppot -= 1
                 this.playersLogs[0].luck += Value
-
-                this.potion_img2.removeInteractive()
                     
                 } else {
                     
@@ -542,7 +601,33 @@ export class Start extends Phaser.Scene {
             }
            
         
-  }           
+  }          
+
+  shakeDmg(index) {
+
+    let imgData = this.imageShake[index]; // Get stored image and original position
+
+    console.log("Shaking image at index:", index);
+
+    // Prevent error if index is out of range
+    if (!imgData || !imgData.image) return; 
+
+    this.tweens.add({
+        targets: imgData.image, // Fix: No "s"
+        x: imgData.originalX + Phaser.Math.Between(-5, 5), // Random X shake
+        y: imgData.originalY + Phaser.Math.Between(-5, 5), // Random Y shake
+        angle: Phaser.Math.Between(-5, 5), // Small rotation shake
+        alpha: 0.3,
+        duration: 50,
+        yoyo: true,
+        repeat: 3,
+        onComplete: () => {
+            imgData.image.x = imgData.originalX; // Reset X
+            imgData.image.y = imgData.originalY; // Reset Y
+            imgData.image.setAngle(0); // Reset rotation
+        }
+    });
+}
         
   update() {
     
@@ -577,13 +662,21 @@ export class Start extends Phaser.Scene {
         }
     }
 
+    for (let i = 0; i < this.playersLogs.length; i++) {
+
+        if (this.lifePoints[i] <= 0) {
+
+            if (this.imageShake[i]) {
+                this.imageShake[i].setVisible(false)
+            }
+        }
+
+        continue
+
+    }
+
+    }
     
  }
      
-     
-     
-              
-              
-      
-       }
             
