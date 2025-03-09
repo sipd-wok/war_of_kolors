@@ -48,3 +48,15 @@ html, body {
   }
 }
 
+@media screen and (orientation: portrait) {
+  body {
+    transform: rotate(90deg);
+    transform-origin: center;
+    width: 100vh;
+    height: 100vw;
+    overflow: hidden;
+    position: fixed;
+  }
+}
+
+

@@ -13,7 +13,7 @@ export default function Home() {
       const config = {
         type: Phaser.AUTO,
         parent: "game-container",
-        width: isMobile ? window.innerWidth : 1500, // Fullscreen only on mobile
+        width: isMobile ? window.innerWidth : 1296, // Fullscreen only on mobile
         height: isMobile ? window.innerHeight : 926,
         scene: [Start],
         backgroundColor: '#87CEEB',

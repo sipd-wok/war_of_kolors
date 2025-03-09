@@ -38,27 +38,27 @@ export class Start extends Phaser.Scene {
 
     create() {
             
-         // Detect mobile device
-         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-         if (isMobile) {
-             // Force Fullscreen
-             if (!this.scale.isFullscreen) {
-                 this.scale.startFullscreen();
-             }
- 
-             // Force Landscape
-             this.scale.orientation = Phaser.Scale.LANDSCAPE;
-             this.scale.on('orientationchange', this.handleOrientationChange, this);
-         }
- 
-         this.scale.on("resize", (gameSize) => {
-            const { width, height } = gameSize;
-        
-            // Only resize if the new size is different
-            if (this.scale.width !== width || this.scale.height !== height) {
-                this.cameras.resize(width, height); // Resize cameras instead
+        this.scale.on("resize", () => {
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+    
+            // Detect if it's a mobile device
+            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    
+            if (isMobile) {
+                // Force landscape mode
+                if (height > width) {
+                    [width, height] = [height, width]; // Swap width & height for landscape
+                }
+    
+                this.scale.setGameSize(width, height);
+                this.cameras.main.setZoom(1); // Reset zoom
+            } else {
+                // For PC, just resize normally
+                this.scale.setGameSize(width, height);
             }
+    
+            this.cameras.resize(width, height);
         });
 
          
