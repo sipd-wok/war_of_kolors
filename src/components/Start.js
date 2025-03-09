@@ -30,6 +30,12 @@ export class Start extends Phaser.Scene {
 
     }
 
+    handleOrientationChange(orientation) {
+        if (orientation !== Phaser.Scale.LANDSCAPE) {
+            alert("Please rotate your device to landscape mode!");
+        }
+    }
+
     create() {
             
          // Detect mobile device
@@ -46,10 +52,16 @@ export class Start extends Phaser.Scene {
              this.scale.on('orientationchange', this.handleOrientationChange, this);
          }
  
-         // Handle Screen Resize
-         this.scale.on('resize', (gameSize) => {
-             this.scale.resize(gameSize.width, gameSize.height);
-         });
+         this.scale.on("resize", (gameSize) => {
+            const { width, height } = gameSize;
+        
+            // Only resize if the new size is different
+            if (this.scale.width !== width || this.scale.height !== height) {
+                this.cameras.resize(width, height); // Resize cameras instead
+            }
+        });
+
+         
 
          //Responsive
         this.cameraX = this.cameras.main.width / 2
