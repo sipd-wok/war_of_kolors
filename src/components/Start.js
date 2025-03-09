@@ -1,5 +1,8 @@
 
+import Phaser from "@/utils/phaser"
+
 export class Start extends Phaser.Scene {
+
     constructor() {
     
         super('Start')  
@@ -15,7 +18,9 @@ export class Start extends Phaser.Scene {
         this.load.image('white', '/white.png')
         this.load.image('red', '/red.png')
         this.load.image('green', '/green.png')
-        
+        this.load.image('wok_coins', '/WokCoin.png')
+        this.load.image('dpotion', '/dpotion.png')
+        this.load.image('leppot', '/leppot.png')
         
     }
 
@@ -27,17 +32,15 @@ export class Start extends Phaser.Scene {
 
         this.cameraY = this.cameras.main.height / 2
         
-        
-        
-           
+          
         //Players Logs || Waiting Other Player Logs
         this.playersLogs = [
-            {name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0.5},
-            {name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0.2},
-            {name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0.5},
-            {name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0.8},
-            {name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0.3},
-            {name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0.6},
+            {name: "Player 1", color: 0xff0000, luck: 1, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4},
+            {name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
+            {name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
+            {name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
+            {name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
+            {name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
         ]     
         
         this.lifePoints = [10, 10, 10, 10, 10, 10] // Life Points
@@ -49,6 +52,8 @@ export class Start extends Phaser.Scene {
         var prizeWOK = totalBet
 
         var text_color = "#000"
+        
+        var walletBal = 0
 
         //Free For All Mode
         var defualtColor = [
@@ -75,13 +80,21 @@ export class Start extends Phaser.Scene {
         var WokCoins = this.add.text(
             this.cameraX + 450,
             this.cameraY - 430,
-            ' Wok Coins ()',
+            ' Wok Coins (' + walletBal + ')',
             {
                 fontSize: '28px',
                 color: '#fff',
                 fontStyle: 'bold'
             }
         ).setOrigin(0.5)
+        
+        var Wokcoins = this.add.image(
+            this.cameraX + 300,
+            this.cameraY - 430,
+            'wok_coins'
+        ).setDisplaySize(50, 50)
+       
+       
         
         var container = this.add.rectangle(
             this.cameraX,
@@ -232,7 +245,7 @@ export class Start extends Phaser.Scene {
                 this.lifePoints[i] = "NaN".toString()
                 this.playersLogs[i].luck = 0
                 this.playersLogs[i].name = "Eliminated"
-            } else if (this.lifePoints[i] >= 15){
+            } else if (this.lifePoints[i] >= 30){
                 
                 setTimeout(() => {
                     
@@ -393,8 +406,150 @@ export class Start extends Phaser.Scene {
                 this.playersLogs[0].img
             ).setDisplaySize(180, 180)
             
+        var potions = this.add.rectangle(
+            this.cameraX,
+            this.cameraY + 340,
+            520,
+            370,
+            0x000000
+            )
+              
+        var potions = this.add.rectangle(
+            this.cameraX,
+            this.cameraY + 340,
+            510,
+            360,
+            0xffffff
+            )
+           
+        var potion_img1 = this.add.image(
+            this.cameraX - 100,
+            this.cameraY + 300,
+            'dpotion'
+        ).setDisplaySize(140, 140)
+         .setInteractive()
+         
+         potion_img1.on('pointerdown', () => {
+            this.buttonClick1();
+        });
+       
+        var potion_name = this.add.text(
+            this.cameraX - 140,
+            this.cameraY + 370,
+            'Dpotion',
+            {
+                fontSize: '24px',
+                color: '#000',
+                fontStyle: 'bold'
+            }
+        )
+        
+            this.dpotion = this.add.text(
+            this.cameraX - 70,
+            this.cameraY + 230,
+            '' + this.playersLogs[0].dpotion + 'x',
+            {
+                fontSize: '42px',
+                color: '#000',
+                fontStyle: 'bold'
+            }
+        )
+        
+         let potion_img2 = this.add.image(
+            this.cameraX + 100,
+            this.cameraY + 300,
+            'leppot'
+        )
+        .setDisplaySize(140, 140)
+        .setInteractive();
+
+        potion_img2.on('pointerdown', () => {
+            this.buttonClick2();
+        });
+        
+            this.leppot = this.add.text(
+            this.cameraX + 150,
+            this.cameraY + 230,
+            '' + this.playersLogs[0].leppot + 'x',
+            {
+                fontSize: '42px',
+                color: '#000',
+                fontStyle: 'bold'
+            }
+        )
+        
+        
+        var potion_name = this.add.text(
+            this.cameraX + 60,
+            this.cameraY + 370,
+            'Leppot',
+            {
+                fontSize: '24px',
+                color: '#000',
+                fontStyle: 'bold'
+            }
+        )
+        
     }
+  
+  
+  buttonClick1() {
+        
+    if (this.lifePoints[0] <= 5) {
+        let randomNumber = Math.random() < 0.5 ? -2 : 2;
+
+        this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
+        
+        
+       if (this.playersLogs[0].dpotion >= 1) {
+           
+           this.playersLogs[0].dpotion -= 1
+           
+       } else {
+           
+           //Wallet -- Price -- 
+           
+           alert("Buy Another One")
+           
+           
+       }
+      
+}
+        
+  }
+  
+  buttonClick2() {
+        
+       
+            
+            if (this.playersLogs[0].LM === 0) {
+                
+                var Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10
+                if (this.playersLogs[0].leppot >= 1) {
                
+               this.playersLogs[0].LM += Value
+                this.playersLogs[0].leppot -= 1
+                this.playersLogs[0].luck += Value
+                    
+                } else {
+                    
+                    //Wallet -- Price
+                    
+                    alert("Buy Another One")
+                    
+                }
+                
+                if (this.playersLogs[0].LM >= 1) {
+                    
+                    alert("1 time only")
+                    
+                }
+                
+                
+            }
+           
+        
+  }           
         
   update() {
     
@@ -403,7 +558,15 @@ export class Start extends Phaser.Scene {
             this.playersLogs[0].name + '\nLUCK Multiplayer - ' + this.playersLogs[0].LM +
             '\nLIFE POINTS - ' + this.lifePoints[0]
         ])
-    
+        
+    this.dpotion.setText(
+            this.playersLogs[0].dpotion + 'x',
+         
+        )
+        
+      this.leppot.setText(
+            this.playersLogs[0].leppot + 'x',
+        )
     
     for (let i = 1; i < this.playersLogs.length; i++) {
         if (this.text_value[i - 1]) {
@@ -422,7 +585,12 @@ export class Start extends Phaser.Scene {
     }
 
     
-    
-}
-              }
-             
+ }
+     
+     
+     
+              
+              
+      
+       }
+            
