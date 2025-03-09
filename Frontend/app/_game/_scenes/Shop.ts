@@ -181,12 +181,6 @@ export class Shop extends Scene {
     this.load.image("devilsPotion", "assets/devilsPotion.png");
     this.load.image("leprechaunsPotion", "assets/leprechaunsPotion.png");
     this.load.image("healthPotion", "assets/healthPotion.png");
-
-    // Characters
-    // 💬[vincent]: gn move ko sa preloader.ts
-    //   for (let i = 1; i <= 104; i++) {
-    //     this.load.image(`characterSprite${i}`, `assets/char_${i}.png`);
-    // }
   }
 
   create(): void {
