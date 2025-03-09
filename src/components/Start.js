@@ -11,22 +11,24 @@ export class Start extends Phaser.Scene {
     preload() {
         
         //Characters
-        this.load.image('blue', '/img/blue.png')
-        this.load.image('yellow', '/img/yellow.png')
-        this.load.image('pink', '/img/boky.png')
-        this.load.image('white', '/img/white.png')
-        this.load.image('red', '/img/red.png')
-        this.load.image('green', '/img/green.png')
+        this.load.image('blue', '../img/blue.png')
+        this.load.image('yellow', '../img/yellow.png')
+        this.load.image('pink', '../img/boky.png')
+        this.load.image('white', '../img/white.png')
+        this.load.image('red', '../img/red.png')
+        this.load.image('green', '../img/green.png')
 
         //Wok Accessories
-        this.load.image('wok_coins', '/img/WokCoin.png')
-        this.load.image('dpotion', '/img/dpotion.png')
-        this.load.image('leppot', '/img/leppot.png')
-        this.load.image('bag1', '/img/bag1.png')
-        this.load.image('bag2', '/img/bag2.png')
+        this.load.image('wok_coins', '../img/WokCoin.png')
+        this.load.image('dpotion', '../img/dpotion.png')
+        this.load.image('leppot', '../img/leppot.png')
+        this.load.image('bag1', '../img/bag1.png')
+        this.load.image('bag2', '../img/bag2.png')
+        this.load.image('skull', '../img/dead_sign.png')
+        this.load.image('sword', '../img/sword-r.png')
 
         //Wok Buttons
-        this.load.image('whitesrc', '/img/whitesqr.png')
+        this.load.image('whitesrc', '../img/whitesqr.png')
 
     }
 
@@ -39,6 +41,7 @@ export class Start extends Phaser.Scene {
         
           
         //Players Logs || Waiting Other Player Logs
+        //Just change for main session to index 0 as main character in their Own Devices
         this.playersLogs = [
             {name: "Player 1", color: 0xff0000, luck: 1, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4},
             {name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
@@ -58,9 +61,9 @@ export class Start extends Phaser.Scene {
 
         var text_color = "#000"
         
-        var walletBal = 0
+        var walletBal = 0 //Wallets --  to Show Current Balances
 
-        //Free For All Mode
+        //6 Collors
         var defualtColor = [
             {color: 0xff0000},
             {color: 0xffff00},
@@ -68,12 +71,10 @@ export class Start extends Phaser.Scene {
             {color: 0xffffff},
             {color: 0x0000ff},
             {color: 0xff00ff},
-        ]
-
-        //GamePlay System && Rules   
+        ]   
             
-    // Main Board
-        
+
+    // Main Board && GamePlay System && Rules
         var container = this.add.rectangle(
             this.cameraX + 450,
             this.cameraY - 430,
@@ -99,8 +100,6 @@ export class Start extends Phaser.Scene {
             'wok_coins'
         ).setDisplaySize(50, 50)
        
-       
-        
         var container = this.add.rectangle(
             this.cameraX,
             this.cameraY,
@@ -134,8 +133,8 @@ export class Start extends Phaser.Scene {
         
 
         var count = 5
-        
-        var container_countdown_respin = this.add.text(this.cameraX, this.cameraY + 90, [
+        //5 second Delay before Start the Game
+        this.container_countdown_respin = this.add.text(this.cameraX, this.cameraY + 90, [
             'Re - rolling in ' + count + ' sec...'
         ], {
             fontSize: '24px',
@@ -145,17 +144,14 @@ export class Start extends Phaser.Scene {
 
         
 
-            this.time.addEvent({
+            let countDown = this.time.addEvent({
             delay: 1000,
             callback: () => {
                 count -= 1
-                container_countdown_respin.setText('Re - rolling in ' + count + ' sec...')
-
+                this.container_countdown_respin.setText('Re - rolling in ' + count + ' sec...')
                 if (count <= 0) {
-                    container_countdown_respin.setText('Rerolling.... ')
-                    
+                    countDown.remove()
                 }
-
             },
             
             loop: true
@@ -188,9 +184,8 @@ export class Start extends Phaser.Scene {
             this.playersLogs[0].color
             )
 
-       
-         var totalLuck = this.playersLogs.reduce((sum, player) => sum + player.luck, 0);
-
+        //LUCK Formula Dont Touch !!!
+        var totalLuck = this.playersLogs.reduce((sum, player) => sum + player.luck, 0);
         
         const RandomColors = () => {
 
@@ -209,9 +204,19 @@ export class Start extends Phaser.Scene {
 
         } 
         
+
+        //Arrays for Dmg Reciever
         this.imageDead = []
+        
+        this.skull = []
+        
+        this.imageAttack = []
 
         this.imageShake = []
+
+        this.imageAttack_ani = []
+
+        let round = 0
 
         const setColors = () => {
             let boxResult = [RandomColors(), RandomColors(), RandomColors()]
@@ -220,16 +225,32 @@ export class Start extends Phaser.Scene {
             box2.fillColor = boxResult[1]
             box3.fillColor = boxResult[2]
 
+            let round_result = round += 1
+
+            this.container_countdown_respin.setText('Round ' + round_result)
+
+            
+
             for (let i = 0; i < this.playersLogs.length; i++) {
                 
           if (
              this.playersLogs[i].color === boxResult[0] ||
              this.playersLogs[i].color === boxResult[1] ||
              this.playersLogs[i].color === boxResult[2]) {
+             this.imageAttack_ani[i].setVisible(true)
+             
+             setTimeout(() => {
+                this.imageAttack_ani[i].setVisible(false)
+             }, 1000)
+
+             this.rotateAttack(i)
              this.lifePoints[i] += 1
             } else {
              this.lifePoints[i] -= 1
-             this.shakeDmg(i)
+
+             setTimeout(() => {
+                this.shakeDmg(i)
+             }, 700)
 
             }
             
@@ -240,6 +261,13 @@ export class Start extends Phaser.Scene {
             this.playersLogs[i].color === boxResult[2] || 
             this.playersLogs[i].color === boxResult[1] &&
             this.playersLogs[i].color === boxResult[2]) {
+            this.rotateAttack(i)
+            this.imageAttack_ani[i].setVisible(true)
+
+            setTimeout(() => {
+                this.imageAttack_ani[i].setVisible(false)
+             }, 1000)
+
             this.lifePoints[i] += 1
             } 
             
@@ -247,21 +275,31 @@ export class Start extends Phaser.Scene {
             this.playersLogs[i].color === boxResult[0] && 
             this.playersLogs[i].color === boxResult[1] && 
             this.playersLogs[i].color === boxResult[2]) {
+            this.rotateAttack(i)
             this.lifePoints[i] += 1
+
+            setTimeout(() => {
+                this.imageAttack_ani[i].setVisible(false)
+             }, 1000)
+
+            this.imageAttack_ani[i].setVisible(true)
             }
             
 
-            
+            //Winners and Lossers  
             if (this.lifePoints[i] <= 0) {
 
                 this.lifePoints[i] = NaN
                 this.playersLogs[i].luck = 0
-                this.playersLogs[i].name = "Eliminated"
-
+                this.playersLogs[i].name = "Dead"
                 this.imageDead[i].setVisible(false)
+                this.skull[i].setTexture('skull').setVisible(true)
+                this.imageAttack_ani[i].destroy()
 
             } else if (this.lifePoints[i] >= 30){
                 
+                //here Add to Recieve the WOK Prize to Transfer Wok Wallet
+
                 setTimeout(() => {
                     
                     this.scene.pause()
@@ -285,7 +323,7 @@ export class Start extends Phaser.Scene {
             )
                
                         
-               var container_winners_text1 = this.add.text(this.cameraX, this.cameraY - 100, [
+        var container_winners_text1 = this.add.text(this.cameraX, this.cameraY - 100, [
             'TOTAL PRIZE = ' + prizeWOK + ' Wok'
         ], {
             fontSize: '28px',
@@ -320,8 +358,8 @@ export class Start extends Phaser.Scene {
                 setInterval(setColors, 3000)
             }, 3000)
 
-        //Other Player
-       
+        //Other Player 
+        //This Code Dont Touch For maintenance only
        this.player_info_p = [
            {x: this.cameraX - 590, y: this.cameraY - 70},
            {x: this.cameraX - 570, y: this.cameraY + 70},
@@ -331,8 +369,6 @@ export class Start extends Phaser.Scene {
            {x: this.cameraX + 460, y: this.cameraY - 140},
            
        ]
-       
-       
        
        this.player_ar = [
            {x: this.cameraX - 360, y: this.cameraY - 100},
@@ -345,7 +381,6 @@ export class Start extends Phaser.Scene {
        
        
        this.text_value = []
-       
        
        for (let i = 1; i < this.playersLogs.length; i++) {
            
@@ -384,16 +419,34 @@ export class Start extends Phaser.Scene {
                 this.playersLogs[i].color 
                 
             )
+
+            let dead = this.add.image(
+                this.player_ar[i].x,
+                this.player_ar[i].y,
+                this.playersLogs[i].img
+            ).setDisplaySize(140, 140).setVisible(false)
             
             let images = this.add.image(
                 this.player_ar[i].x,
                 this.player_ar[i].y,
                 this.playersLogs[i].img
             ).setDisplaySize(140, 140)
+
+            let attack = this.add.image(
+                this.player_ar[i].x,
+                this.player_ar[i].y,
+                'sword'
+            ).setDisplaySize(140, 140).setVisible(false)
            
            this.imageShake.push({ image: images, originalX: images.x, originalY: images.y })
 
+           this.imageAttack.push({ image: attack, originalX: attack.x, originalY: attack.y })
+
+           this.imageAttack_ani.push(attack)
+
            this.imageDead.push(images)
+
+           this.skull.push(dead)
 
         }
 
@@ -481,9 +534,19 @@ export class Start extends Phaser.Scene {
         .setVisible(false)
 
         potion_img2.on('pointerdown', () => {
-            this.buttonClick2();
-
+            
             potion_img2.disableInteractive()
+
+            if (isNaN(this.lifePoints[0])) {
+
+                potion_img2.disableInteractive()
+
+            } else {
+
+                this.buttonClick2();
+
+            }
+
         });
         
             this.leppot = this.add.text(
@@ -555,7 +618,7 @@ export class Start extends Phaser.Scene {
   buttonClick1() {
         
     if (this.lifePoints[0] <= 5) {
-        let randomNumber = Math.random() < 0.5 ? -2 : 2;
+        let randomNumber = Math.random() < 0.7 ? -2 : 7;
 
         this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
         
@@ -565,7 +628,7 @@ export class Start extends Phaser.Scene {
            
        } else {
            
-           //Wallet -- Price -- 
+           //Add Wallet here -- Price -- to buy Dpotion
            
            alert("Buy Another One")
            
@@ -581,31 +644,48 @@ export class Start extends Phaser.Scene {
             if (this.playersLogs[0].LM >= 0) {
                 
                 var Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10
-
+                
                 if (this.playersLogs[0].leppot >= 1) {
                
-               this.playersLogs[0].LM += Value
+                this.playersLogs[0].LM += Value
                 this.playersLogs[0].leppot -= 1
                 this.playersLogs[0].luck += Value
                     
                 } else {
                     
-                    //Wallet -- Price
+                    //Add Wallet here -- Price -- to Buy leppot Potion
                     
-                    alert("Buy Another One")
+                    alert("Buy Another One?")
                     
                 }  
+
+                
                      
             }
            
         
-  }          
+  } 
 
+  // Special Effect: Rotate Attack
+rotateAttack(index) {
+    let imgData = this.imageAttack[index]; // Get stored image
+
+    // Prevent error if index is out of range
+    if (!imgData || !imgData.image) return;
+
+    this.tweens.add({
+        targets: imgData.image, // Apply tween to the image
+        angle: 360, // Rotate 360 degrees
+        duration: 500, // Duration of the full rotation
+        ease: 'easeInOut' // Constant rotation speed
+    });
+}
+
+
+    //Special Effects
   shakeDmg(index) {
 
     let imgData = this.imageShake[index]; // Get stored image and original position
-
-    console.log("Shaking image at index:", index);
 
     // Prevent error if index is out of range
     if (!imgData || !imgData.image) return; 
@@ -659,21 +739,7 @@ export class Start extends Phaser.Scene {
             
         }
     }
-
-    for (let i = 0; i < this.playersLogs.length; i++) {
-
-        if (this.lifePoints[i] <= 0) {
-
-            if (this.imageShake[i]) {
-                this.imageShake[i].setVisible(false)
-            }
-        }
-
-        continue
-
-    }
-
-    }
+  }
     
  }
      
