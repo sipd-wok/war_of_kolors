@@ -4,6 +4,9 @@ export class Shop extends Scene {
   private character: {
     tier: string;
     color: string;
+    hp: number;
+    atk: number;
+    def: number;
     luck: number;
     sprite: string;
     name: string;
@@ -139,6 +142,9 @@ export class Shop extends Scene {
     this.character = {
       tier: "",
       color: "",
+      hp: 0,
+      atk: 0,
+      def: 0,
       luck: 0,
       sprite: "",
       name: "",
@@ -155,6 +161,7 @@ export class Shop extends Scene {
     // Potions
     this.load.image("devilsPotion", "assets/devilsPotion.png");
     this.load.image("leprechaunsPotion", "assets/leprechaunsPotion.png");
+    this.load.image("healthPotion", "assets/healthPotion.png");
 
     // Characters
     // 💬[vincent]: gn move ko sa preloader.ts
@@ -199,8 +206,8 @@ export class Shop extends Scene {
 
     // Potions
     this.createPotion(
-      centerX - 100,
-      centerY + 210,
+      centerX - 200,
+      centerY + 160,
       "Devil's Potion",
       "devilsPotion",
       5000,
@@ -209,14 +216,25 @@ export class Shop extends Scene {
       this.buyDevilsPotion.bind(this),
     );
     this.createPotion(
-      centerX + 100,
-      centerY + 210,
+      centerX + 20,
+      centerY + 160,
       "Leprechaun's Potion",
       "leprechaunsPotion",
       2000,
       2,
       2,
       this.buyLeprechaunsPotion.bind(this),
+    );
+
+    this.createPotion(
+      centerX + 240,
+      centerY + 160,
+      "Health Potion",
+      "healthPotion",
+      2000,
+      2,
+      2,
+      this.buyHealthPotion.bind(this),
     );
 
     // Doors
@@ -390,6 +408,14 @@ export class Shop extends Scene {
     // For example, add the potion to the player's inventory
   }
 
+  private buyHealthPotion(): void {
+    const heal = 2;
+    this.character.hp = heal;
+    console.log("Leprechaun's Potion Purchased!");
+    // Implement purchase logic
+    // For example, add the potion to the player's inventory
+  }
+
   private createDoor(
     x: number,
     y: number,
@@ -445,6 +471,9 @@ export class Shop extends Scene {
     maxLuck: number,
   ): Promise<void> {
     this.character.tier = tier;
+    this.character.hp = this.getRandomInt(1, 5);
+    this.character.atk = this.getRandomInt(1, 5);
+    this.character.def = this.getRandomInt(1, 5);
     this.character.color =
       tier === "Rainbow" ? "Rainbow" : this.getRandomColor();
     this.character.luck = parseFloat(
@@ -484,6 +513,9 @@ export class Shop extends Scene {
         body: JSON.stringify({
           tier: this.character.tier,
           color: this.character.color,
+          hp: this.character.hp,
+          atk: this.character.atk,
+          def: this.character.def,
           luck: this.character.luck,
           sprite: this.character.sprite,
           name: this.character.name,
