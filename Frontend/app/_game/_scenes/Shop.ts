@@ -136,6 +136,22 @@ export class Shop extends Scene {
     "Rainbow Sumo Wrestler",
     "Rainbow Mech Warrior",
     "Rainbow Monk",
+    // Elemntalist
+    "Green Elementalist",
+    "Red Elementalist",
+    "White Elementalist",
+    "Yellow Elementalist",
+    "Blue Elementalist",
+    "Pink Elementalist",
+    "Rainbow Elementalist",
+    // Dragon Tamer
+    "Red Dragon Tamer",
+    "Blue Dragon Tamer",
+    "Green Dragon Tamer",
+    "Yellow Dragon Tamer",
+    "White Dragon Tamer",
+    "Pink Dragon Tamer",
+    "Rainbow Dragon Tamer",
   ];
 
   private buyCharacter!: (amount: string) => Promise<void>;
@@ -477,24 +493,31 @@ export class Shop extends Scene {
     maxLuck: number,
   ): Promise<void> {
     this.character.tier = tier;
-    this.character.hp = this.getRandomInt(1, 5);
-    this.character.atk = this.getRandomInt(1, 5);
-    this.character.def = this.getRandomInt(1, 5);
-    this.character.color =
-      tier === "Rainbow" ? "Rainbow" : this.getRandomColor();
+    const stats = {
+      Bronze: { min: 1, max: 3 },
+      Silver: { min: 3, max: 5 },
+      Gold: { min: 5, max: 7 },
+      Rainbow: { min: 5, max: 7 },
+    };
+
+    const { min, max } = stats[tier];
+    this.character.hp = this.getRandomInt(min, max);
+    this.character.atk = this.getRandomInt(min, max);
+    this.character.def = this.getRandomInt(min, max);
+    this.character.color = tier === "Rainbow" ? "Rainbow" : this.getRandomColor();
     this.character.luck = parseFloat(
       (Math.random() * (maxLuck - minLuck) + minLuck).toFixed(2),
     );
 
     // Define sprite options based on color
     const spriteOptions: Record<string, number[]> = {
-      Red: [1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91],
-      Blue: [2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93],
-      Yellow: [6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95],
-      Green: [3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92],
-      Pink: [4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94],
-      White: [5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96],
-      Rainbow: [97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107],
+      Red: [1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115],
+      Blue: [2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116],
+      Yellow: [6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118],
+      Green: [3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117],
+      Pink: [4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120],
+      White: [5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119],
+      Rainbow: [97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121],
     };
 
     const possibleSprites = spriteOptions[this.character.color];
