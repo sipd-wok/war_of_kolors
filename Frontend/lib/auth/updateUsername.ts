@@ -22,7 +22,7 @@ export async function updateUsername(username: string) {
   }
 
   // Force revalidation of the session by clearing the cache for relevant paths
-  revalidatePath("/mainGame");
+  revalidatePath("/MainGame");
   revalidatePath("/welcome");
 
   return { success: true };

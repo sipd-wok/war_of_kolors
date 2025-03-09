@@ -42,7 +42,7 @@ export const WelcomeForm = ({ session }: WelcomeFormProps) => {
       }
 
       // Navigate to game page
-      router.push("/mainGame");
+      router.push("/MainGame");
     } catch (err: unknown) {
       console.error("Error updating username:", err);
       if (err instanceof Error) {

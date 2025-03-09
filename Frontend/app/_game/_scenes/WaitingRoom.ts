@@ -119,7 +119,7 @@ export class WaitingRoom extends Scene {
     this.character = data.character;
     this.potions = data.potions;
 
-    this.socket = io(process.env.SOCKET_HOST || "http://localhost:3000");
+    this.socket = io("localhost:3000");
 
     this.socket.on("connect", () => {
       console.log("Connected with ID:", this.socket.id);
