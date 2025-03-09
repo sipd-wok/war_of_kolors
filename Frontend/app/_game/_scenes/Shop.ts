@@ -133,6 +133,9 @@ export class Shop extends Scene {
     "Rainbow Tribal Chief",
     "Rainbow Great Elder",
     "Rainbow Knight",
+    "Rainbow Sumo Wrestler",
+    "Rainbow Mech Warrior",
+    "Rainbow Monk",
   ];
 
   private buyCharacter!: (amount: string) => Promise<void>;
@@ -339,20 +342,23 @@ export class Shop extends Scene {
       )
       .setOrigin(0.5)
       .setDisplaySize(100, 100);
+      
 
     const luckText = this.add
       .text(
         this.cameras.main.centerX,
         this.cameras.main.centerY + 60,
-        `Luck Multiplier: ${this.character.luck}`,
+        potionName === "Devil's Potion" || potionName === "Leprechaun's Potion"
+          ? `Luck Multiplier: ${this.character.luck}`
+          : `Health Points: ${this.character.hp}`,
         {
           fontFamily: "Arial",
           fontSize: 20,
           color: "#000000",
-        },
+        }
       )
       .setOrigin(0.5);
-
+    
     const closeButton = this.add
       .text(
         this.cameras.main.centerX,
@@ -488,7 +494,7 @@ export class Shop extends Scene {
       Green: [3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92],
       Pink: [4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94],
       White: [5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96],
-      Rainbow: [97, 98, 99, 100, 101, 102, 103, 104],
+      Rainbow: [97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107],
     };
 
     const possibleSprites = spriteOptions[this.character.color];
@@ -579,9 +585,9 @@ export class Shop extends Scene {
       .setDisplaySize(100, 100);
 
     const characterDetails = this.add.text(
-      this.cameras.main.centerX - 60,
+      this.cameras.main.centerX - 110,
       this.cameras.main.centerY + 20,
-      `Tier: ${this.character.tier}\nColor: ${this.character.color}\nLuck Multiplier: ${this.character.luck}`,
+      `Tier: ${this.character.tier}  Color: ${this.character.color}\nLife Points: ${this.character.hp}  Attack: ${this.character.atk}\nDefense: ${this.character.def}  Luck Multiplier: ${this.character.luck}`,
       {
         fontFamily: "Arial",
         fontSize: 20,
