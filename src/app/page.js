@@ -16,7 +16,7 @@ export default function Home() {
         scene: [Start],
         backgroundColor: '#87CEEB',
         scale: {
-          mode: isMobile ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
+          mode: Phaser.Scale.FIT,
           autoCenter: Phaser.Scale.CENTER_BOTH,
         },
       };
