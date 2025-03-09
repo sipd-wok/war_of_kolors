@@ -52,15 +52,15 @@ export class Start extends Phaser.Scene {
         //Players Logs || Waiting Other Player Logs
         //Just change for main session to index 0 as main character in their Own Devices
         this.playersLogs = [
-            {name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4},
-            {name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
-            {name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
-            {name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
-            {name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
-            {name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
+            {lifePoints: 10 ,name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4},
+            {lifePoints: 10 ,name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
+            {lifePoints: 10 ,name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
+            {lifePoints: 10 ,name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
+            {lifePoints: 10 ,name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
+            {lifePoints: 10 ,name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
         ]     
         
-        this.lifePoints = [10, 10, 10, 10, 10, 10] // Life Points
+        // this.lifePoints = [10, 10, 10, 10, 10, 10] // Life Points
         
         //Text, Elements, Colors, and prizes
         
@@ -189,23 +189,77 @@ export class Start extends Phaser.Scene {
         
         
         //Box Dice...
-         var box1 = this.add.image(
+        this.box1 = this.add.image(
             this.cameraX - 130,
             this.cameraY, 
             this.defualtColor[0].img
-            ).setDisplaySize(120, 120)
+            ).setDisplaySize(120, 120).setVisible(false)
 
-        var box2 = this.add.image(
+        this.box2 = this.add.image(
             this.cameraX,
             this.cameraY, 
             this.defualtColor[0].img
-            ).setDisplaySize(120, 120)
+            ).setDisplaySize(120, 120).setVisible(false)
 
-        var box3 = this.add.image(
+        this.box3 = this.add.image(
             this.cameraX + 130,
             this.cameraY, 
             this.defualtColor[0].img
-            ).setDisplaySize(120, 120)
+            ).setDisplaySize(120, 120).setVisible(false)
+        
+        //Dice History
+         this.box1h = this.add.image(
+            this.cameraX + 360,
+            this.cameraY - 320, 
+            this.defualtColor[0].img
+            ).setDisplaySize(90, 90).setVisible(true)
+
+        this.box2h = this.add.image(
+            this.cameraX + 460,
+            this.cameraY - 320, 
+            this.defualtColor[0].img
+            ).setDisplaySize(90, 90)
+
+        this.box3h = this.add.image(
+            this.cameraX + 560,
+            this.cameraY - 320, 
+            this.defualtColor[0].img
+            ).setDisplaySize(90, 90)
+
+        this.boxStart = this.add.image(
+            this.cameraX,
+            this.cameraY, 
+            'loadDice'
+            ).setDisplaySize(300, 280)
+
+        this.bounceBox = true
+
+        setTimeout(() => {
+
+            this.boxStart.setVisible(false)
+
+            this.spinning = setInterval(() => {
+                let Value1 = Phaser.Math.Between(0, this.defualtColor.length - 1);
+                this.box1.setTexture(this.defualtColor[Value1].img).setVisible(true)
+                let Value2 = Phaser.Math.Between(0, this.defualtColor.length - 1);
+                this.box2.setTexture(this.defualtColor[Value2].img).setVisible(true)
+                let Value3 = Phaser.Math.Between(0, this.defualtColor.length - 1);
+                this.box3.setTexture(this.defualtColor[Value3].img).setVisible(true)
+            }, 100)
+
+            this.rotateBounce(this.box1, this.bounceBox)
+
+            this.rotateBounce(this.box2, this.bounceBox)
+
+            this.rotateBounce(this.box3, this.bounceBox)
+
+            this.box1h.setTexture(boxResult[0].img)
+
+            this.box2h.setTexture(boxResult[1].img)
+
+            this.box3h.setTexture(boxResult[2].img)
+
+        }, 7200)
 
         //Arrays for Dmg Reciever
         this.imageDead = []
@@ -220,22 +274,48 @@ export class Start extends Phaser.Scene {
 
         let round = 0
 
-        const setColors = () => {
-            let boxResult = [RandomColors(), RandomColors(), RandomColors()]
+        let closedGame = true
 
-            box1.setTexture(boxResult[0].img)
-            box2.setTexture(boxResult[1].img)
-            box3.setTexture(boxResult[2].img)
+        const setColors = () => {
+
+            if(!closedGame) return
+
+            clearInterval(this.spinning)
+
+            let boxResult = [RandomColors(), RandomColors(), RandomColors()]
+            
+            this.box1.setTexture(boxResult[0].img)
+            this.box2.setTexture(boxResult[1].img)
+            this.box3.setTexture(boxResult[2].img)
 
             let round_result = round += 1
 
             this.container_countdown_respin.setText('Round ' + round_result)
+            
+            setTimeout(() => {
+                
+                this.spinning = setInterval(() => {
+                    let Value1 = Phaser.Math.Between(0, this.defualtColor.length - 1);
+                    this.box1.setTexture(this.defualtColor[Value1].img)
+                    let Value2 = Phaser.Math.Between(0, this.defualtColor.length - 1);
+                    this.box2.setTexture(this.defualtColor[Value2].img)
+                    let Value3 = Phaser.Math.Between(0, this.defualtColor.length - 1);
+                    this.box3.setTexture(this.defualtColor[Value3].img)
+                }, 100)
 
-            if (round >= 0) {
+                this.rotateBounce(this.box1, this.bounceBox)
 
+                this.rotateBounce(this.box2, this.bounceBox)
 
+                this.rotateBounce(this.box3, this.bounceBox)
 
-            }
+                this.box1h.setTexture(boxResult[0].img)
+
+                this.box2h.setTexture(boxResult[1].img)
+
+                this.box3h.setTexture(boxResult[2].img)
+
+            }, 4100)
 
             for (let i = 0; i < this.playersLogs.length; i++) {
                 
@@ -250,9 +330,9 @@ export class Start extends Phaser.Scene {
              }, 1000)
 
              this.rotateAttack(i)
-             this.lifePoints[i] += 1
+             this.playersLogs[i].lifePoints += 1
             } else {
-             this.lifePoints[i] -= 1
+             this.playersLogs[i].lifePoints -= 1
 
              setTimeout(() => {
                 this.shakeDmg(i)
@@ -274,7 +354,7 @@ export class Start extends Phaser.Scene {
                 this.imageAttack_ani[i].setVisible(false)
              }, 1000)
 
-            this.lifePoints[i] += 1
+            this.playersLogs[i].lifePoints += 1
             } 
             
             if (
@@ -282,7 +362,7 @@ export class Start extends Phaser.Scene {
             this.playersLogs[i].color === boxResult[1].color && 
             this.playersLogs[i].color === boxResult[2].color) {
             this.rotateAttack(i)
-            this.lifePoints[i] += 1
+            this.playersLogs[i].lifePoints += 1
 
             setTimeout(() => {
                 this.imageAttack_ani[i].setVisible(false)
@@ -293,23 +373,24 @@ export class Start extends Phaser.Scene {
             
 
             //Winners and Lossers  
-            if (this.lifePoints[i] <= 0) {
+            if (this.playersLogs[i].lifePoints <= 0) {
 
-                this.lifePoints[i] = NaN
+                this.playersLogs[i].lifePoints = NaN
                 this.playersLogs[i].luck = 0
                 this.playersLogs[i].name = "Dead"
                 this.imageDead[i].setVisible(false)
                 this.skull[i].setTexture('skull').setVisible(true)
                 this.imageAttack_ani[i].destroy()
 
-            } else if (this.lifePoints[i] >= 15){
+            } else if (this.playersLogs[i].lifePoints >= 15){
                 
                 //here Add to Recieve the WOK Prize to Transfer Wok Wallet
+                
 
                 setTimeout(() => {
                     
-                    this.scene.pause()
-                    this.scene.destroy()
+                    closedGame = false
+
                     setTimeout(() => {
                
                var containerBg1 = this.add.rectangle(
@@ -398,7 +479,7 @@ export class Start extends Phaser.Scene {
                this.playersLogs[i].name + '\n' +
                'LM - ' + this.playersLogs[i].LM + '\n' +
                
-               'LP - ' + this.lifePoints[i]
+               'LP - ' + this.playersLogs[i].lifePoints
                
                ,
                
@@ -460,7 +541,7 @@ export class Start extends Phaser.Scene {
 
         this.mainplayerinfo_text = this.add.text(this.cameraX - 430, this.cameraY - 420,
      [       this.playersLogs[0].name + '\n - LUCK Multiplayer - ' +
-            this.lifePoints[0] + ' LIFE POINTS'
+            this.playersLogs[0].lifePoints + ' LIFE POINTS'
         ], {
             fontSize: '34px',
             color: text_color,
@@ -543,7 +624,7 @@ export class Start extends Phaser.Scene {
             
             potion_img2.disableInteractive()
 
-            if (isNaN(this.lifePoints[0])) {
+            if (isNaN(this.playersLogs[0].lifePoints)) {
 
                 potion_img2.disableInteractive()
 
@@ -623,10 +704,10 @@ export class Start extends Phaser.Scene {
   
   buttonClick1() {
         
-    if (this.lifePoints[0] <= 5) {
-        let randomNumber = Math.random() < 0.5 ? -2 : 7;
+    if (this.playersLogs[0].lifePoints <= 5) {
+        let randomNumber = Math.random() < 0.7 ? -2 : 7;
 
-        this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
+        this.playersLogs[0].lifePoints = Math.max(1, this.playersLogs[0].lifePoints + randomNumber);
         
        if (this.playersLogs[0].dpotion >= 1) {
            
@@ -672,11 +753,19 @@ export class Start extends Phaser.Scene {
         
   } 
 
-// rotateDice(index) {
+rotateBounce(box, shouldAnimate) {
+    if (!shouldAnimate) return; // If condition is false, exit function
+    this.tweens.add({
+        targets: box,  
+        y: box.y - 30,
+        angle: 360,                         
+        ease: 'Sine.easeInOut',  
+        duration: 500,
+        yoyo: true,
+    });
+}
 
-//     let imgData = 
 
-// }
 
   // Special Effect: Rotate Attack
 rotateAttack(index) {
@@ -724,7 +813,7 @@ rotateAttack(index) {
     this.mainplayerinfo_text.setText(
     [
             this.playersLogs[0].name + '\nLUCK Multiplayer - ' + this.playersLogs[0].LM +
-            '\nLIFE POINTS - ' + this.lifePoints[0]
+            '\nLIFE POINTS - ' + this.playersLogs[0].lifePoints
         ])
         
     this.dpotion.setText(
@@ -743,7 +832,7 @@ rotateAttack(index) {
                 this.playersLogs[i].name + '\n' +
                'LM - ' + this.playersLogs[i].LM + '\n' +
                
-               'LP - ' + this.lifePoints[i]
+               'LP - ' + this.playersLogs[i].lifePoints
                 
                 
             )
