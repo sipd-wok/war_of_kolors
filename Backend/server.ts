@@ -19,6 +19,7 @@ interface PlayerRoom {
       id: string;
       devil: number;
       leprechaun: number;
+      hp: number;
     };
     character: {
       id: number;
@@ -61,6 +62,9 @@ interface BattleRoom {
       tier: string;
       color: string;
       luck?: number;
+    };
+    stats: {
+      lifepoints: number;
     };
   }[];
   entryBet: number;
@@ -291,6 +295,10 @@ io.on("connection", (socket) => {
         `Emitting updated players list for room ${roomID}:`,
         room.players,
       );
+
+      if (room.players.length === 6) {
+        io.to(roomID).emit("proceedToGame", room);
+      }
     } else {
       console.log("Room not found: ", roomID);
     }
@@ -299,27 +307,15 @@ io.on("connection", (socket) => {
   // Track ready players for each room
   const roomReadyPlayers: { [roomID: string]: string[] } = {};
 
-  socket.on("playerReady", (roomID, socketID) => {
-    // Initialize the room's ready players array if it doesn't exist
-    if (!roomReadyPlayers[roomID]) {
-      roomReadyPlayers[roomID] = [];
+  socket.on("playerVotedSkip", (roomID, callback) => {
+    const room = playersWaitingRooms.find((room) => room.roomID === roomID);
+    if (room) {
+      room.votesToStart++;
     }
-
-    // Add this player to the ready players list if not already there
-    if (!roomReadyPlayers[roomID].includes(socketID)) {
-      roomReadyPlayers[roomID].push(socketID);
+    callback(room ? room.votesToStart : 0);
+    if (room && room.votesToStart === room.players.length - 1) {
+      io.to(roomID).emit("proceedToGame");
     }
-
-    // Get all players in the room
-    const allPlayers = Array.from(io.sockets.adapter.rooms.get(roomID) || []);
-
-    // Send the complete list of ready players and their position in the room
-    io.to(roomID).emit("updatePlayersReady", {
-      roomID,
-      readyPlayerID: socketID,
-      allReadyPlayers: roomReadyPlayers[roomID],
-      totalPlayers: allPlayers.length,
-    });
   });
 
   // Add these handlers in your server.ts file inside the io.on("connection") handler:

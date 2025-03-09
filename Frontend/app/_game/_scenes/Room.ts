@@ -1,118 +1,157 @@
-import { Scene } from "phaser";
-import { io, Socket } from "socket.io-client";
-import { EventBus } from "../EventBus";
-
-// Define player log interface for type safety
-interface PlayerLog {
-  name: string;
-  color: number;
-  luck: number;
-  bet: number;
-}
-
-export class Room extends Scene {
-  // Leva GUI properties
-  levaControlsEnabled: boolean = true;
-  levaSubscriptions: Array<() => void> = [];
-
-  // Room properties
-  socket!: Socket;
-  roomId!: string;
-
-  // Camera position
-  cameraX!: number;
-  cameraY!: number;
-  visualViewportWidth!: number;
-
-  // Game data
-  playersLogs!: PlayerLog[];
-  lifePoints!: (number | string)[];
-  Img!: string[];
-
-  // UI elements
-  player_info_p!: Array<{ x: number; y: number }>;
-  text_value!: Phaser.GameObjects.Text[];
-  mainplayerinfo_text!: Phaser.GameObjects.Text;
-  die1!: Phaser.GameObjects.Image;
-  die2!: Phaser.GameObjects.Image;
-  die3!: Phaser.GameObjects.Image;
-  slash!: Phaser.GameObjects.Image;
+export class Room extends Phaser.Scene {
+  private cameraX: number = 0;
+  private cameraY: number = 0;
+  private playersLogs: Array<{
+    name: string;
+    color: number;
+    luck: number;
+    bet: number;
+    img: string;
+    LM: number;
+    dpotion: number;
+    leppot: number;
+  }> = [];
+  private lifePoints: number[] = [];
+  private imageDead: Phaser.GameObjects.Image[] = [];
+  private skull: Phaser.GameObjects.Image[] = [];
+  private imageAttack: {
+    image: Phaser.GameObjects.Image;
+    originalX: number;
+    originalY: number;
+  }[] = [];
+  private imageShake: {
+    image: Phaser.GameObjects.Image;
+    originalX: number;
+    originalY: number;
+  }[] = [];
+  private imageAttack_ani: Phaser.GameObjects.Image[] = [];
+  private container_countdown_respin: Phaser.GameObjects.Text = null!;
+  private mainplayerinfo_text: Phaser.GameObjects.Text = null!;
+  private dpotion: Phaser.GameObjects.Text = null!;
+  private leppot: Phaser.GameObjects.Text = null!;
+  private text_value: Phaser.GameObjects.Text[] = [];
+  private player_info_p: { x: number; y: number }[] = [];
+  private player_ar: { x: number; y: number }[] = [];
 
   constructor() {
     super("Room");
-    this.socket = io(process.env.SOCKET_HOST || "http://localhost:3000");
-
-    this.socket.on("connect", () => {
-      console.log("Connected with ID:", this.socket.id);
-    });
   }
 
-  // Renamed from roomID to roomId for consistency
-  init(data: { roomID: string }) {
-    this.roomId = data.roomID;
-    console.log("Room initialized with roomId:", this.roomId);
+  preload() {
+    this.load.setPath("assets/img");
+    //Characters
+    this.load.image("blue", "blue.png");
+    this.load.image("yellow", "yellow.png");
+    this.load.image("pink", "boky.png");
+    this.load.image("white", "white.png");
+    this.load.image("red", "red.png");
+    this.load.image("green", "green.png");
+
+    //Wok Accessories
+    this.load.image("wok_coins", "WokCoin.png");
+    this.load.image("dpotion", "dpotion.png");
+    this.load.image("leppot", "leppot.png");
+    this.load.image("bag1", "bag1.png");
+    this.load.image("bag2", "bag2.png");
+    this.load.image("skull", "dead_sign.png");
+    this.load.image("sword", "sword-r.png");
+
+    //Wok Buttons
+    this.load.image("whitesrc", "whitesqr.png");
   }
+
+  // init(data) {}
 
   create() {
     //Responsive
     this.cameraX = this.cameras.main.width / 2;
     this.cameraY = this.cameras.main.height / 2;
-    this.visualViewportWidth = window.visualViewport?.width || 1024;
+    // const canvasWidth = this.sys.game.config.width as number;
+    const canvasHeight = this.sys.game.config.height as number;
 
-    // responsivve condigurations
-    const wokArenaConfig = {
-      width: this.visualViewportWidth! + 50,
-      height: this.visualViewportWidth! * (3000 / 4200) + 50,
-      rotation: 0,
-    };
-    const dieConfig = {
-      size: 90,
-      spaceBetween: 100,
-    };
-
-    if (
-      this.visualViewportWidth !== undefined &&
-      this.visualViewportWidth < 928
-    ) {
-      wokArenaConfig.width = this.visualViewportWidth! * 2.1;
-      wokArenaConfig.height =
-        this.visualViewportWidth! * (3000 / 4200) * 2.1 + 20;
-      dieConfig.size = 60;
-      dieConfig.spaceBetween = 70;
-    }
+    this.add.image(this.cameraX, this.cameraY, "background");
 
     //Players Logs || Waiting Other Player Logs
+    //Just change for main session to index 0 as main character in their Own Devices
     this.playersLogs = [
-      { name: "Player 1", color: 0xff0000, luck: 4, bet: 2000 },
-      { name: "Player 2", color: 0xffff00, luck: 5, bet: 2000 },
-      { name: "Player 3", color: 0x00ff00, luck: 5, bet: 2000 },
-      { name: "Player 4", color: 0xffffff, luck: 4, bet: 2000 },
-      { name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000 },
-      { name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000 },
-    ];
-
-    this.Img = [
-      "character1",
-      "character2",
-      "character3",
-      "character4",
-      "character5",
-      "character6",
+      {
+        name: "Player 1",
+        color: 0xff0000,
+        luck: 1,
+        bet: 2000,
+        img: "red",
+        LM: 0,
+        dpotion: 2,
+        leppot: 4,
+      },
+      {
+        name: "Player 2",
+        color: 0xffff00,
+        luck: 6,
+        bet: 2000,
+        img: "yellow",
+        LM: 0,
+        dpotion: 2,
+        leppot: 4,
+      },
+      {
+        name: "Player 3",
+        color: 0x00ff00,
+        luck: 6,
+        bet: 2000,
+        img: "green",
+        LM: 0,
+        dpotion: 2,
+        leppot: 4,
+      },
+      {
+        name: "Player 4",
+        color: 0xffffff,
+        luck: 6,
+        bet: 2000,
+        img: "white",
+        LM: 0,
+        dpotion: 2,
+        leppot: 4,
+      },
+      {
+        name: "Player 5",
+        color: 0x0000ff,
+        luck: 6,
+        bet: 2000,
+        img: "blue",
+        LM: 0,
+        dpotion: 2,
+        leppot: 4,
+      },
+      {
+        name: "Player 6",
+        color: 0xff00ff,
+        luck: 6,
+        bet: 2000,
+        img: "pink",
+        LM: 0,
+        dpotion: 2,
+        leppot: 4,
+      },
     ];
 
     this.lifePoints = [10, 10, 10, 10, 10, 10]; // Life Points
 
     //Text, Elements, Colors, and prizes
+
     const totalBet = this.playersLogs.reduce(
-      (sum: number, player: PlayerLog) => sum + player.bet,
+      (sum, player) => sum + player.bet,
       0,
     );
 
     const prizeWOK = totalBet;
-    const colorb1 = 0x30363d;
-    const text_color = "#c9d1d9";
 
-    //Free For All Mode
+    const text_color = "#000";
+
+    const walletBal = 0; //Wallets --  to Show Current Balances
+
+    //6 Collors
     const defualtColor = [
       { color: 0xff0000 },
       { color: 0xffff00 },
@@ -122,15 +161,38 @@ export class Room extends Scene {
       { color: 0xff00ff },
     ];
 
-    //GamePlay System && Rules
+    // Main Board && GamePlay System && Rules
+    // Creating UI elements directly without assigning to unused variables
+    this.add.rectangle(
+      this.cameraX + 450,
+      this.cameraY - 430,
+      450,
+      90,
+      0x693701,
+    );
 
-    // Add black background
-    this.cameras.main.setBackgroundColor(0x161b22);
-
-    // Main Board
+    // Add text directly without assigning to variable
     this.add
-      .image(this.cameraX, this.cameraY, "wokArena")
-      .setDisplaySize(wokArenaConfig.width, wokArenaConfig.height);
+      .text(
+        this.cameraX + 450,
+        this.cameraY - 430,
+        " Wok Coins (" + walletBal + ")",
+        {
+          fontSize: "28px",
+          color: "#fff",
+          fontStyle: "bold",
+        },
+      )
+      .setOrigin(0.5);
+
+    // Add image directly without assigning to variable
+    this.add
+      .image(this.cameraX + 300, this.cameraY - 430, "wok_coins")
+      .setDisplaySize(50, 50);
+
+    this.add.rectangle(this.cameraX, this.cameraY, 510, 360, 0x000000);
+    this.add.rectangle(this.cameraX, this.cameraY, 500, 350, 0xb0c4de);
+    this.add.rectangle(this.cameraX, this.cameraY, 450, 250, 0x4682b4);
 
     this.add
       .text(this.cameraX, this.cameraY - 100, ["TOTAL PRIZE = " + prizeWOK], {
@@ -140,77 +202,9 @@ export class Room extends Scene {
       })
       .setOrigin(0.5);
 
-    // Dices
-    this.die1 = this.add
-      .image(this.cameraX - dieConfig.spaceBetween, this.cameraY, "die-1")
-      .setDisplaySize(dieConfig.size, dieConfig.size);
-    this.die2 = this.add
-      .image(this.cameraX, this.cameraY, "die-2")
-      .setDisplaySize(dieConfig.size, dieConfig.size);
-    this.die3 = this.add
-      .image(this.cameraX + dieConfig.spaceBetween, this.cameraY, "die-3")
-      .setDisplaySize(dieConfig.size, dieConfig.size);
-    this.time.addEvent({
-      delay: 800,
-      callback: () => {
-        this.die1.setTexture(`die-${Math.floor(Math.random() * 6) + 1}`);
-        this.tweens.add({
-          targets: this.die1,
-          y: this.die1.y - 16,
-          duration: 340,
-          ease: "Power2",
-          yoyo: true,
-        });
-
-        this.die2.setTexture(`die-${Math.floor(Math.random() * 6) + 1}`);
-        this.tweens.add({
-          targets: this.die2,
-          y: this.die2.y - 16,
-          duration: 400,
-          ease: "Power2",
-          yoyo: true,
-        });
-
-        this.die3.setTexture(`die-${Math.floor(Math.random() * 6) + 1}`);
-        this.tweens.add({
-          targets: this.die3,
-          y: this.die3.y - 16,
-          duration: 320,
-          ease: "Power2",
-          yoyo: true,
-        });
-      },
-      loop: true,
-    });
-
-    this.slash = this.add
-      .image(this.cameraX, this.cameraY, "slash")
-      .setDisplaySize(800, 800)
-      .setAlpha(0.8); // Start with slightly transparent
-
-    this.time.addEvent({
-      delay: 600,
-      callback: () => {
-        // Create a diagonal slashing animation from top-right to bottom-left
-        // Position at top-right of screen
-        this.slash.setPosition(this.cameraX + 400, this.cameraY - 800);
-
-        this.tweens.add({
-          targets: this.slash,
-          x: this.cameraX - 500, // Move to bottom-left
-          y: this.cameraY + 800,
-          alpha: 1, // Fade in during slash
-          scale: { from: 2, to: 1.5 },
-          duration: 500,
-          ease: "Power2",
-        });
-      },
-      loop: true,
-    });
-
     let count = 5;
-
-    const container_countdown_respin = this.add
+    //5 second Delay before Start the Game
+    this.container_countdown_respin = this.add
       .text(
         this.cameraX,
         this.cameraY + 90,
@@ -223,29 +217,55 @@ export class Room extends Scene {
       )
       .setOrigin(0.5);
 
-    this.time.addEvent({
+    const countDown = this.time.addEvent({
       delay: 1000,
       callback: () => {
         count -= 1;
-        container_countdown_respin.setText(
+        this.container_countdown_respin.setText(
           "Re - rolling in " + count + " sec...",
         );
-
         if (count <= 0) {
-          container_countdown_respin.setText("Rerolling.... ");
+          countDown.remove();
         }
       },
 
       loop: true,
     });
 
+    //Box Dice...
+    const box1 = this.add.rectangle(
+      this.cameraX - 130,
+      this.cameraY,
+      120,
+      120,
+      this.playersLogs[0].color,
+    );
+
+    const box2 = this.add.rectangle(
+      this.cameraX,
+      this.cameraY,
+      120,
+      120,
+      this.playersLogs[0].color,
+    );
+
+    const box3 = this.add.rectangle(
+      this.cameraX + 130,
+      this.cameraY,
+      120,
+      120,
+      this.playersLogs[0].color,
+    );
+
+    //LUCK Formula Dont Touch !!!
     const totalLuck = this.playersLogs.reduce(
-      (sum: number, player: PlayerLog) => sum + player.luck,
+      (sum, player) => sum + player.luck,
       0,
     );
 
     const RandomColors = () => {
       const random = Math.random() * 100;
+
       let cumu = 0;
 
       for (let i = 0; i < this.playersLogs.length; i++) {
@@ -258,8 +278,29 @@ export class Room extends Scene {
       return defualtColor[0].color;
     };
 
+    //Arrays for Dmg Reciever
+    this.imageDead = [];
+
+    this.skull = [];
+
+    this.imageAttack = [];
+
+    this.imageShake = [];
+
+    this.imageAttack_ani = [];
+
+    let round = 0;
+
     const setColors = () => {
       const boxResult = [RandomColors(), RandomColors(), RandomColors()];
+
+      box1.fillColor = boxResult[0];
+      box2.fillColor = boxResult[1];
+      box3.fillColor = boxResult[2];
+
+      const round_result = (round += 1);
+
+      this.container_countdown_respin.setText("Round " + round_result);
 
       for (let i = 0; i < this.playersLogs.length; i++) {
         if (
@@ -267,9 +308,20 @@ export class Room extends Scene {
           this.playersLogs[i].color === boxResult[1] ||
           this.playersLogs[i].color === boxResult[2]
         ) {
-          this.lifePoints[i] = Number(this.lifePoints[i]) + 1;
+          this.imageAttack_ani[i].setVisible(true);
+
+          setTimeout(() => {
+            this.imageAttack_ani[i].setVisible(false);
+          }, 1000);
+
+          this.rotateAttack(i);
+          this.lifePoints[i] += 1;
         } else {
-          this.lifePoints[i] = Number(this.lifePoints[i]) - 1;
+          this.lifePoints[i] -= 1;
+
+          setTimeout(() => {
+            this.shakeDmg(i);
+          }, 700);
         }
 
         if (
@@ -280,7 +332,14 @@ export class Room extends Scene {
           (this.playersLogs[i].color === boxResult[1] &&
             this.playersLogs[i].color === boxResult[2])
         ) {
-          this.lifePoints[i] = Number(this.lifePoints[i]) + 1;
+          this.rotateAttack(i);
+          this.imageAttack_ani[i].setVisible(true);
+
+          setTimeout(() => {
+            this.imageAttack_ani[i].setVisible(false);
+          }, 1000);
+
+          this.lifePoints[i] += 1;
         }
 
         if (
@@ -288,32 +347,53 @@ export class Room extends Scene {
           this.playersLogs[i].color === boxResult[1] &&
           this.playersLogs[i].color === boxResult[2]
         ) {
-          this.lifePoints[i] = Number(this.lifePoints[i]) + 1;
+          this.rotateAttack(i);
+          this.lifePoints[i] += 1;
+
+          setTimeout(() => {
+            this.imageAttack_ani[i].setVisible(false);
+          }, 1000);
+
+          this.imageAttack_ani[i].setVisible(true);
         }
 
-        if (Number(this.lifePoints[i]) <= 0) {
-          this.lifePoints[i] = "NaN";
+        //Winners and Lossers
+        if (this.lifePoints[i] <= 0) {
+          this.lifePoints[i] = NaN;
           this.playersLogs[i].luck = 0;
-          this.playersLogs[i].name = "Eliminated";
-        } else if (Number(this.lifePoints[i]) >= 20) {
+          this.playersLogs[i].name = "Dead";
+          this.imageDead[i].setVisible(false);
+          this.skull[i].setTexture("skull").setVisible(true);
+          this.imageAttack_ani[i].destroy();
+        } else if (this.lifePoints[i] >= 30) {
+          //here Add to Recieve the WOK Prize to Transfer Wok Wallet
+
           setTimeout(() => {
             this.scene.pause();
-            // Fixed the destroy method - use stop() instead
-            this.scene.stop();
+            // Removing scene.destroy() as it doesn't exist on ScenePlugin
             setTimeout(() => {
+              // Don't store these in variables since they're not referenced later
               this.add.rectangle(
                 this.cameraX,
                 this.cameraY,
-                500,
+                560,
+                310,
+                0x000000,
+              );
+
+              this.add.rectangle(
+                this.cameraX,
+                this.cameraY,
+                550,
                 300,
-                0x161b22,
+                0xffffff,
               );
 
               this.add
                 .text(
                   this.cameraX,
                   this.cameraY - 100,
-                  ["TOTAL PRIZE = " + prizeWOK],
+                  ["TOTAL PRIZE = " + prizeWOK + " Wok"],
                   {
                     fontSize: "28px",
                     color: text_color,
@@ -336,55 +416,36 @@ export class Room extends Scene {
                 .setOrigin(0.5);
 
               this.add
-                .image(this.cameraX, this.cameraY, this.Img[i])
-                .setDisplaySize(100, 100);
+                .image(this.cameraX, this.cameraY, this.playersLogs[i].img)
+                .setDisplaySize(120, 120);
             }, 1000);
           }, 2000);
         }
       }
     };
-
     setTimeout(() => {
       setInterval(setColors, 3000);
     }, 3000);
 
     //Other Player
+    //This Code Dont Touch For maintenance only
     this.player_info_p = [
-      { x: this.cameraX - 210, y: this.cameraY + 270 },
-      { x: this.cameraX - 530, y: this.cameraY + 140 },
-      { x: this.cameraX + 400, y: this.cameraY + 140 },
-      { x: this.cameraX + 400, y: this.cameraY - 220 },
-      { x: this.cameraX - 530, y: this.cameraY - 220 },
-      { x: this.cameraX - 50, y: this.cameraY - 270 },
+      { x: this.cameraX - 590, y: this.cameraY - 70 },
+      { x: this.cameraX - 570, y: this.cameraY + 70 },
+      { x: this.cameraX - 300, y: this.cameraY + 220 },
+      { x: this.cameraX + 190, y: this.cameraY + 220 },
+      { x: this.cameraX + 460, y: this.cameraY + 70 },
+      { x: this.cameraX + 460, y: this.cameraY - 140 },
     ];
 
-    const player_info = [
-      { x: this.cameraX - 450, y: this.cameraY + 180, width: 220, height: 120 },
-      { x: this.cameraX - 450, y: this.cameraY + 180, width: 220, height: 120 },
-      { x: this.cameraX + 450, y: this.cameraY + 180, width: 220, height: 120 },
-      { x: this.cameraX + 450, y: this.cameraY - 180, width: 220, height: 120 },
-      { x: this.cameraX - 450, y: this.cameraY - 180, width: 220, height: 120 },
-      { x: this.cameraX + 20, y: this.cameraY - 240, width: 220, height: 120 },
+    this.player_ar = [
+      { x: this.cameraX - 360, y: this.cameraY - 100 },
+      { x: this.cameraX - 360, y: this.cameraY + 100 },
+      { x: this.cameraX - 90, y: this.cameraY + 260 },
+      { x: this.cameraX + 90, y: this.cameraY + 260 },
+      { x: this.cameraX + 360, y: this.cameraY + 100 },
+      { x: this.cameraX + 360, y: this.cameraY - 100 },
     ];
-
-    const player_ar = [
-      { x: this.cameraX - 530, y: this.cameraY + 140 },
-      { x: this.cameraX - 330, y: this.cameraY + 120 },
-      { x: this.cameraX + 330, y: this.cameraY + 120 },
-      { x: this.cameraX + 330, y: this.cameraY - 120 },
-      { x: this.cameraX - 330, y: this.cameraY - 120 },
-      { x: this.cameraX - 120, y: this.cameraY - 230 },
-    ];
-
-    for (let i = 1; i < this.playersLogs.length; i++) {
-      this.add.rectangle(
-        player_info[i].x,
-        player_info[i].y,
-        player_info[i].width,
-        player_info[i].height,
-        colorb1,
-      );
-    }
 
     this.text_value = [];
 
@@ -395,15 +456,15 @@ export class Room extends Scene {
 
         this.playersLogs[i].name +
           "\n" +
-          "LUCK - " +
-          this.playersLogs[i].luck +
+          "LM - " +
+          this.playersLogs[i].LM +
           "\n" +
-          "Life - " +
+          "LP - " +
           this.lifePoints[i],
 
         {
           fontSize: "24px",
-          color: "#fff",
+          color: text_color,
           fontStyle: "bold",
         },
       );
@@ -411,72 +472,284 @@ export class Room extends Scene {
       this.text_value.push(info_text);
     }
 
-    for (let i = 1; i < this.playersLogs.length; i++) {
+    for (let i = 0; i < this.playersLogs.length; i++) {
+      // Removed unused variable
       this.add.rectangle(
-        player_ar[i].x,
-        player_ar[i].y,
-        122,
-        122,
+        this.player_ar[i].x,
+        this.player_ar[i].y,
+        150,
+        150,
         this.playersLogs[i].color,
       );
 
-      this.add
-        .image(player_ar[i].x, player_ar[i].y, this.Img[i])
-        .setDisplaySize(100, 100);
+      const dead = this.add
+        .image(
+          this.player_ar[i].x,
+          this.player_ar[i].y,
+          this.playersLogs[i].img,
+        )
+        .setDisplaySize(140, 140)
+        .setVisible(false);
+
+      const images = this.add
+        .image(
+          this.player_ar[i].x,
+          this.player_ar[i].y,
+          this.playersLogs[i].img,
+        )
+        .setDisplaySize(140, 140);
+
+      const attack = this.add
+        .image(this.player_ar[i].x, this.player_ar[i].y, "sword")
+        .setDisplaySize(140, 140)
+        .setVisible(false);
+
+      this.imageShake.push({
+        image: images,
+        originalX: images.x,
+        originalY: images.y,
+      });
+
+      this.imageAttack.push({
+        image: attack,
+        originalX: attack.x,
+        originalY: attack.y,
+      });
+
+      this.imageAttack_ani.push(attack);
+
+      this.imageDead.push(images);
+
+      this.skull.push(dead);
     }
 
-    //Player Main Info
-    this.add.rectangle(
-      this.cameraX,
-      this.cameraY + 300,
-      this.cameraX - 150,
-      this.cameraY - 260,
-      colorb1,
-    );
-
+    //Player Main
     this.mainplayerinfo_text = this.add.text(
-      this.cameraX - 210,
-      this.cameraY + 270,
+      210,
+      0,
       [
         this.playersLogs[0].name +
-          " - LUCK " +
-          this.playersLogs[0].luck +
+          "\n - LUCK Multiplayer - " +
           this.lifePoints[0] +
           " LIFE POINTS",
       ],
       {
-        fontSize: "24px",
+        fontSize: "34px",
         color: text_color,
         fontStyle: "bold",
       },
     );
-
-    this.add.rectangle(
-      this.cameraX + 140,
-      this.cameraY + 250,
-      this.cameraX - 490,
-      this.cameraY - 220,
-      this.playersLogs[0].color,
-    );
-
+    this.add.rectangle(0, 0, 190, 190, this.playersLogs[0].color).setOrigin(0);
     this.add
-      .image(this.cameraX + 140, this.cameraY + 250, this.Img[0])
-      .setDisplaySize(115, 115);
+      .image(5, 5, this.playersLogs[0].img)
+      .setDisplaySize(180, 180)
+      .setOrigin(0);
 
-    // Connect to Leva GUI if it's enabled
-    this.setupLevaControlListeners();
+    const potionsbg = this.add
+      .rectangle(this.cameraX, this.cameraY + 340, 520, 370, 0x000000)
+      .setVisible(false);
 
-    EventBus.emit("current-scene-ready", this);
+    const potions = this.add
+      .rectangle(this.cameraX, this.cameraY + 340, 510, 360, 0xffffff)
+      .setVisible(false);
+
+    const potion_img1 = this.add
+      .image(this.cameraX - 100, this.cameraY + 300, "dpotion")
+      .setDisplaySize(140, 140)
+      .setInteractive()
+      .setVisible(false);
+    potion_img1.on("pointerdown", () => {
+      this.buttonClick1();
+    });
+
+    const potion_name_1 = this.add
+      .text(this.cameraX - 140, this.cameraY + 370, "Dpotion", {
+        fontSize: "24px",
+        color: "#000",
+        fontStyle: "bold",
+      })
+      .setVisible(false);
+
+    this.dpotion = this.add
+      .text(
+        this.cameraX - 70,
+        this.cameraY + 230,
+        "" + this.playersLogs[0].dpotion + "x",
+        {
+          fontSize: "42px",
+          color: "#000",
+          fontStyle: "bold",
+        },
+      )
+      .setVisible(false);
+
+    const potion_img2 = this.add
+      .image(this.cameraX + 100, this.cameraY + 300, "leppot")
+      .setDisplaySize(140, 140)
+      .setInteractive()
+      .setVisible(false);
+
+    potion_img2.on("pointerdown", () => {
+      potion_img2.disableInteractive();
+
+      if (isNaN(this.lifePoints[0])) {
+        potion_img2.disableInteractive();
+      } else {
+        this.buttonClick2();
+      }
+    });
+
+    this.leppot = this.add
+      .text(
+        this.cameraX + 150,
+        this.cameraY + 230,
+        "" + this.playersLogs[0].leppot + "x",
+        {
+          fontSize: "42px",
+          color: "#000",
+          fontStyle: "bold",
+        },
+      )
+      .setVisible(false);
+
+    const potion_name_2 = this.add
+      .text(this.cameraX + 60, this.cameraY + 370, "Leppot", {
+        fontSize: "24px",
+        color: "#000",
+        fontStyle: "bold",
+      })
+      .setVisible(false);
+
+    const bag = this.add
+      .image(this.cameraX + 540, canvasHeight - 100, "bag2")
+      .setDisplaySize(110, 120)
+      .setInteractive();
+
+    let isOpen = false;
+
+    bag.on("pointerdown", () => {
+      if (isOpen) {
+        bag.setTexture("bag2");
+        potions.setVisible(false);
+        potionsbg.setVisible(false);
+        potion_img1.setVisible(false);
+        potion_img2.setVisible(false);
+        potion_name_1.setVisible(false);
+        potion_name_2.setVisible(false);
+        this.leppot.setVisible(false);
+        this.dpotion.setVisible(false);
+      } else {
+        bag.setTexture("bag1");
+        potions.setVisible(true);
+        potionsbg.setVisible(true);
+        potion_img1.setVisible(true);
+        potion_img2.setVisible(true);
+        potion_name_1.setVisible(true);
+        potion_name_2.setVisible(true);
+        this.leppot.setVisible(true);
+        this.dpotion.setVisible(true);
+      }
+
+      isOpen = !isOpen;
+    });
   }
 
-  update(): void {}
+  buttonClick1() {
+    if (this.lifePoints[0] <= 5) {
+      const randomNumber = Math.random() < 0.7 ? -2 : 7;
 
-  // Add the setupLevaControlListeners method
-  setupLevaControlListeners() {
-    if (!this.levaControlsEnabled) return;
+      this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
 
-    // Here you would add your event listeners for Leva
-    // This is just a placeholder as the actual implementation will depend on your Leva integration
-    console.log("Leva control listeners set up");
+      if (this.playersLogs[0].dpotion >= 1) {
+        this.playersLogs[0].dpotion -= 1;
+      } else {
+        //Add Wallet here -- Price -- to buy Dpotion
+
+        alert("Buy Another One");
+      }
+    }
+  }
+
+  buttonClick2() {
+    if (this.playersLogs[0].LM >= 0) {
+      const Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10;
+
+      if (this.playersLogs[0].leppot >= 1) {
+        this.playersLogs[0].LM += Value;
+        this.playersLogs[0].leppot -= 1;
+        this.playersLogs[0].luck += Value;
+      } else {
+        //Add Wallet here -- Price -- to Buy leppot Potion
+
+        alert("Buy Another One?");
+      }
+    }
+  }
+
+  // Special Effect: Rotate Attack
+  rotateAttack(index: number) {
+    const imgData = this.imageAttack[index]; // Get stored image
+
+    // Prevent error if index is out of range
+    if (!imgData || !imgData.image) return;
+
+    this.tweens.add({
+      targets: imgData.image, // Apply tween to the image
+      angle: 360, // Rotate 360 degrees
+      duration: 500, // Duration of the full rotation
+      ease: "easeInOut", // Constant rotation speed
+    });
+  }
+
+  //Special Effects
+  shakeDmg(index: number) {
+    const imgData = this.imageShake[index]; // Get stored image and original position
+
+    // Prevent error if index is out of range
+    if (!imgData || !imgData.image) return;
+
+    this.tweens.add({
+      targets: imgData.image, // Fix: No "s"
+      x: imgData.originalX + Phaser.Math.Between(-5, 5), // Random X shake
+      y: imgData.originalY + Phaser.Math.Between(-5, 5), // Random Y shake
+      angle: Phaser.Math.Between(-5, 5), // Small rotation shake
+      alpha: 0.3,
+      duration: 50,
+      yoyo: true,
+      repeat: 3,
+      onComplete: () => {
+        imgData.image.x = imgData.originalX; // Reset X
+        imgData.image.y = imgData.originalY; // Reset Y
+        imgData.image.setAngle(0); // Reset rotation
+      },
+    });
+  }
+
+  update() {
+    this.mainplayerinfo_text.setText([
+      this.playersLogs[0].name +
+        "\nLUCK Multiplayer - " +
+        this.playersLogs[0].LM +
+        "\nLIFE POINTS - " +
+        this.lifePoints[0],
+    ]);
+
+    this.dpotion.setText(this.playersLogs[0].dpotion + "x");
+
+    this.leppot.setText(this.playersLogs[0].leppot + "x");
+
+    for (let i = 1; i < this.playersLogs.length; i++) {
+      if (this.text_value[i - 1]) {
+        this.text_value[i - 1].setText(
+          this.playersLogs[i].name +
+            "\n" +
+            "LM - " +
+            this.playersLogs[i].LM +
+            "\n" +
+            "LP - " +
+            this.lifePoints[i],
+        );
+      }
+    }
   }
 }

@@ -38,6 +38,11 @@ export class WaitingRoom extends Scene {
   playersReady: number = 0;
   playersReadyText!: GameObjects.Text;
 
+  // Add flag to track if UI is ready
+  private uiReady: boolean = false;
+  // Store players data until UI is ready
+  private pendingPlayersUpdate: Player[] | null = null;
+
   // players
   characterName!: GameObjects.Text;
   playerName!: GameObjects.Text;
@@ -70,6 +75,7 @@ export class WaitingRoom extends Scene {
     id: string;
     devil: number;
     leprechaun: number;
+    hp: number;
   };
   character!: {
     id: number;
@@ -92,7 +98,7 @@ export class WaitingRoom extends Scene {
     this.load.image("logo", "logo.png");
   }
 
-  init(data: {
+  async init(data: {
     roomID: string;
     user: { id: string; user_id: string; username: string };
     character: {
@@ -104,7 +110,7 @@ export class WaitingRoom extends Scene {
       color: string;
       luck?: number;
     };
-    potions: { id: string; devil: number; leprechaun: number };
+    potions: { id: string; devil: number; leprechaun: number; hp: number };
   }) {
     this.roomID = data.roomID;
     this.user = data.user;
@@ -138,17 +144,20 @@ export class WaitingRoom extends Scene {
       this.connectedPlayers = players.length;
 
       // Enable skip button if enough players
-      if (players.length > 2) {
-        if (this.skipButton) {
-          this.skipButton.setInteractive();
-        }
+      if (players.length > 1 && this.uiReady && this.skipButton) {
+        this.skipButton.setInteractive();
       }
 
-      // Update current player information
-      this.updatePlayerInfo(players);
-
-      // Update opponents information
-      this.updateOpponentInfo(players);
+      // Store players data or update UI if ready
+      if (this.uiReady) {
+        // Update current player information
+        this.updatePlayerInfo(players);
+        // Update opponents information
+        this.updateOpponentInfo(players);
+      } else {
+        console.log("UI not ready yet, storing player data for later");
+        this.pendingPlayersUpdate = players;
+      }
     });
 
     // Listen for player left events
@@ -174,9 +183,20 @@ export class WaitingRoom extends Scene {
         );
       },
     );
+
+    this.socket.on("proceedToGame", (room: string) => {
+      console.log("Proceeding to game room...");
+      this.scene.start("Room", { room });
+    });
   }
 
   updatePlayerInfo(players: Player[]) {
+    // Only update if UI is ready
+    if (!this.uiReady) {
+      console.log("UI not ready, can't update player info yet");
+      return;
+    }
+
     // Find the current player in the players array
     const currentPlayer = players.find(
       (player) => player.socketID === this.socket.id,
@@ -186,32 +206,42 @@ export class WaitingRoom extends Scene {
       console.log("Current player information:", currentPlayer);
 
       // Add null checks for all properties
-      if (currentPlayer.character) {
+      if (currentPlayer.character && this.characterName) {
         this.characterName.setText(currentPlayer.character.name || "Unknown");
 
         // Set character texture if sprite exists
-        if (currentPlayer.character.sprite) {
+        if (currentPlayer.character.sprite && this.characterImage1) {
           this.characterImage1
             .setTexture(currentPlayer.character.sprite)
             .setAlpha(1);
         }
 
         // Update box color if color exists
-        if (currentPlayer.character.color) {
+        if (currentPlayer.character.color && this.playerBox) {
           this.updateBoxColor(this.playerBox, currentPlayer.character.color);
         }
       }
 
       // Set username with null check
-      if (currentPlayer.user && currentPlayer.user.username) {
+      if (
+        currentPlayer.user &&
+        currentPlayer.user.username &&
+        this.playerName
+      ) {
         this.playerName.setText(currentPlayer.user.username);
-      } else {
+      } else if (this.playerName) {
         this.playerName.setText("(Unknown Player)");
       }
     }
   }
 
   updateOpponentInfo(players: Player[]) {
+    // Only update if UI is ready
+    if (!this.uiReady) {
+      console.log("UI not ready, can't update opponent info yet");
+      return;
+    }
+
     // Filter out the current player to get opponents
     const otherPlayers = players.filter(
       (player) => player.socketID !== this.socket.id,
@@ -250,32 +280,41 @@ export class WaitingRoom extends Scene {
 
     // Reset all opponent slots first
     for (let i = 0; i < opponentBoxes.length; i++) {
-      opponentNames[i].setText("(Player Name)");
-      oppCharacterNames[i].setText("Character Name");
-      characterImages[i].setAlpha(0);
-      opponentBoxes[i].setStrokeStyle(4, 0xa9a9a9);
+      if (
+        opponentNames[i] &&
+        oppCharacterNames[i] &&
+        characterImages[i] &&
+        opponentBoxes[i]
+      ) {
+        opponentNames[i].setText("(Player Name)");
+        oppCharacterNames[i].setText("Character Name");
+        characterImages[i].setAlpha(0);
+        opponentBoxes[i].setStrokeStyle(4, 0xa9a9a9);
+      }
     }
 
     // Update with new opponent information
     otherPlayers.forEach((player, index) => {
       if (index < opponentBoxes.length) {
         // Add null checks for all properties
-        if (player.user) {
+        if (player.user && opponentNames[index]) {
           opponentNames[index].setText(player.user.username || "(Player Name)");
         }
 
         if (player.character) {
-          oppCharacterNames[index].setText(
-            player.character.name || "Character Name",
-          );
+          if (oppCharacterNames[index]) {
+            oppCharacterNames[index].setText(
+              player.character.name || "Character Name",
+            );
+          }
 
-          if (player.character.sprite) {
+          if (player.character.sprite && characterImages[index]) {
             characterImages[index]
               .setTexture(player.character.sprite)
               .setAlpha(1);
           }
 
-          if (player.character.color) {
+          if (player.character.color && opponentBoxes[index]) {
             this.updateBoxColor(opponentBoxes[index], player.character.color);
           }
         }
@@ -510,7 +549,7 @@ export class WaitingRoom extends Scene {
       .on("pointerdown", () => {
         console.log("Ready button clicked by: " + this.socket.id);
 
-        this.socket.emit("playerReady", this.roomID, this.socket.id);
+        this.socket.emit("playerVotedSkip", this.roomID);
 
         this.skipButton.destroy();
         skipText.destroy();
@@ -552,13 +591,16 @@ export class WaitingRoom extends Scene {
       })
       .setOrigin(0.5, 0.5);
 
-    // +---------------------------+
-    // |     CREATE UI ELEMENTS    |
-    // +---------------------------+
+    // Mark UI as ready
+    this.uiReady = true;
 
-    // ... existing UI creation code...
-
-    // Don't set up socket listeners here to avoid duplication
+    // If we have pending player updates, process them now
+    if (this.pendingPlayersUpdate) {
+      console.log("Processing pending player updates now that UI is ready");
+      this.updatePlayerInfo(this.pendingPlayersUpdate);
+      this.updateOpponentInfo(this.pendingPlayersUpdate);
+      this.pendingPlayersUpdate = null;
+    }
 
     EventBus.emit("current-scene-ready", this);
   }
