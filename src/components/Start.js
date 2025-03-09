@@ -624,7 +624,7 @@ export class Start extends Phaser.Scene {
   buttonClick1() {
         
     if (this.lifePoints[0] <= 5) {
-        let randomNumber = Math.random() < 0.7 ? -2 : 7;
+        let randomNumber = Math.random() < 0.5 ? -2 : 7;
 
         this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
         
