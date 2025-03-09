@@ -519,20 +519,17 @@ export class Start extends Phaser.Scene {
   
   buttonClick2() {
         
-       
-            
             if (this.playersLogs[0].LM >= 0) {
                 
                 var Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10
+
                 if (this.playersLogs[0].leppot >= 1) {
                
                this.playersLogs[0].LM += Value
                 this.playersLogs[0].leppot -= 1
                 this.playersLogs[0].luck += Value
-                    
-                }else if (this.playersLogs[0].LM >= 1) {
-                    
-                    alert("1 time only")
+
+                this.potion_img2.removeInteractive()
                     
                 } else {
                     
@@ -540,11 +537,8 @@ export class Start extends Phaser.Scene {
                     
                     alert("Buy Another One")
                     
-                }
-                
-                
-                
-                
+                }  
+                     
             }
            
         
