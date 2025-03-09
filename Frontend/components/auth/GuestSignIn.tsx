@@ -7,7 +7,7 @@ const GuestSignIn = () => {
   return (
     <Button
       className="w-full"
-      variant="outline"
+      variant="default"
       onClick={() => {
         console.log("Guest sign in");
         guestSignInAction();

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 const MainGame = async () => {
   const session = await auth();
   if (!session) {
-    redirect("/signIn");
+    redirect("/");
   } else {
     console.log("Session found at /MainGame");
     console.log(session);

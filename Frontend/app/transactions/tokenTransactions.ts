@@ -1,14 +1,23 @@
 import { ethers } from "ethers";
-import { getSigner, getProvider } from "@/utils/ethersProvider";
+// import { getSigner, getProvider } from "@/utils/ethersProvider";
+import { getSigner } from "@/utils/ethersProvider";
 import { getTokenContract } from "@/utils/tokencontract";
-import { mintNFT } from "./nftTransactions";
-export const sendTokens = async (recipient: string, amount: string, walletAddress: string, fetchBalance: (address: string) => void) => {
+// import { mintNFT } from "./nftTransactions";
+export const sendTokens = async (
+  recipient: string,
+  amount: string,
+  walletAddress: string,
+  fetchBalance: (address: string) => void,
+) => {
   try {
     const signer = await getSigner();
     const contract = getTokenContract(signer);
-    const tx = await contract.transfer(recipient, ethers.parseUnits(amount, 18));
+    const tx = await contract.transfer(
+      recipient,
+      ethers.parseUnits(amount, 18),
+    );
     await tx.wait();
-    
+
     alert("Transaction Successful!");
     fetchBalance(walletAddress);
   } catch (error) {
@@ -17,8 +26,12 @@ export const sendTokens = async (recipient: string, amount: string, walletAddres
   }
 };
 
-export const buyCharacter = async (amount: string, walletAddress: string, fetchBalance: (address: string) => void) => {
-  console.log(amount,walletAddress,fetchBalance(walletAddress))
+export const buyCharacter = async (
+  amount: string,
+  walletAddress: string,
+  fetchBalance: (address: string) => void,
+) => {
+  console.log(amount, walletAddress, fetchBalance(walletAddress));
   try {
     if (!walletAddress) throw new Error("Wallet not connected");
     const devWallet = process.env.NEXT_PUBLIC_WALLET_ADDRESS;
@@ -26,13 +39,15 @@ export const buyCharacter = async (amount: string, walletAddress: string, fetchB
 
     const signer = await getSigner();
     const contract = getTokenContract(signer);
-    const tx = await contract.transfer(devWallet, ethers.parseUnits(amount, 18));
+    const tx = await contract.transfer(
+      devWallet,
+      ethers.parseUnits(amount, 18),
+    );
     await tx.wait();
 
     alert("Character purchased successfully!");
-
   } catch (error) {
-    console.log(fetchBalance(walletAddress))
+    console.log(fetchBalance(walletAddress));
     console.error("Character purchase failed:", error);
     alert("Character purchase failed!");
   }
@@ -51,7 +66,7 @@ export const buyCharacter = async (amount: string, walletAddress: string, fetchB
 
 //     const signer = await getSigner();
 //     const tokenContract = getTokenContract(signer);
-    
+
 //     // Step 1: Transfer tokens
 //     const tx1 = await tokenContract.transfer(devWallet, ethers.parseUnits(amount, 18));
 //     await tx1.wait();
@@ -60,7 +75,7 @@ export const buyCharacter = async (amount: string, walletAddress: string, fetchB
 //     // Step 2: Mint NFT immediately after payment
 //     console.log("Minting NFT...");
 //     await mintNFT(walletAddress, metadataURI);
-    
+
 //     alert("Character purchased and NFT minted successfully!");
 //     fetchBalance(walletAddress);
 //   } catch (error) {
@@ -68,4 +83,3 @@ export const buyCharacter = async (amount: string, walletAddress: string, fetchB
 //     alert("Transaction failed!");
 //   }
 // };
-

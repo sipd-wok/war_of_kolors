@@ -3,35 +3,37 @@
 import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
 import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface MetaMaskSignInProps {
   setWalletConnected: (connected: boolean) => void;
 }
 
-const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({ setWalletConnected }) => {
+const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
+  setWalletConnected,
+}) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const checkIfWalletIsConnected = async () => {
-      if (typeof window !== "undefined" && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({
-            method: "eth_accounts",
-          });
+  // useEffect(() => {
+  //   const checkIfWalletIsConnected = async () => {
+  //     if (typeof window !== "undefined" && window.ethereum) {
+  //       try {
+  //         const accounts = await window.ethereum.request({
+  //           method: "eth_accounts",
+  //         });
 
-          if (accounts && accounts.length > 0) {
-            await connectWallet();
-          }
-        } catch (error) {
-          console.error("Error checking wallet connection:", error);
-        }
-      }
-    };
+  //         if (accounts && accounts.length > 0) {
+  //           await connectWallet();
+  //         }
+  //       } catch (error) {
+  //         console.error("Error checking wallet connection:", error);
+  //       }
+  //     }
+  //   };
 
-    checkIfWalletIsConnected();
-  }, []);
+  //   checkIfWalletIsConnected();
+  // }, []);
 
   const connectWallet = async () => {
     setIsConnecting(true);
@@ -58,9 +60,12 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({ setWalletConnected }) =
 
       const address = accounts[0];
       console.log("Connected address:", address);
-      setWalletConnected(true)
+      setWalletConnected(true);
       // Now call the server action with the wallet address
       await metaMaskSignInAction(address);
+
+      // Reload the page after successful connection
+      window.location.reload();
     } catch (error) {
       console.error("Error connecting to wallet:", error);
     } finally {

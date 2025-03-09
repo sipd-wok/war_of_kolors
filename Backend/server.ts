@@ -22,7 +22,7 @@ const PlayersWaitingRooms: PlayerRoom[] = [];
 // Create express app
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors()); // kilanglan mo ni ang cors
 
 // Create HTTP server with Express
 const server = http.createServer(app);
@@ -30,7 +30,7 @@ const server = http.createServer(app);
 // Create Socket.IO server using the HTTP server
 const io = new Server(server, {
   cors: {
-    origin: "*", // change this to the frontend URL kng mag deploy na
+    origin: "*", // frontend url ex localhost: 3000
     methods: ["GET", "POST"],
   },
 });

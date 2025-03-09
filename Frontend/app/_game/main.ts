@@ -1,9 +1,6 @@
 "use client";
 
 import { Boot } from "./_scenes/Boot";
-import { GameOver } from "./_scenes/GameOver";
-import { GameOver2 } from "./_scenes/GameOver2";
-import { Game as MainGame } from "./_scenes/Game";
 import { MainMenu } from "./_scenes/MainMenu";
 import { AUTO, Game } from "phaser";
 import { Preloader } from "./_scenes/Preloader";
@@ -17,17 +14,14 @@ import { Shop } from "./_scenes/Shop";
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
-  width: 1024,
-  height: 768,
+  width: window.visualViewport?.width || 1024,
+  height: window.visualViewport?.height || 768,
   parent: "game-container",
   backgroundColor: "#028af8",
   scene: [
     Boot,
     Preloader,
     MainMenu,
-    MainGame,
-    GameOver,
-    GameOver2,
     Room,
     RoomList,
     WaitingRoom,
@@ -36,7 +30,10 @@ const config: Phaser.Types.Core.GameConfig = {
   ],
 };
 
-const StartGame = (parent: string, buyCharacter: (amount: string) => Promise<void>) => {
+const StartGame = (
+  parent: string,
+  buyCharacter: (amount: string) => Promise<void>,
+) => {
   const game = new Game({ ...config, parent });
 
   // Store buyCharacter in the game registry so scenes can access it
@@ -46,4 +43,3 @@ const StartGame = (parent: string, buyCharacter: (amount: string) => Promise<voi
 };
 
 export default StartGame;
-

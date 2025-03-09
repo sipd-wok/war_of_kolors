@@ -183,30 +183,30 @@ export class Room extends Scene {
       loop: true,
     });
 
-    // this.slash = this.add
-    //   .image(this.cameraX, this.cameraY, "slash")
-    //   .setDisplaySize(800, 800)
-    //   .setAlpha(0.8); // Start with slightly transparent
+    this.slash = this.add
+      .image(this.cameraX, this.cameraY, "slash")
+      .setDisplaySize(800, 800)
+      .setAlpha(0.8); // Start with slightly transparent
 
-    // this.time.addEvent({
-    //   delay: 600,
-    //   callback: () => {
-    //     // Create a diagonal slashing animation from top-right to bottom-left
-    //     // Position at top-right of screen
-    //     this.slash.setPosition(this.cameraX + 400, this.cameraY - 800);
+    this.time.addEvent({
+      delay: 600,
+      callback: () => {
+        // Create a diagonal slashing animation from top-right to bottom-left
+        // Position at top-right of screen
+        this.slash.setPosition(this.cameraX + 400, this.cameraY - 800);
 
-    //     this.tweens.add({
-    //       targets: this.slash,
-    //       x: this.cameraX - 500, // Move to bottom-left
-    //       y: this.cameraY + 800,
-    //       alpha: 1, // Fade in during slash
-    //       scale: { from: 2, to: 1.5 },
-    //       duration: 500,
-    //       ease: "Power2",
-    //     });
-    //   },
-    //   loop: true,
-    // });
+        this.tweens.add({
+          targets: this.slash,
+          x: this.cameraX - 500, // Move to bottom-left
+          y: this.cameraY + 800,
+          alpha: 1, // Fade in during slash
+          scale: { from: 2, to: 1.5 },
+          duration: 500,
+          ease: "Power2",
+        });
+      },
+      loop: true,
+    });
 
     let count = 5;
 

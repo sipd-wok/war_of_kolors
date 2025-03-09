@@ -3,8 +3,8 @@
 import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import type { IRefPhaserGame } from "../_game/PhaserGame";
-import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
+// import { Button } from "@/components/ui/button";
+// import { signOut } from "next-auth/react";
 import { setGlobalState } from "../_game/globalState";
 import { WalletProvider } from "@/context/WalletContext";
 
@@ -28,21 +28,23 @@ export default function GameClient(props: {
       user_id: props.user_id,
       username: props.username,
     });
+
+    console.log();
   }, [props.user_id, props.username]);
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  // const handleSignOut = async () => {
+  //   await signOut();
+  // };
 
   return (
     <WalletProvider>
       <div id="app" className="relative">
-        <div className="absolute top-0 left-0 z-50">
+        {/* <div className="absolute top-0 left-0 z-50">
           <p>{props.username}</p>
           <Button className="w-full" variant="outline" onClick={handleSignOut}>
             Sign Out
           </Button>
-        </div>
+        </div> */}
         <PhaserGame ref={phaserRef} />
       </div>
     </WalletProvider>

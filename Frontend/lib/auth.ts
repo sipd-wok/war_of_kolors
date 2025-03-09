@@ -90,6 +90,7 @@ export const { auth, signIn, handlers } = NextAuth({
   callbacks: {
     // amo na d ang makita sa client side
     async jwt({ token, user, account }) {
+      // If this is a sign-in, add the user data to the token
       if (account?.provider === "credentials") {
         token.credentials = true;
         // Add user data to the token if available
@@ -99,6 +100,22 @@ export const { auth, signIn, handlers } = NextAuth({
           token.role_id = user.role_id;
         }
       }
+
+      // On every token refresh, get the latest user data from the database
+      if (token.user_id) {
+        // Get the latest user data from the database
+        const { data, error } = await supabase
+          .from("users_tbl")
+          .select("username")
+          .eq("user_id", token.user_id)
+          .single();
+
+        if (data && !error) {
+          // Update the token with the latest username
+          token.username = data.username;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
