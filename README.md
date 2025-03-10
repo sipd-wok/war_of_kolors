@@ -1,138 +1,162 @@
-# War of Kolors (WOK)
-
-## Overview
+# War of Kolors on Core Blockchain
 
 War of Kolors (WOK) is a blockchain-based, play-to-earn (P2E) game inspired by the traditional Pinoy color game. It integrates NFTs, decentralized finance (DeFi), and gaming mechanics to create an engaging battle experience where players use Champions to compete in the War Arena and earn rewards.
 
-### Vision
-
+Vision
 To revolutionize blockchain gaming by blending strategy, luck, and decentralized ownership.
 
-### Mission
-
+Mission
 To provide a fair, transparent, and rewarding gaming experience where players truly own their assets and can earn while playing.
 
-## Blockchain Information
+## Table of Contents
 
-### Core Testnet
+- [War of Kolors on Core Blockchain](#war-of-kolors-on-core-blockchain)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Project Structure](#project-structure)
+  - [Setup Instructions](#setup-instructions)
+  - [Running the Application](#running-the-application)
+  - [Interacting with the dApp](#interacting-with-the-dapp)
+  - [Backend Overview](#backend-overview)
+  - [Frontend Overview](#frontend-overview)
 
-- **Network Name:** Core Blockchain TestNet
-- **RPC URL:** https://rpc.test2.btcs.network
-- **Chain ID:** 1114
-- **Currency Symbol:** tCORE2
-- **Block Explorer URL:** https://scan.test2.btcs.network
+## Prerequisites
 
-### Deployed Smart Contracts
+Before you begin, ensure you have the following installed:
 
-- **NFT Contract Address:** `0xdda26c76f22219489e25fdf3861a3031c457892d`
-- **Token Contract Address:** `0x6EE3DdE20B0982f12232616B7EB84c11e353DBaA`
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [npm](https://www.npmjs.com/) or [Yarn](https://yarnpkg.com/)
+- [MetaMask](https://metamask.io/) browser extension
+- Basic understanding of Ethereum smart contracts and React
 
-## Game Mechanics
+## Project Structure
 
-### Champion Acquisition
+The repository is organized as follows:
 
-1. Go to the Marketplace section
-2. Browse available Doors containing Champions
-3. Select a Door (Bronze, Silver, Gold, or Rainbow)
-4. Each Door assigns a random color when opened: Red, Blue, Green, White, Yellow, or Pink
-5. Each Door provides a Luck Multiplier:
-   - **Bronze:** 0.01 - 0.05 (Price: 10,000 $WOK)
-   - **Silver:** 0.05 - 0.1 (Price: 20,000 $WOK)
-   - **Gold:** 0.1 - 0.15 (Price: 30,000 $WOK)
-   - **Rainbow:** 0.1 - 0.15 (Price: 50,000 $WOK)
-6. Complete purchase using $WOK tokens
+- `Backend/`: Express.js application for the game's frontend.
+- `Frontend/`: Next.js application for the game's frontend.
 
-### Battle System
+## Setup Instructions
 
-1. **Enter the War Arena:**
+1. **Clone the Repository**
 
-   - Go to the Battle Section
-   - Click on "War Rooms" to join a battle
+   ```bash
+   https://github.com/sipd-wok/war_of_kolors.git
+   cd war_of_kolors
+   ```
 
-2. **Select Your Champion:**
+2. **Install Dependencies**
 
-   - Pick a Champion from your inventory
+   Nvigate to the `Backend` directory and install its dependencies:
 
-3. **Join a Free-for-All Match:**
+   ```bash
+   cd Backend
+   npm install
+   ```
 
-   - Each match includes six Champions, one per color
-   - A fee in $WOK may be required for entry
+   ````
 
-4. **Battle Mechanics:**
+   Then, navigate to the `Frontend` directory and install its dependencies:
 
-   - Each Champion's stats start at 10 health
-   - When your color appears, your health increases by +1
-   - When your color does not appear, your health decreases by -1
-   - The first Champion to reach 15 health wins all bets
-   - If a Champion's life reaches 0, they are disqualified (DQ)
+   ```bash
+    # Navigate to the Frontend directory and install dependencies.
 
-5. **Power-Ups:**
+    # 1.  Make sure you are in the 'war_of_kolors' project root.
+    #     If you are not, navigate there first.
+    #     You can check your current directory with:
+    pwd  # (Linux/macOS)  or  cd  # (Windows) - without arguments
 
-   - Players can buy a Luck Potion to increase their chances of winning
+    # 2.  If you are already inside the 'Frontend' directory, go up one level:
+    #     (Only do this step if you are INSIDE 'Backend' or 'war_of_kolors/Backend')
+    cd ..
 
-6. **Claim Your Rewards:**
-   - Winners receive $WOK and in-game items
-   - Rewards can be used for upgrades or withdrawn
+    # 3. Go into the 'Frontend' directory:
+    cd Frontend
 
-### Marketplace
+    # 4. Install the project's dependencies:
+    npm install
+   ````
 
-- A decentralized marketplace allows players to buy, sell, and trade Champions, skins, and upgrades
-- Prices are set in $WOK tokens, creating an in-game economy
+## Running the Application
 
-### Staking & Rewards
+1. **Start the Backend Application**
 
-- Players can stake $WOK tokens for passive income
-- Winning battles grants $WOK rewards, NFT skins, and power-ups
+   1. Navigate to the `Backend` directory and build the Nextjs application:
 
-## Blockchain & Tokenomics
+   ```bash
+   cd Backend
+   npm start
+   ```
 
-### Token ($WOK) Utility
+   The application will be available at `http://localhost:3000`.
 
-- **Marketplace transactions:** Used to buy/sell Champions and skins
-- **Battle entry fees & rewards:** Earned through battles
-- **Staking:** Users can stake for long-term rewards
+2. **Start the Frontend Application**
 
-### Token Distribution
+   1. Open new terminal. (Do not close or stop the terminal that's running the Backend)
 
-| Category                 | Allocation |
-| ------------------------ | ---------- |
-| Play-to-Earn Rewards     | 40%        |
-| Development & Operations | 20%        |
-| Staking & Liquidity      | 15%        |
-| Team & Advisors          | 10%        |
-| Marketing & Partnerships | 10%        |
-| Community & Airdrops     | 5%         |
+   2. Navigate to the `Frontend` directory and build the Nextjs application:
 
-## Roadmap
+   ```bash
+   # Make sure that you are in the war_of_kolors directory first
+   cd Frontend
+   npm run build
+   ```
 
-### Phase 1: Game Concept & Development
+   3. Start the Nextjs application:
 
-- Game mechanics design
-- Smart contract development
+   ```bash
+   npm start
+   ```
 
-### Phase 2: Alpha & Beta Testing
+   The application will be available at `http://localhost:3010`.
 
-- Closed alpha release
-- Community beta testing
+## Interacting with the dApp
 
-### Phase 3: Public Launch & Marketplace
+1. **Connect Wallet**
 
-- Official launch
-- NFT marketplace activation
+   - Open the application in your browser.
+   - Click on the "Connect Wallet" button.
+   - Approve the connection in your MetaMask extension.
 
-### Phase 4: Staking & Future Upgrades
+2. **Champion Acquisition**
+   -Go to the Marketplace.
+   -Click on the Marketplace section.
+   -Browse available Doors containing Champions.
+   -Select a Door ( Choose from Bronze, Silver, Gold, or Rainbow.)
+   -Each Door assigns a random color when opened: Red, Blue, Green, White, Yellow, or Pink.
+   -Each Door also provides a Luck Multiplier:
+   -Bronze: 0.01 - 0.05 (Price: 10,000 $WOK)
+   -Silver: 0.05 - 0.1 (Price: 20,000 $WOK)
+   -Gold: 0.1 - 0.15 (Price: 30,000 $WOK)
+   -Rainbow: 0.1 - 0.15 (Price: 50,000 $WOK)
+   -Purchase Using $WOK
+   -Battle System
+   -Go to the Battle Section
 
-- Staking system implementation
-- Expansion of game features
+3. **Join Room**
 
-## Security & Fairness
+   - Click "Create Room" to create room.
+   - Click "Join Room" to join room.
+   - _NOTE: The game needs at least 2 players to proceed. You can open another browser and connect another wallet to play multiplayer._
 
-- Smart contracts are audited to ensure transparency and fairness
-- Anti-cheating mechanisms are implemented
-- Provably fair mechanics through blockchain randomization
+4. **Main Gameplay Mechanics**
 
-## Conclusion
+   -Each match includes six Champions, one per color.
+   -A fee in $WOK may be required for entry.
+   -Battle Mechanics
+   -Each Champion's stats start at 10.
+   -When your color appears, your health increase by +1.
+   -When your color does not appear, your health decrease by -1.
+   -The first Champion to reach 15 health wins all bets.
+   -If a Champion’s life reaches 0, they are disqualified (DQ).
+   -Luck Potion
+   -Winners receive $WOK and in-game items.
+   -Rewards can be used for upgrades or withdrawn.
 
-War of Kolors combines blockchain technology with engaging gameplay, creating a unique NFT-based battle game. With $WOK token utility, decentralized ownership, and a play-to-earn model, the game aims to be a leading force in blockchain gaming.
+## Backend Overview
 
-**Join the War!**
+The backend is built with Express.js and is located in the `Backend` directory.
+
+## Frontend Overview
+
+The frontend is built with Nextjs and is located in the `Frontend` directory. It interacts with the wallet using the ethers.js library and provides a user-friendly interface for players. The main game is powered by Phaser.
