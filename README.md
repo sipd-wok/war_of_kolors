@@ -54,8 +54,6 @@ The repository is organized as follows:
    npm install
    ```
 
-   ````
-
    Then, navigate to the `Frontend` directory and install its dependencies:
 
    ```bash
@@ -119,6 +117,7 @@ The repository is organized as follows:
    - Approve the connection in your MetaMask extension.
 
 2. **Champion Acquisition**
+   
    -Go to the Marketplace.
    -Click on the Marketplace section.
    -Browse available Doors containing Champions.
@@ -133,13 +132,13 @@ The repository is organized as follows:
    -Battle System
    -Go to the Battle Section
 
-3. **Join Room**
-
+4. **Join Room**
+   
    - Click "Create Room" to create room.
    - Click "Join Room" to join room.
    - _NOTE: The game needs at least 2 players to proceed. You can open another browser and connect another wallet to play multiplayer._
 
-4. **Main Gameplay Mechanics**
+6. **Main Gameplay Mechanics**
 
    -Each match includes six Champions, one per color.
    -A fee in $WOK may be required for entry.
