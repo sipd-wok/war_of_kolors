@@ -86,6 +86,8 @@ export class WaitingRoom extends Scene {
     color: string;
     luck?: number;
   };
+  votesText!: GameObjects.Text;
+  neededVotes!: number;
 
   constructor() {
     super("WaitingRoom");
@@ -117,7 +119,7 @@ export class WaitingRoom extends Scene {
     this.character = data.character;
     this.potions = data.potions;
 
-    this.socket = io(process.env.SOCKET_HOST || "http://localhost:3000");
+    this.socket = io("localhost:3000");
 
     this.socket.on("connect", () => {
       console.log("Connected with ID:", this.socket.id);
@@ -146,6 +148,7 @@ export class WaitingRoom extends Scene {
       // Enable skip button if enough players
       if (players.length > 1 && this.uiReady && this.skipButton) {
         this.skipButton.setInteractive();
+        this.votesText.setAlpha(1);
       }
 
       // Store players data or update UI if ready
@@ -187,6 +190,23 @@ export class WaitingRoom extends Scene {
     this.socket.on("proceedToGame", (room: string) => {
       console.log("Proceeding to game room...");
       this.scene.start("Room", { room });
+    });
+
+    this.socket.on("updateVotes", (votes: number) => {
+      console.log("Votes to skip now: ", votes);
+      this.neededVotes = this.connectedPlayers || 2;
+      this.votesText.setText(
+        `Need ${votes}/${this.neededVotes} to skip waiting.`,
+      );
+    });
+
+    // Add listener for playerVotedSkip event from server
+    this.socket.on("playerVotedSkip", (votes: number) => {
+      console.log("Received playerVotedSkip event with votes: ", votes);
+      this.neededVotes = this.connectedPlayers || 2;
+      this.votesText.setText(
+        `Need ${votes}/${this.neededVotes} to skip waiting.`,
+      );
     });
   }
 
@@ -549,7 +569,13 @@ export class WaitingRoom extends Scene {
       .on("pointerdown", () => {
         console.log("Ready button clicked by: " + this.socket.id);
 
-        this.socket.emit("playerVotedSkip", this.roomID);
+        this.socket.emit("playerVotedSkip", this.roomID, (votes: number) => {
+          console.log("Votes to skip now: ", votes);
+          this.neededVotes = this.connectedPlayers || 2;
+          this.votesText.setText(
+            `Need ${votes}/${this.neededVotes} to skip waiting.`,
+          );
+        });
 
         this.skipButton.destroy();
         skipText.destroy();
@@ -568,8 +594,8 @@ export class WaitingRoom extends Scene {
       })
       .setOrigin(0.5);
     const votesToSkip = 0;
-    const neededVotes = this.connectedPlayers - 1 || 2;
-    this.add
+    const neededVotes = this.connectedPlayers || 2;
+    this.votesText = this.add
       .text(
         canvasWidth / 2,
         canvasHeight - 120,

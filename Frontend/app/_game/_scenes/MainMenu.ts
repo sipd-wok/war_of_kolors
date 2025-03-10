@@ -50,7 +50,7 @@ export class MainMenu extends Scene {
   constructor() {
     super("MainMenu");
 
-    this.socket = io(process.env.SOCKET_HOST || "http://localhost:3000");
+    this.socket = io("localhost:3000");
   }
 
   private updateCharacterBasedUI() {

@@ -58,11 +58,22 @@ export class Room extends Phaser.Scene {
 
     //Wok Buttons
     this.load.image("whitesrc", "whitesqr.png");
+
+    //Dice
+    this.load.image("blueDice", "../img/blueDice.png");
+    this.load.image("greenDice", "../img/greenDice.png");
+    this.load.image("pinkDice", "../img/pinkDice.png");
+    this.load.image("redDice", "../img/redDice.png");
+    this.load.image("whiteDice", "../img/whiteDice.png");
+    this.load.image("yellowDice", "../img/yellowDice.png");
+    this.load.image("loadDice", "../img/load.png");
   }
 
   // init(data) {}
 
   create() {
+    this.sound.add("ambiance", { loop: true }).stop();
+    this.sound.add("action", { loop: true }).play();
     //Responsive
     this.cameraX = this.cameras.main.width / 2;
     this.cameraY = this.cameras.main.height / 2;
@@ -77,7 +88,7 @@ export class Room extends Phaser.Scene {
       {
         name: "Player 1",
         color: 0xff0000,
-        luck: 1,
+        luck: 6,
         bet: 2000,
         img: "red",
         LM: 0,
@@ -153,12 +164,12 @@ export class Room extends Phaser.Scene {
 
     //6 Collors
     const defualtColor = [
-      { color: 0xff0000 },
-      { color: 0xffff00 },
-      { color: 0x00ff00 },
-      { color: 0xffffff },
-      { color: 0x0000ff },
-      { color: 0xff00ff },
+      { color: 0xff0000, img: "redDice" },
+      { color: 0xffff00, img: "yellowDice" },
+      { color: 0x00ff00, img: "greenDice" },
+      { color: 0xffffff, img: "whiteDice" },
+      { color: 0x0000ff, img: "blueDice" },
+      { color: 0xff00ff, img: "pinkDice" },
     ];
 
     // Main Board && GamePlay System && Rules
@@ -232,31 +243,6 @@ export class Room extends Phaser.Scene {
       loop: true,
     });
 
-    //Box Dice...
-    const box1 = this.add.rectangle(
-      this.cameraX - 130,
-      this.cameraY,
-      120,
-      120,
-      this.playersLogs[0].color,
-    );
-
-    const box2 = this.add.rectangle(
-      this.cameraX,
-      this.cameraY,
-      120,
-      120,
-      this.playersLogs[0].color,
-    );
-
-    const box3 = this.add.rectangle(
-      this.cameraX + 130,
-      this.cameraY,
-      120,
-      120,
-      this.playersLogs[0].color,
-    );
-
     //LUCK Formula Dont Touch !!!
     const totalLuck = this.playersLogs.reduce(
       (sum, player) => sum + player.luck,
@@ -271,12 +257,25 @@ export class Room extends Phaser.Scene {
       for (let i = 0; i < this.playersLogs.length; i++) {
         cumu += (this.playersLogs[i].luck / totalLuck) * 100;
         if (random < cumu) {
-          return defualtColor[i].color;
+          return defualtColor[i];
         }
       }
 
-      return defualtColor[0].color;
+      return defualtColor[0];
     };
+
+    //Box Dice...
+    const box1 = this.add
+      .image(this.cameraX - 130, this.cameraY, defualtColor[0].img)
+      .setDisplaySize(120, 120);
+
+    const box2 = this.add
+      .image(this.cameraX, this.cameraY, defualtColor[0].img)
+      .setDisplaySize(120, 120);
+
+    const box3 = this.add
+      .image(this.cameraX + 130, this.cameraY, defualtColor[0].img)
+      .setDisplaySize(120, 120);
 
     //Arrays for Dmg Reciever
     this.imageDead = [];
@@ -294,19 +293,22 @@ export class Room extends Phaser.Scene {
     const setColors = () => {
       const boxResult = [RandomColors(), RandomColors(), RandomColors()];
 
-      box1.fillColor = boxResult[0];
-      box2.fillColor = boxResult[1];
-      box3.fillColor = boxResult[2];
+      box1.setTexture(boxResult[0].img);
+      box2.setTexture(boxResult[1].img);
+      box3.setTexture(boxResult[2].img);
 
       const round_result = (round += 1);
 
       this.container_countdown_respin.setText("Round " + round_result);
 
+      if (round >= 0) {
+      }
+
       for (let i = 0; i < this.playersLogs.length; i++) {
         if (
-          this.playersLogs[i].color === boxResult[0] ||
-          this.playersLogs[i].color === boxResult[1] ||
-          this.playersLogs[i].color === boxResult[2]
+          this.playersLogs[i].color === boxResult[0].color ||
+          this.playersLogs[i].color === boxResult[1].color ||
+          this.playersLogs[i].color === boxResult[2].color
         ) {
           this.imageAttack_ani[i].setVisible(true);
 
@@ -325,12 +327,12 @@ export class Room extends Phaser.Scene {
         }
 
         if (
-          (this.playersLogs[i].color === boxResult[0] &&
-            this.playersLogs[i].color === boxResult[1]) ||
-          (this.playersLogs[i].color === boxResult[0] &&
-            this.playersLogs[i].color === boxResult[2]) ||
-          (this.playersLogs[i].color === boxResult[1] &&
-            this.playersLogs[i].color === boxResult[2])
+          (this.playersLogs[i].color === boxResult[0].color &&
+            this.playersLogs[i].color === boxResult[1].color) ||
+          (this.playersLogs[i].color === boxResult[0].color &&
+            this.playersLogs[i].color === boxResult[2].color) ||
+          (this.playersLogs[i].color === boxResult[1].color &&
+            this.playersLogs[i].color === boxResult[2].color)
         ) {
           this.rotateAttack(i);
           this.imageAttack_ani[i].setVisible(true);
@@ -343,9 +345,9 @@ export class Room extends Phaser.Scene {
         }
 
         if (
-          this.playersLogs[i].color === boxResult[0] &&
-          this.playersLogs[i].color === boxResult[1] &&
-          this.playersLogs[i].color === boxResult[2]
+          this.playersLogs[i].color === boxResult[0].color &&
+          this.playersLogs[i].color === boxResult[1].color &&
+          this.playersLogs[i].color === boxResult[2].color
         ) {
           this.rotateAttack(i);
           this.lifePoints[i] += 1;
@@ -365,7 +367,7 @@ export class Room extends Phaser.Scene {
           this.imageDead[i].setVisible(false);
           this.skull[i].setTexture("skull").setVisible(true);
           this.imageAttack_ani[i].destroy();
-        } else if (this.lifePoints[i] >= 30) {
+        } else if (this.lifePoints[i] >= 15) {
           //here Add to Recieve the WOK Prize to Transfer Wok Wallet
 
           setTimeout(() => {
@@ -424,7 +426,7 @@ export class Room extends Phaser.Scene {
       }
     };
     setTimeout(() => {
-      setInterval(setColors, 3000);
+      setInterval(setColors, 5000); //Set Colors Every 5 Seconds
     }, 3000);
 
     //Other Player
@@ -656,7 +658,7 @@ export class Room extends Phaser.Scene {
 
   buttonClick1() {
     if (this.lifePoints[0] <= 5) {
-      const randomNumber = Math.random() < 0.7 ? -2 : 7;
+      const randomNumber = Math.random() < 0.5 ? -2 : 7;
 
       this.lifePoints[0] = Math.max(1, this.lifePoints[0] + randomNumber);
 
@@ -685,6 +687,12 @@ export class Room extends Phaser.Scene {
       }
     }
   }
+
+  // rotateDice(index) {
+
+  //     let imgData =
+
+  // }
 
   // Special Effect: Rotate Attack
   rotateAttack(index: number) {
