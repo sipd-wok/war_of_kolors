@@ -1,4 +1,6 @@
 
+const io = require('socket.io') (server)
+
 
 export class Start extends Phaser.Scene {
 
@@ -26,6 +28,7 @@ export class Start extends Phaser.Scene {
         this.load.image('bag2', 'img/bag2.png')
         this.load.image('skull', 'img/dead_sign.png')
         this.load.image('sword', 'img/sword-r.png')
+        this.load.image('healthPotion', 'img/healthPotion.png')
 
         //Wok Buttons
         this.load.image('whitesrc', 'img/whitesqr.png')
