@@ -3,6 +3,10 @@ import { useEffect } from "react";
 import Phaser from "@/utils/phaser";
 import { Start } from '../components/Start';
 
+import { io } from "socket.io-client";
+
+let socket
+
 export default function Home() {
 
   useEffect(() => {
