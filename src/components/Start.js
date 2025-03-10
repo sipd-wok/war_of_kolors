@@ -1,5 +1,5 @@
 
-const io = require('socket.io') (server)
+
 
 
 export class Start extends Phaser.Scene {
@@ -255,12 +255,6 @@ export class Start extends Phaser.Scene {
             this.rotateBounce(this.box2, this.bounceBox)
 
             this.rotateBounce(this.box3, this.bounceBox)
-
-            this.box1h.setTexture(boxResult[0].img)
-
-            this.box2h.setTexture(boxResult[1].img)
-
-            this.box3h.setTexture(boxResult[2].img)
 
         }, 7200)
 
@@ -589,6 +583,7 @@ export class Start extends Phaser.Scene {
         ).setDisplaySize(140, 140)
          .setInteractive()
          .setVisible(false)
+         
          potion_img1.on('pointerdown', () => {
             this.buttonClick1();
         });
@@ -628,7 +623,10 @@ export class Start extends Phaser.Scene {
             
             potion_img2.disableInteractive()
 
-            if (isNaN(this.playersLogs[0].lifePoints)) {
+          if (isNaN(this.playersLogs[0].lifePoints) || this.playersLogs[0].lifePoints >= 15 || 
+this.playersLogs[1].lifePoints >= 15 || this.playersLogs[2].lifePoints >= 15 || 
+this.playersLogs[3].lifePoints >= 15 || this.playersLogs[4].lifePoints >= 15 || 
+this.playersLogs[5].lifePoints >= 15) {
 
                 potion_img2.disableInteractive()
 
@@ -636,7 +634,7 @@ export class Start extends Phaser.Scene {
 
                 this.buttonClick2();
 
-            }
+            }  
 
         });
         
@@ -764,8 +762,9 @@ rotateBounce(box, shouldAnimate) {
         y: box.y - 30,
         angle: 360,                         
         ease: 'Sine.easeInOut',  
-        duration: 500,
+        duration: 150,
         yoyo: true,
+        repeat: 2
     });
 }
 
