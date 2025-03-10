@@ -1,10 +1,10 @@
 
+import { io } from "socket.io-client"
+
 export class Start extends Phaser.Scene {
 
     constructor() {
-    
         super('Start')  
-        
     }
     
     preload() {
@@ -43,6 +43,8 @@ export class Start extends Phaser.Scene {
 
     create() {
             
+        this.socket = io("http://localhost:3001")
+
          //Responsive
         this.cameraX = this.cameras.main.width / 2
 
@@ -278,6 +280,18 @@ export class Start extends Phaser.Scene {
 
             let boxResult = [RandomColors(), RandomColors(), RandomColors()]
             
+            //Server Emit Sender Connection and Receiver
+            this.socket.emit("randomColorsGenerated", { color: boxResult })
+            this.socket.on("updateColors", (data) => {
+
+                console.log("Received updated colors:", data);
+                // Apply the received colors to update the game
+                this.box1.setTexture(data.color[0].img);
+                this.box2.setTexture(data.color[1].img);
+                this.box3.setTexture(data.color[2].img);
+
+            })
+
             this.box1.setTexture(boxResult[0].img)
             this.box2.setTexture(boxResult[1].img)
             this.box3.setTexture(boxResult[2].img)
@@ -381,6 +395,7 @@ export class Start extends Phaser.Scene {
                 
                 //here Add to Recieve the WOK Prize to Transfer Wok Wallet
                 
+                this.socket.emit("Winners is", this.playersLogs[i].name)
 
                 setTimeout(() => {
                     
