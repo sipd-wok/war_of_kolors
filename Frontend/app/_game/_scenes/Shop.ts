@@ -1,5 +1,4 @@
 import { Scene } from "phaser";
-
 export class Shop extends Scene {
   private character: {
     tier: string;
@@ -563,9 +562,7 @@ export class Shop extends Scene {
         console.log("Buy and mint response:", buyandmint);
         if (buyandmint.message === 'TSFailed') {
           this.transactionFail = true;
-          alert('Transaction failed.');
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
-          
           return null;
         } else {
           this.transactionFail = false;
@@ -576,7 +573,6 @@ export class Shop extends Scene {
       } catch (error) {
         this.transactionFail = true;
         console.log(error)
-        alert('Transaction failed. sa try inside')
         await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
         return null;
       }
@@ -601,45 +597,49 @@ export class Shop extends Scene {
     }
   }
   private async cancelUploads(imageHash: string, metadataHash: string) {
-    try {
-      // Remove from Pinata
-      const imageResponse = await fetch(
-        `https://api.pinata.cloud/pinning/unpin/${imageHash}`,
-        {
-          method: "POST",
-          headers: {
-            pinata_api_key: this.pinataApiKey as string,
-            pinata_secret_api_key: this.pinataSecretApiKey as string,
-          },
-        },
-      );
-  
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to unpin image: ${imageResponse.statusText}`);
-      }
-  
-      const metadataResponse = await fetch(
-        `https://api.pinata.cloud/pinning/unpin/${metadataHash}`,
-        {
-          method: "POST",
-          headers: {
-            pinata_api_key: this.pinataApiKey as string,
-            pinata_secret_api_key: this.pinataSecretApiKey as string,
-          },
-        },
-      );
-  
-      if (!metadataResponse.ok) {
-        throw new Error(`Failed to unpin metadata: ${metadataResponse.statusText}`);
-      }
-  
-      console.log("Uploads successfully removed.");
-    } catch (error) {
-      console.error("Error cancelling uploads:", error);
-      alert("Failed to cancel uploads.");
+    // Generate JWT Token
+    const jwtResponse = await fetch("https://api.pinata.cloud/users/generateApiKey", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "pinata_api_key": this.pinataApiKey as string,
+        "pinata_secret_api_key": this.pinataSecretApiKey as string 
+      },
+      body: JSON.stringify({
+        keyName: "My JWT Key",
+        permissions: {
+          endpoints: {
+            "pinning": {
+              "unpin": true 
+            }
+          }
+        }
+      })
+    });
+
+    const jwtData = await jwtResponse.json(); 
+    const jwtToken = jwtData.JWT; 
+
+  //  Unpin File
+    const image = await fetch(`https://api.pinata.cloud/pinning/unpin/${imageHash}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${jwtToken}`,
+      },
+    });
+    const metadata = await fetch(`https://api.pinata.cloud/pinning/unpin/${metadataHash}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${jwtToken}`,
+      },
+    });
+    if (metadata.ok) {
+      console.log("✅ File Unpinned from Pinata:", metadataHash, image);
+    } else {
+      console.error("❌ Failed to Unpin File", await metadata.json());
     }
-  }
-  
+}
+
   private async assignCharacter(
     tier: "Bronze" | "Silver" | "Gold" | "Rainbow",
     minLuck: number,

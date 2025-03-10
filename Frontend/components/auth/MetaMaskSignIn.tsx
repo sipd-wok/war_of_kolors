@@ -23,7 +23,7 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
       
       fetchBalance(walletAddress);
       console.log('Wallet address is set:', walletAddress, balance);
-      router.push("/welcome");
+      // router.push("/welcome");
       // Perform actions that require walletAddress here
     }
   }, [walletAddress, fetchBalance, balance]);
