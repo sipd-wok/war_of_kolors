@@ -154,8 +154,7 @@ export class Shop extends Scene {
     "Rainbow Dragon Tamer",
   ];
 
-  private buyCharacter!: (amount: string) => Promise<void>;
-
+  private shopPayment!: (amount: string) => Promise<void>;
   constructor() {
     super("Shop");
     this.character = {
@@ -204,7 +203,7 @@ export class Shop extends Scene {
         this.scene.start("MainMenu");
       });
 
-    this.buyCharacter = this.registry.get("buyCharacter");
+    this.shopPayment = this.registry.get("shopPayment");
     // Title
     this.add
       .text(centerX, 50, "WOK Shop", {
@@ -302,7 +301,7 @@ export class Shop extends Scene {
     potionSprite: string,
   ): Promise<void> {
     try {
-      await this.buyCharacter(price.toString()); // Reusing the buyCharacter method for purchasing potions
+      await this.shopPayment(price.toString()); // Reusing the shopPayment method for purchasing potions
       buyPotion();
       this.showPotionModal(potionName, potionSprite);
       try {
@@ -472,8 +471,7 @@ export class Shop extends Scene {
       .setOrigin(0.5);
 
     door.on("pointerdown", async () => {
-      await this.buyCharacter(price.toString());
-      this.assignCharacter(tier, minLuck, maxLuck);
+        await this.assignCharacter(tier, minLuck, maxLuck, price.toString());
     });
   }
 
@@ -493,11 +491,161 @@ export class Shop extends Scene {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
+  // CHARACTERS NFT AND PAYMENT
+  private transactionFail: boolean = false;
+  private pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
+  private pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
+  private async uploadToPinata(file: File, price: string): Promise<string | null> {
+    const buyAndmint = this.game.registry.get('buyAndmint');
+    const walletAddress = this.game.registry.get('walletAddress');
+    const balance = this.game.registry.get('balance');
+    if(parseInt(balance) < parseInt(price)){
+      this.transactionFail = true;
+      alert(`WoK is not enough!.`);
+      return null; 
+    }
+    if (!walletAddress) {
+      this.transactionFail = true;
+      alert(`Wallet Address is missing`);
+      return null; 
+    }
+    const formData = new FormData();
+    console.log(file);
+    formData.append("file", file, file.name);
+  
+    try {
+      const image = await fetch(
+        "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        {
+          method: "POST",
+          headers: {
+            pinata_api_key: this.pinataApiKey as string,
+            pinata_secret_api_key: this.pinataSecretApiKey as string,
+          },
+          body: formData,
+        },
+      );
+  
+      if (!image.ok) {
+        throw new Error(`Upload failed: ${image.statusText}`);
+      }
+  
+      const imageData = await image.json();
+      const imageURI = `https://bronze-active-seahorse-192.mypinata.cloud/ipfs/${imageData.IpfsHash}`;
+  
+      const metadata = {
+        name: "My NFT",
+        description: "An NFT minted on Core DAO",
+        image: imageURI,
+      };
+  
+      // Upload metadata to Pinata
+      const metadataRes = await fetch(
+        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            pinata_api_key: this.pinataApiKey as string,
+            pinata_secret_api_key: this.pinataSecretApiKey as string,
+          },
+          body: JSON.stringify(metadata),
+        },
+      );
+  
+      const metadataData = await metadataRes.json();
+      const metadataURI = `https://bronze-active-seahorse-192.mypinata.cloud/ipfs/${metadataData.IpfsHash}`;
+  
+      // 🔹 Mint NFT with metadataURI
+      try {
+        console.log("Calling buyAndmint with:", price, walletAddress, metadataURI);
+        const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
+        console.log("Buy and mint response:", buyandmint);
+        if (buyandmint.message === 'TSFailed') {
+          this.transactionFail = true;
+          alert('Transaction failed.');
+          await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
+          
+          return null;
+        } else {
+          this.transactionFail = false;
+          return metadataURI;
+        }
+        // this.transactionFail = false;
+        // return metadataURI;
+      } catch (error) {
+        this.transactionFail = true;
+        console.log(error)
+        alert('Transaction failed. sa try inside')
+        await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
+        return null;
+      }
+    } catch (error) {
+      this.transactionFail = true;
+      console.error("Error sa try outside:", error);
+      alert("NFT Minting Failed!");
+      return null
+    }
+  }
+  private async uploadImageToPinata(imagePath: string, price: string): Promise<string | null> {
+    try {
+      const response = await fetch(imagePath);
+      const blob = await response.blob();
+      const file = new File([blob], `char_${Date.now()}.png`, {
+        type: blob.type,
+      });
+      return await this.uploadToPinata(file, price);
+    } catch (error) {
+      console.error("Error converting image to File:", error);
+      return null;
+    }
+  }
+  private async cancelUploads(imageHash: string, metadataHash: string) {
+    try {
+      // Remove from Pinata
+      const imageResponse = await fetch(
+        `https://api.pinata.cloud/pinning/unpin/${imageHash}`,
+        {
+          method: "POST",
+          headers: {
+            pinata_api_key: this.pinataApiKey as string,
+            pinata_secret_api_key: this.pinataSecretApiKey as string,
+          },
+        },
+      );
+  
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to unpin image: ${imageResponse.statusText}`);
+      }
+  
+      const metadataResponse = await fetch(
+        `https://api.pinata.cloud/pinning/unpin/${metadataHash}`,
+        {
+          method: "POST",
+          headers: {
+            pinata_api_key: this.pinataApiKey as string,
+            pinata_secret_api_key: this.pinataSecretApiKey as string,
+          },
+        },
+      );
+  
+      if (!metadataResponse.ok) {
+        throw new Error(`Failed to unpin metadata: ${metadataResponse.statusText}`);
+      }
+  
+      console.log("Uploads successfully removed.");
+    } catch (error) {
+      console.error("Error cancelling uploads:", error);
+      alert("Failed to cancel uploads.");
+    }
+  }
+  
   private async assignCharacter(
     tier: "Bronze" | "Silver" | "Gold" | "Rainbow",
     minLuck: number,
     maxLuck: number,
-  ): Promise<void> {
+    price: string
+  ): Promise<string> {
     this.character.tier = tier;
     const stats = {
       Bronze: { min: 1, max: 3 },
@@ -505,24 +653,36 @@ export class Shop extends Scene {
       Gold: { min: 5, max: 7 },
       Rainbow: { min: 5, max: 7 },
     };
-
     const { min, max } = stats[tier];
     this.character.hp = this.getRandomInt(min, max);
     this.character.atk = this.getRandomInt(min, max);
     this.character.def = this.getRandomInt(min, max);
-    this.character.color = tier === "Rainbow" ? "Rainbow" : this.getRandomColor();
+    this.character.color =
+      tier === "Rainbow" ? "Rainbow" : this.getRandomColor();
     this.character.luck = parseFloat(
       (Math.random() * (maxLuck - minLuck) + minLuck).toFixed(2),
     );
 
     // Define sprite options based on color
     const spriteOptions: Record<string, number[]> = {
-      Red: [1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115],
-      Blue: [2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116],
-      Yellow: [6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118],
-      Green: [3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117],
-      Pink: [4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120],
-      White: [5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119],
+      Red: [
+        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115,
+      ],
+      Blue: [
+        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116,
+      ],
+      Yellow: [
+        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118,
+      ],
+      Green: [
+        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117,
+      ],
+      Pink: [
+        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120,
+      ],
+      White: [
+        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119,
+      ],
       Rainbow: [97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121],
     };
 
@@ -534,36 +694,43 @@ export class Shop extends Scene {
       this.characterNames[
         parseInt(this.character.sprite.replace("characterSprite", "")) - 1
       ];
-
+    await this.uploadImageToPinata(
+      `assets/char_${possibleSprites[randomIndex]}.png`,price
+    );
     // Show the modal to display the character details
-    this.showCharacterModal();
-
-    // Save character using API endpoint
-    try {
-      const response = await fetch("/api/createCharacter", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tier: this.character.tier,
-          color: this.character.color,
-          hp: this.character.hp,
-          atk: this.character.atk,
-          def: this.character.def,
-          luck: this.character.luck,
-          sprite: this.character.sprite,
-          name: this.character.name,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to save character:", errorData);
+    console.log(this.transactionFail)
+    if(this.transactionFail === false){
+      this.showCharacterModal();
+      // Save character using API endpoint
+      try {
+        const response = await fetch("/api/createCharacter", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tier: this.character.tier,
+            color: this.character.color,
+            hp: this.character.hp,
+            atk: this.character.atk,
+            def: this.character.def,
+            luck: this.character.luck,
+            sprite: this.character.sprite,
+            name: this.character.name,
+          }),
+        });
+  
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to save character:", errorData);
+        }
+      } catch (error) {
+        console.error("Error saving character:", error);
       }
-    } catch (error) {
-      console.error("Error saving character:", error);
+    }else{
+      console.log('transaction failed.')
     }
+    return this.character.sprite;
   }
 
   // Helper function to get a random integer between min and max (inclusive)

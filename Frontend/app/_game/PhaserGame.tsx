@@ -15,11 +15,10 @@ interface IProps {
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
   function PhaserGame({ currentActiveScene }, ref) {
     const game = useRef<Phaser.Game | null>(null!);
-    const { buyCharacter } = useWallet();
+    const { shopPayment, buyAndmint, walletAddress, balance } = useWallet();
     useLayoutEffect(() => {
       if (game.current === null) {
-        game.current = StartGame("game-container", buyCharacter);
-
+        game.current = StartGame("game-container", shopPayment, buyAndmint, walletAddress, balance);
         if (typeof ref === "function") {
           ref({ game: game.current, scene: null });
         } else if (ref) {
@@ -41,7 +40,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           }
         }
       };
-    }, [ref, buyCharacter]);
+    }, [ref, shopPayment, buyAndmint, walletAddress]);
 
     useEffect(() => {
       EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useWallet } from "../context/WalletContext";
 
 const SendTokens: React.FC = () => {
-  const { buyCharacter } = useWallet();
+  const { shopPayment } = useWallet();
   const [amount, setAmount] = useState("");
 
   return (
@@ -17,7 +17,7 @@ const SendTokens: React.FC = () => {
         placeholder="Amount"
         onChange={(e) => setAmount(e.target.value)}
       />
-      <button onClick={() => buyCharacter(amount)}>Send Tokens</button>
+      <button onClick={() => shopPayment(amount)}>Send Tokens</button>
     </div>
   );
 };
