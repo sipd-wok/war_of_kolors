@@ -141,5 +141,5 @@ console.log(random);
 
 // Start the server
 server.listen(3001, () => {
-    console.log("✅ Server running on http://localhost:3001");
+    console.log("✅ Server running");
 });
