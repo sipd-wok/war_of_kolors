@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import Phaser from "@/utils/phaser";
 import { Start } from "../components/Start";
 
+const socket = io("https://war-of-kolors.onrender.com");
+
 export default function Home() {
   useEffect(() => {
     if (!window.game) {
