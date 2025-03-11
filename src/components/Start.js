@@ -54,26 +54,15 @@ export class Start extends Phaser.Scene {
         //Players Logs || Waiting Other Player Logs
         //Just change for main session to index 0 as main character in their Own Devices
         this.playersLogs = [
-            {lifePoints: 10 ,name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4},
-            {lifePoints: 10 ,name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
-            {lifePoints: 10 ,name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
-            {lifePoints: 10 ,name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
-            {lifePoints: 10 ,name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
-            {lifePoints: 10 ,name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
+          //  {lifePoints: 10 ,name: "Player 1", color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4},
+           // {lifePoints: 10 ,name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
+           // {lifePoints: 10 ,name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
+            //{lifePoints: 10 ,name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
+           // {lifePoints: 10 ,name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
+            //{lifePoints: 10 ,name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
         ]     
         
-        // this.lifePoints = [10, 10, 10, 10, 10, 10] // Life Points
         
-        //Text, Elements, Colors, and prizes
-        
-        var totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
-
-        var prizeWOK = totalBet
-
-        var text_color = "#000"
-        
-        var walletBal = 0 //Wallets --  to Show Current Balances
-
         //6 Collors
         this.defualtColor = [
             {color: 0xff0000, img: 'redDice'},
@@ -83,7 +72,20 @@ export class Start extends Phaser.Scene {
             {color: 0x0000ff, img: 'blueDice'},
             {color: 0xff00ff, img: 'pinkDice'},
         ]   
-            
+        
+        this.room = []
+        
+        const loadPlayers = () => {
+        
+        //Text, Elements, Colors, and prizes
+        
+        var totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
+
+        var prizeWOK = totalBet
+
+        var text_color = "#000"
+        
+        var walletBal = this.playersLogs[0].walletBal //Wallets --  to Show Current Balances
 
     // Main Board && GamePlay System && Rules
         var container = this.add.rectangle(
@@ -169,27 +171,7 @@ export class Start extends Phaser.Scene {
 
         })
 
-        //LUCK Formula Dont Touch !!!
-        var totalLuck = this.playersLogs.reduce((sum, player) => sum + player.luck, 0);
-        
-        const RandomColors = () => {
-
-            var random = Math.random() * 100
-
-            var cumu = 0
-
-            for (var i = 0; i < this.playersLogs.length; i++) {
-                cumu += (this.playersLogs[i].luck / totalLuck) * 100
-                if (random < cumu) {
-                    return this.defualtColor[i]
-                }
-            }
-
-            return this.defualtColor[0]
-
-        } 
-        
-        
+              
         //Box Dice...
         this.box1 = this.add.image(
             this.cameraX - 130,
@@ -257,7 +239,9 @@ export class Start extends Phaser.Scene {
 
         }, 7200)
 
-        //Arrays for Dmg Reciever
+        //Arrays for Dmg Recieve
+        
+        
         this.imageDead = []
         
         this.skull = []
@@ -271,34 +255,37 @@ export class Start extends Phaser.Scene {
         let round = 0
 
         let closedGame = true
-
+        
+        this.boxResult = null
+        
+        
+      
+         
+            //Server Emit Sender Connection and Receiver
+           
         const setColors = () => {
 
             if(!closedGame) return
-
-            clearInterval(this.spinning)
-
-            let boxResult = [RandomColors(), RandomColors(), RandomColors()]
             
-            //Server Emit Sender Connection and Receiver
-            this.socket.emit("randomColorsGenerated", { color: boxResult })
-            this.socket.on("updateColors", (data) => {
-
-                console.log("Received updated colors:", data);
-                // Apply the received colors to update the game
-                this.box1.setTexture(data.color[0].img);
-                this.box2.setTexture(data.color[1].img);
-                this.box3.setTexture(data.color[2].img);
-
-            })
-
-            this.box1.setTexture(boxResult[0].img)
-            this.box2.setTexture(boxResult[1].img)
-            this.box3.setTexture(boxResult[2].img)
+            clearInterval(this.spinning)
+         
+           this.socket.emit("GenerateColors", this.room)            
+                                               
+                                  
+this.box1.setTexture(this.boxResult[0].img)
+            this.box2.setTexture(this.boxResult[1].img)
+            this.box3.setTexture(this.boxResult[2].img)
 
             let round_result = round += 1
-
-            this.container_countdown_respin.setText('Round ' + round_result)
+            
+            this.socket.emit("round", round_result)
+            
+            this.socket.on("round_result", (data) => {
+                
+               this.container_countdown_respin.setText('Round ' + data) 
+                
+            })
+            
             
             setTimeout(() => {
                 
@@ -317,20 +304,26 @@ export class Start extends Phaser.Scene {
 
                 this.rotateBounce(this.box3, this.bounceBox)
 
-                this.box1h.setTexture(boxResult[0].img)
 
-                this.box2h.setTexture(boxResult[1].img)
+        this.socket.on("colorHistory", (data) => {
+             
+             this.box1h.setTexture(data[0].img)
 
-                this.box3h.setTexture(boxResult[2].img)
+             this.box2h.setTexture(data[1].img)
+
+             this.box3h.setTexture(data[2].img)
+             
+        })
+                
 
             }, 4100)
 
             for (let i = 0; i < this.playersLogs.length; i++) {
                 
           if (
-             this.playersLogs[i].color === boxResult[0].color ||
-             this.playersLogs[i].color === boxResult[1].color ||
-             this.playersLogs[i].color === boxResult[2].color) {
+             this.playersLogs[i].color === this.boxResult[0].color ||
+             this.playersLogs[i].color === this.boxResult[1].color ||
+             this.playersLogs[i].color === this.boxResult[2].color) {
              this.imageAttack_ani[i].setVisible(true)
              
              setTimeout(() => {
@@ -338,7 +331,9 @@ export class Start extends Phaser.Scene {
              }, 1000)
 
              this.rotateAttack(i)
+             
              this.playersLogs[i].lifePoints += 1
+              
             } else {
              
 
@@ -350,33 +345,38 @@ export class Start extends Phaser.Scene {
             }
             
             if (
-            this.playersLogs[i].color === boxResult[0].color &&
-            this.playersLogs[i].color === boxResult[1].color ||
-            this.playersLogs[i].color === boxResult[0].color &&
-            this.playersLogs[i].color === boxResult[2].color || 
-            this.playersLogs[i].color === boxResult[1].color &&
-            this.playersLogs[i].color === boxResult[2].color) {
+            this.playersLogs[i].color === this.boxResult[0].color &&
+            this.playersLogs[i].color === this.boxResult[1].color ||
+            this.playersLogs[i].color === this.boxResult[0].color &&
+            this.playersLogs[i].color === this.boxResult[2].color || 
+            this.playersLogs[i].color === this.boxResult[1].color &&
+            this.playersLogs[i].color === this.boxResult[2].color) {
             this.rotateAttack(i)
+            
+           
             this.imageAttack_ani[i].setVisible(true)
 
             setTimeout(() => {
                 this.imageAttack_ani[i].setVisible(false)
              }, 1000)
 
-            this.playersLogs[i].lifePoints += 1
+             this.playersLogs[i].lifePoints += 1
+            
             } 
             
             if (
-            this.playersLogs[i].color === boxResult[0].color && 
-            this.playersLogs[i].color === boxResult[1].color && 
-            this.playersLogs[i].color === boxResult[2].color) {
+            this.playersLogs[i].color === this.boxResult[0].color && 
+            this.playersLogs[i].color === this.boxResult[1].color && 
+            this.playersLogs[i].color === this.boxResult[2].color) {
+            
             this.rotateAttack(i)
-            this.playersLogs[i].lifePoints += 1
 
             setTimeout(() => {
                 this.imageAttack_ani[i].setVisible(false)
              }, 1000)
 
+           this.playersLogs[i].lifePoints += 1
+           
             this.imageAttack_ani[i].setVisible(true)
             }
             
@@ -451,9 +451,26 @@ export class Start extends Phaser.Scene {
                 
             }
         }
+        
+        this.socket.emit("GenerateColors", this.boxColorResult)
+           
+        this.socket.on("ReceiveColor", (data) => {
+    
+    this.boxResult = data
+    
+});
             setTimeout(() => {
-                setInterval(setColors, 5000)//Set Colors Every 5 Seconds
-            }, 3000)
+               
+                setInterval(setColors, 5000)//Set Colors Every 5 Seconds  
+    
+                       
+            }, 2000)
+            
+             
+                
+                
+            
+          
 
         //Other Player 
         //This Code Dont Touch For maintenance only
@@ -710,8 +727,74 @@ this.playersLogs[5].lifePoints >= 15) {
             isOpen = !isOpen
 
         })
-
         
+        
+        }
+        
+        
+            let waiting = this.add.text(this.cameraX, this.cameraY, "Waiting For Others Players", {
+                font: '34px',
+                color: '#000',
+                fontStyle: 'bold'
+            }).setOrigin(0.5, 0.5)
+            
+            this.socket.on("SetCount", (data) => {
+                
+                waiting.setText("Waiting For Others Players " + data + "/6")
+                
+            })
+            
+            
+            let roomText = this.add.text(this.cameraX, this.cameraY - 440, "Waiting For Others Players", {
+                font: '34px',
+                color: '#000',
+                fontStyle: 'bold'
+            }).setOrigin(0.5, 0.5)
+            
+            this.socket.on("roomAssign", (data) => {
+                
+                roomText.setText(data)
+                
+                this.room = data
+                
+            })
+        
+            
+            this.socket.on("InputPlayer", (data) => {
+            
+            waiting.destroy()
+            
+            let players = this.socket.id
+            
+            let index = data.findIndex(player => player.id === players)
+            
+            if (index !== -1) {
+                
+                let currentPlayer = data.splice(index, 1)[0]
+                
+                if (currentPlayer) {
+                    
+                    data.unshift(currentPlayer)
+                    
+                }
+                
+            }
+                 
+            this.playersLogs = data  
+            
+            setTimeout(loadPlayers, 2000)
+        
+            setTimeout(() => {
+            
+            this.updateFunction = true
+            
+            
+            
+            }, 5000)
+            
+            })
+        
+            this.updateFunction = false
         
     }
   
@@ -767,17 +850,21 @@ this.playersLogs[5].lifePoints >= 15) {
         
   } 
 
-rotateBounce(box, shouldAnimate) {
-    if (!shouldAnimate) return; // If condition is false, exit function
-    this.tweens.add({
+rotateBounce(box, bounceBox) {
+    
+        
+        this.tweens.add({
         targets: box,  
         y: box.y - 30,
         angle: 360,                         
         ease: 'Sine.easeInOut',  
         duration: 150,
         yoyo: true,
-        repeat: 2
-    });
+        repeat: 2,
+        });
+        
+    
+    
 }
 
 
@@ -825,6 +912,10 @@ rotateAttack(index) {
         
   update() {
     
+    if (!this.updateFunction) {
+        return
+    }
+    
     this.mainplayerinfo_text.setText(
     [
             this.playersLogs[0].name + '\nLUCK Multiplayer - ' + this.playersLogs[0].LM +
@@ -855,6 +946,9 @@ rotateAttack(index) {
             
         }
     }
+    
+    
+    
   }
     
  }
