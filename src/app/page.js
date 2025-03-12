@@ -1,5 +1,5 @@
 "use client"
-
+import React from "react";
 import dynamic from "next/dynamic";
 
 // Dynamically import the PhaserComponent with SSR disabled

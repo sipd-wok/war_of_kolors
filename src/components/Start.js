@@ -1,5 +1,6 @@
-
+"use client"
 import { io } from "socket.io-client"
+import * as Phaser from "phaser"
 
 export class Start extends Phaser.Scene {
 
@@ -43,9 +44,9 @@ export class Start extends Phaser.Scene {
 
     create() {
             
-        //this.socket = io("http://localhost:3001")
+        this.socket = io("http://localhost:3001")
 
-        this.socket = io("https://war-of-kolors.onrender.com")
+        //this.socket = io("https://war-of-kolors.onrender.com")
 
          //Responsive
         this.cameraX = this.cameras.main.width / 2
@@ -90,7 +91,7 @@ export class Start extends Phaser.Scene {
         var walletBal = this.playersLogs[0].walletBal //Wallets --  to Show Current Balances
 
     // Main Board && GamePlay System && Rules
-        var container = this.add.rectangle(
+        this.add.rectangle(
             this.cameraX + 450,
             this.cameraY - 430,
             450,
@@ -98,7 +99,7 @@ export class Start extends Phaser.Scene {
             0x693701
             )
         
-        var WokCoins = this.add.text(
+        this.add.text(
             this.cameraX + 450,
             this.cameraY - 430,
             ' Wok Coins (' + walletBal + ')',
@@ -109,27 +110,28 @@ export class Start extends Phaser.Scene {
             }
         ).setOrigin(0.5)
         
-        var Wokcoins = this.add.image(
+        this.add.image(
             this.cameraX + 300,
             this.cameraY - 430,
             'wok_coins'
         ).setDisplaySize(50, 50)
        
-        var container = this.add.rectangle(
+        this.add.rectangle(
             this.cameraX,
             this.cameraY,
             510,
             360,
             0x000000
             )
-        var container = this.add.rectangle(
+
+        this.add.rectangle(
             this.cameraX,
             this.cameraY,
             500,
             350,
             0xb0c4de
             )
-        var containerS2 = this.add.rectangle(
+        this.add.rectangle(
             this.cameraX,
             this.cameraY,
             450,
@@ -137,7 +139,7 @@ export class Start extends Phaser.Scene {
             0x4682b4
             )
 
-        var container_prize_pool = this.add.text(this.cameraX, this.cameraY - 100, [
+        this.add.text(this.cameraX, this.cameraY - 100, [
             'TOTAL PRIZE = ' + prizeWOK
         ], {
             fontSize: '28px',
@@ -405,7 +407,7 @@ this.box1.setTexture(this.boxResult[0].img)
 
                     setTimeout(() => {
                
-               var containerBg1 = this.add.rectangle(
+            this.add.rectangle(
             this.cameraX,
             this.cameraY,
             560,
@@ -413,7 +415,7 @@ this.box1.setTexture(this.boxResult[0].img)
             0x000000
             )
                
-                var container2 = this.add.rectangle(
+            this.add.rectangle(
             this.cameraX,
             this.cameraY,
             550,
@@ -422,7 +424,7 @@ this.box1.setTexture(this.boxResult[0].img)
             )
                
                         
-        var container_winners_text1 = this.add.text(this.cameraX, this.cameraY - 100, [
+        this.add.text(this.cameraX, this.cameraY - 100, [
             'TOTAL PRIZE = ' + prizeWOK + ' Wok'
         ], {
             fontSize: '28px',
@@ -430,7 +432,7 @@ this.box1.setTexture(this.boxResult[0].img)
             fontStyle: 'bold'
         }).setOrigin(0.5)
         
-        var container_winners_text2 = this.add.text(this.cameraX, this.cameraY + 100, [
+        this.add.text(this.cameraX, this.cameraY + 100, [
             'The Winner is ' + this.playersLogs[i].name
         ], {
             fontSize: '28px',
@@ -438,7 +440,7 @@ this.box1.setTexture(this.boxResult[0].img)
             fontStyle: 'bold'
         }).setOrigin(0.5)
         
-        var winner_pic = this.add.image(
+        this.add.image(
             this.cameraX,
             this.cameraY,
             this.playersLogs[i].img
@@ -527,7 +529,7 @@ this.box1.setTexture(this.boxResult[0].img)
 
         for (let i = 0; i < this.playersLogs.length; i++) {
             
-            var player_ar_rect = this.add.rectangle(
+            this.add.rectangle(
                 this.player_ar[i].x,
                 this.player_ar[i].y,
                 150,
@@ -577,7 +579,7 @@ this.box1.setTexture(this.boxResult[0].img)
             fontStyle: 'bold'
         })
 
-        var profilePic = this.add.rectangle(
+        this.add.rectangle(
             this.cameraX - 540,
             this.cameraY - 340,
             190,
@@ -585,7 +587,7 @@ this.box1.setTexture(this.boxResult[0].img)
             this.playersLogs[0].color
         )
         
-        let images = this.add.image(
+        this.add.image(
                 this.cameraX - 540, 
                 this.cameraY - 340,
                 this.playersLogs[0].img
@@ -853,7 +855,8 @@ this.playersLogs[5].lifePoints >= 15) {
   } 
 
 rotateBounce(box, bounceBox) {
-    
+
+        if(!bounceBox) return;
         
         this.tweens.add({
         targets: box,  

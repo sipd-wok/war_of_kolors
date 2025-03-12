@@ -1,7 +1,8 @@
 
+import React from "react";
 import { useEffect } from "react";
 import Phaser from "phaser"; // ✅ Import Phaser directly
-import { Start } from "../components/Start";
+import { Start } from "./Start";
 
 const PhaserComponent = () => {
   useEffect(() => {
