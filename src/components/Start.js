@@ -43,7 +43,9 @@ export class Start extends Phaser.Scene {
 
     create() {
             
-        this.socket = io("http://localhost:3001")
+        //this.socket = io("http://localhost:3001")
+
+        this.socket = io("https://war-of-kolors.onrender.com")
 
          //Responsive
         this.cameraX = this.cameras.main.width / 2
