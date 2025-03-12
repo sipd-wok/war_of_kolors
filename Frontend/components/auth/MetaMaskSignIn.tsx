@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
 import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useWallet } from "@/context/WalletContext";
 
 interface MetaMaskSignInProps {
   setWalletConnected: (connected: boolean) => void;
@@ -13,10 +14,19 @@ interface MetaMaskSignInProps {
 const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
   setWalletConnected,
 }) => {
+  const { walletAddress,setWalletAddress, fetchBalance, balance } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
+  useEffect(() => {
+    if (walletAddress) {
+      
+      fetchBalance(walletAddress);
+      console.log('Wallet address is set:', walletAddress, balance);
+      // router.push("/welcome");
+      // Perform actions that require walletAddress here
+    }
+  }, [walletAddress, fetchBalance, balance]);
   // useEffect(() => {
   //   const checkIfWalletIsConnected = async () => {
   //     if (typeof window !== "undefined" && window.ethereum) {
@@ -40,7 +50,6 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
   const connectWallet = async () => {
     setIsConnecting(true);
     setError(null);
-
     try {
       if (typeof window === "undefined" || !window.ethereum) {
         setError(
@@ -48,7 +57,6 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
         );
         return;
       }
-
       // Request account access
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
@@ -59,14 +67,16 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
           "No accounts found. Please unlock your MetaMask wallet.",
         );
       }
-
       const address = accounts[0];
       console.log("Connected address:", address);
+      setWalletAddress(address);
       setWalletConnected(true);
       // Now call the server action with the wallet address
-      await metaMaskSignInAction(address).then(() => {
-        router.push("/welcome");
-      });
+      if(walletAddress){
+        await metaMaskSignInAction(address).then(() => {
+          router.push("/welcome");
+        });
+      }
     } catch (error) {
       console.error("Error connecting to wallet:", error);
     } finally {

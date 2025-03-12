@@ -2,7 +2,7 @@ import { getSigner } from "@/utils/ethersProvider";
 import { getNFTContract } from "@/utils/nftcontract";
 
 export const mintNFT = async (walletAddress: string, metadataURI: string) => {
-  console.log(metadataURI);
+  console.log(metadataURI, walletAddress);
   try {
     if (!walletAddress) throw new Error("Wallet not connected");
 
