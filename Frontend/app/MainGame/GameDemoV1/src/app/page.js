@@ -1,6 +1,6 @@
 "use client"
 
-import dynamic from "next/dynamic";
+import { dynamic }  from "next/dynamic";
 
 // Dynamically import the PhaserComponent with SSR disabled
 const PhaserComponent = dynamic(() => import("../components/phaser"), {
