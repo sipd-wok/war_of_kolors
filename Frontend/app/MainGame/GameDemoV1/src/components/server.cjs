@@ -1,5 +1,5 @@
-const { Server } = require("socket.io");
-const http = require("http");
+import { Server } from "socket.io";
+import http from "http";
 
 // Create a basic HTTP server
 const server = http.createServer();
@@ -141,6 +141,6 @@ console.log(random);
 });
 
 // Start the server
-server.listen(3001, () => {
+server.listen(process.env.PORT || 3001, () => {
     console.log("✅ Server running");
 });
