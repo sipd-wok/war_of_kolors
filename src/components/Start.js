@@ -734,7 +734,7 @@ this.playersLogs[5].lifePoints >= 15) {
         }
         
         
-            let waiting = this.add.text(this.cameraX, this.cameraY, "Waiting For Others Players", {
+            let waiting = this.add.text(this.cameraX, this.cameraY, "Conneting...", {
                 font: '34px',
                 color: '#000',
                 fontStyle: 'bold'
@@ -747,7 +747,7 @@ this.playersLogs[5].lifePoints >= 15) {
             })
             
             
-            let roomText = this.add.text(this.cameraX, this.cameraY - 440, "Waiting For Others Players", {
+            let roomText = this.add.text(this.cameraX, this.cameraY - 440, "Finding Rooms Available", {
                 font: '34px',
                 color: '#000',
                 fontStyle: 'bold'
