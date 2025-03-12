@@ -10,34 +10,34 @@ export class Start extends Phaser.Scene {
     preload() {
         
         //Characters
-        this.load.image('blue', 'img/blue.png')
-        this.load.image('yellow', 'img/yellow.png')
-        this.load.image('pink', 'img/boky.png')
-        this.load.image('white', 'img/white.png')
-        this.load.image('red', 'img/red.png')
-        this.load.image('green', 'img/green.png')
+        this.load.image('blue', '../public/img/blue.png')
+        this.load.image('yellow', '../public/img/yellow.png')
+        this.load.image('pink', '../public/img/boky.png')
+        this.load.image('white', '../public/img/white.png')
+        this.load.image('red', '../public/img/red.png')
+        this.load.image('green', '../public/img/green.png')
 
         //Wok Accessories
-        this.load.image('wok_coins', 'img/WokCoin.png')
-        this.load.image('dpotion', 'img/dpotion.png')
-        this.load.image('leppot', 'img/leppot.png')
-        this.load.image('bag1', 'img/bag1.png')
-        this.load.image('bag2', 'img/bag2.png')
-        this.load.image('skull', 'img/dead_sign.png')
-        this.load.image('sword', 'img/sword-r.png')
-        this.load.image('healthPotion', 'img/healthPotion.png')
+        this.load.image('wok_coins', '../public/img/WokCoin.png')
+        this.load.image('dpotion', '../public/img/dpotion.png')
+        this.load.image('leppot', '../public/img/leppot.png')
+        this.load.image('bag1', '../public/img/bag1.png')
+        this.load.image('bag2', '../public/img/bag2.png')
+        this.load.image('skull', '../public/img/dead_sign.png')
+        this.load.image('sword', '../public/img/sword-r.png')
+        this.load.image('healthPotion', '../public/img/healthPotion.png')
 
         //Wok Buttons
-        this.load.image('whitesrc', 'img/whitesqr.png')
+        this.load.image('whitesrc', '../public/img/whitesqr.png')
 
         //Dice
-        this.load.image('blueDice', 'img/blueDice.png')
-        this.load.image('greenDice', 'img/greenDice.png')
-        this.load.image('pinkDice', 'img/pinkDice.png')
-        this.load.image('redDice', 'img/redDice.png')
-        this.load.image('whiteDice', 'img/whiteDice.png')
-        this.load.image('yellowDice', 'img/yellowDice.png')
-        this.load.image('loadDice', 'img/load.png')
+        this.load.image('blueDice', '../public/img/blueDice.png')
+        this.load.image('greenDice', '../public/img/greenDice.png')
+        this.load.image('pinkDice', '../public/img/pinkDice.png')
+        this.load.image('redDice', '../public/img/redDice.png')
+        this.load.image('whiteDice', '../public/img/whiteDice.png')
+        this.load.image('yellowDice', '../public/img/yellowDice.png')
+        this.load.image('loadDice', '../public/img/load.png')
 
     }
 
