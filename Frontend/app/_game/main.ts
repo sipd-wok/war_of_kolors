@@ -8,6 +8,8 @@ import { Room } from "./_scenes/Room";
 import { RoomList } from "./_scenes/RoomList";
 import { WaitingRoom } from "./_scenes/WaitingRoom";
 import { Shop } from "./_scenes/Shop";
+import { Marketplace } from "./_scenes/(marketplace)/Marketplace";
+import { SellCharacters } from "./_scenes/(marketplace)/SellCharacters";
 // impert ang mga scenes diri
 
 //  Find out more information about the Game Config at:
@@ -26,6 +28,8 @@ const config: Phaser.Types.Core.GameConfig = {
     RoomList,
     WaitingRoom,
     Shop,
+    Marketplace,
+    SellCharacters,
     // butang d ang scene mo
   ],
 };
@@ -33,12 +37,16 @@ const config: Phaser.Types.Core.GameConfig = {
 const StartGame = (
   parent: string,
   shopPayment: (amount: string) => Promise<void>,
-  buyAndmint: (amount: string,walletAddress: string, metadataURI: string) => Promise<void>,
+  buyAndmint: (
+    amount: string,
+    walletAddress: string,
+    metadataURI: string,
+  ) => Promise<void>,
   walletAddress: string | null,
-  balance: string | null
+  balance: string | null,
 ) => {
   if (!walletAddress) {
-    console.error('Wallet address is missing.');
+    console.error("Wallet address is missing.");
     return null; // Or handle this case appropriately
   }
   const game = new Game({ ...config, parent });
@@ -46,8 +54,8 @@ const StartGame = (
   // Store shopPayment in the game registry so scenes can access it
   game.registry.set("shopPayment", shopPayment);
   game.registry.set("buyAndmint", buyAndmint);
-  game.registry.set("walletAddress",  walletAddress);
-  game.registry.set("balance",  balance);
+  game.registry.set("walletAddress", walletAddress);
+  game.registry.set("balance", balance);
   return game;
 };
 

@@ -38,16 +38,13 @@ export class Preloader extends Scene {
   preload() {
     //  Load the assets for the game - Replace with your own assets
     this.load.setPath("assets");
-
     this.load.image("loader", "loader.png");
-
     this.load.image("toy-frame-silver", "toy-frame-silver.png");
     this.load.image("toy-frame-gold", "toy-frame-gold.png");
     this.load.image("toy-frame-bronze", "toy-frame-bronze.png");
     this.load.image("banner-bronze", "bronzetier.png");
     this.load.image("banner-silver", "silvertier.png");
     this.load.image("banner-gold", "goldtier.png");
-
     this.load.image("wokArena", "/gameRoom/wokarena.png");
     this.load.image("die-1", "/gameRoom/die-1.png");
     this.load.image("die-2", "/gameRoom/die-2.png");
@@ -56,16 +53,13 @@ export class Preloader extends Scene {
     this.load.image("die-5", "/gameRoom/die-5.png");
     this.load.image("die-6", "/gameRoom/die-6.png");
     this.load.image("slash", "/gameRoom/slash.png");
-
     // Potions
     this.load.image("devilsPotion", "devilsPotion.png");
     this.load.image("leprechaunsPotion", "leprechaunsPotion.png");
     this.load.image("healthPotion", "healthPotion.png");
-
     for (let i = 1; i <= 121; i++) {
       this.load.image(`characterSprite${i}`, `char_${i}.png`);
     }
-
     this.load.audio("ambiance", "/bgm/ambiance.mp3");
     this.load.audio("action", "/bgm/action.mp3");
   }

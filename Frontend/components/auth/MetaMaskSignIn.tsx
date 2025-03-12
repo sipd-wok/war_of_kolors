@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
 import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useWallet } from "@/context/WalletContext";
+import { useRouter } from "next/navigation";
 
 interface MetaMaskSignInProps {
   setWalletConnected: (connected: boolean) => void;
@@ -14,38 +14,18 @@ interface MetaMaskSignInProps {
 const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
   setWalletConnected,
 }) => {
-  const { walletAddress,setWalletAddress, fetchBalance, balance } = useWallet();
+  const router = useRouter();
+  const { walletAddress, setWalletAddress, fetchBalance, balance } =
+    useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+
   useEffect(() => {
     if (walletAddress) {
-      
       fetchBalance(walletAddress);
-      console.log('Wallet address is set:', walletAddress, balance);
-      // router.push("/welcome");
-      // Perform actions that require walletAddress here
+      console.log("Wallet address is set:", walletAddress, balance);
     }
   }, [walletAddress, fetchBalance, balance]);
-  // useEffect(() => {
-  //   const checkIfWalletIsConnected = async () => {
-  //     if (typeof window !== "undefined" && window.ethereum) {
-  //       try {
-  //         const accounts = await window.ethereum.request({
-  //           method: "eth_accounts",
-  //         });
-
-  //         if (accounts && accounts.length > 0) {
-  //           await connectWallet();
-  //         }
-  //       } catch (error) {
-  //         console.error("Error checking wallet connection:", error);
-  //       }
-  //     }
-  //   };
-
-  //   checkIfWalletIsConnected();
-  // }, []);
 
   const connectWallet = async () => {
     setIsConnecting(true);
@@ -70,15 +50,36 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
       const address = accounts[0];
       console.log("Connected address:", address);
       setWalletAddress(address);
+
+      // Set wallet connected immediately for better UX
       setWalletConnected(true);
-      // Now call the server action with the wallet address
-      if(walletAddress){
-        await metaMaskSignInAction(address).then(() => {
-          router.push("/welcome");
-        });
+
+      // Complete authentication before redirecting
+      try {
+        console.log("Starting authentication with address:", address);
+        const result = await metaMaskSignInAction(address);
+        console.log("Authentication result:", result);
+
+        if (!result.success) {
+          console.error("Authentication failed:", result.message);
+          setError(
+            `Authentication failed: ${result.message || "Unknown error"}`,
+          );
+          // Don't reset walletConnected here to avoid UI flickering
+        }
+      } catch (error) {
+        // Log detailed error info
+        console.error("Authentication error details:", error);
+        setError(`Auth error: ${(error as Error).message || "Unknown error"}`);
+        // Continue with wallet connected for better UX
       }
+
+      router.push("/welcome");
     } catch (error) {
-      console.error("Error connecting to wallet:", error);
+      // Log detailed error info
+      console.error("Authentication error details:", error);
+      setError(`Auth error: ${(error as Error).message || "Unknown error"}`);
+      // Continue with wallet connected for better UX
     } finally {
       setIsConnecting(false);
     }
