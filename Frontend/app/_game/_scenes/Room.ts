@@ -828,9 +828,13 @@ this.defaultColor = [
             
             waiting.destroy()
             
-            const players = String(this.socket.id ?? "")
+            const players = this.socket.id
+
+            interface Player {  
+                id: string | number
+            }
             
-            const index = data.findIndex((player: any) => player.id === players)
+            const index = data.findIndex((player: Player) => player.id === players)
             
             if (index !== -1) {
                 
@@ -933,7 +937,7 @@ this.defaultColor = [
  
  
    // Special Effect: Rotate Attack
- rotateAttack(index: any) {
+ rotateAttack(index: number) {
      const imgData = this.imageAttack[index]; // Get stored image
  
      // Prevent error if index is out of range
@@ -949,7 +953,7 @@ this.defaultColor = [
  
  
      //Special Effects
-   shakeDmg(index: any) {
+   shakeDmg(index: number) {
  
      const imgData = this.imageShake[index]; // Get stored image and original position
  
