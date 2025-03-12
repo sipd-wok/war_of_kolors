@@ -1,7 +1,7 @@
 "use client"
 
 import { io } from "socket.io-client"
-import Phaser from "phaser"
+import * as Phaser from "phaser"
 
 export class Start extends Phaser.Scene {
 
