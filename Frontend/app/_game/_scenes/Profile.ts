@@ -22,6 +22,7 @@ export class Profile extends Scene {
     sprite: string;
     created_at: string;
     tier: string;
+    luck : number;
     color: string;
   }[] = [];
 
@@ -110,6 +111,57 @@ export class Profile extends Scene {
     super("Profile");
   }
 
+displayBestCharacters() {
+  // Define the tier order
+  const tierOrder = ["Rainbow", "Gold", "Silver", "Bronze"];
+
+  // Sort characters by tier and luck
+  const sortedCharacters = this.characters.sort((a, b) => {
+    const tierComparison = tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier);
+    if (tierComparison !== 0) {
+      return tierComparison;
+    }
+    return b.luck - a.luck; // Sort by luck in descending order if tiers are the same
+  });
+
+  // Pick the top 5 characters
+  const bestCharacters = sortedCharacters.slice(0, 5);
+
+  const cameraX = this.cameras.main.width / 2;
+  const startY = this.cameras.main.height / 2;
+  const startX = cameraX - (bestCharacters.length - 1) * 100; // Adjust starting X position
+
+  bestCharacters.forEach((character, index) => {
+    const x = startX + index * 200; // Adjust spacing between characters
+
+    // Display character sprite
+    this.add.image(x, startY, character.sprite).setDisplaySize(100, 100).setOrigin(0.5);
+
+    // Display character details
+    this.add.text(x, startY + 60, `${character.name}`, {
+      fontFamily: "Arial",
+      fontSize: "20px",
+      color: "#000000",
+    }).setOrigin(0.5);
+
+    this.add.text(x, startY + 90, `Tier: ${character.tier}`, {
+      fontFamily: "Arial",
+      fontSize: "16px",
+      color: "#000000",
+    }).setOrigin(0.5);
+
+    this.add.text(x, startY + 120, `Luck: ${character.luck}`, {
+      fontFamily: "Arial",
+      fontSize: "16px",
+      color: "#000000",
+    }).setOrigin(0.5);
+  });
+
+  // Set the selected character to the first character in the best characters list
+  if (bestCharacters.length > 0) {
+    this.selectedCharacter = bestCharacters[0];
+  }
+}
 
   create() {
     const cameraX = this.cameras.main.width / 2;
@@ -127,14 +179,14 @@ export class Profile extends Scene {
   
     // Placeholder text to avoid undefined error
     this.getUsername().then((username) => {
-    this.userInfo = this.add.text(cameraX, cameraY - 150, `Username: ${username}` , {
+    this.userInfo = this.add.text(cameraX + 100, cameraY - 200, `Username: ${username}` , {
       fontFamily: "Arial",
       fontSize: "24px",
       color: "#000000",
     }).setOrigin(0.5);
     });
 
-    this.userImage = this.add.image(cameraX, cameraY, "profile").setDisplaySize(100, 100);
+    this.userImage = this.add.image(cameraX - 150, cameraY - 200, "profile").setDisplaySize(100, 100);
   
     this.backButton = this.add.text(cameraX, cameraY + 200, "Back", {
       fontFamily: "Arial",
@@ -149,6 +201,11 @@ export class Profile extends Scene {
     // Wait for user data to be loaded before updating UI
     this.events.on("user-loaded", () => {
       this.userInfo.setText(`Username: ${this.user.username}`);
+    });
+
+    // Wait for characters data to be loaded before displaying best characters
+    this.events.on("characters-loaded", () => {
+      this.displayBestCharacters();
     });
   
     EventBus.emit("current-scene-ready", this);

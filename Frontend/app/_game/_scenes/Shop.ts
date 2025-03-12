@@ -151,6 +151,46 @@ export class Shop extends Scene {
     "White Dragon Tamer",
     "Pink Dragon Tamer",
     "Rainbow Dragon Tamer",
+    // Medusa
+    "Red Medusa",
+    "Green Medusa",
+    "Pink Medusa",
+    "White Medusa",
+    "Yellow Medusa",
+    "Blue Medusa",
+    "Rainbow Medusa",
+    // Sniper
+    "Pink Sniper",
+    "Red Sniper",
+    "Green Sniper",
+    "Yellow Sniper",
+    "White Sniper",
+    "Blue Sniper",
+    "Rainbow Sniper",
+    // Wrestler
+    "Red Wrestler",
+    "Pink Wrestler",
+    "Yellow Wrestler",
+    "Green Wrestler",
+    "Blue Wrestler",
+    "White Wrestler",
+    "Rainbow Wrestler",
+    // Master Chef
+    "Green Master Chef",
+    "Blue Master Chef",
+    "Red Master Chef",
+    "Yellow Master Chef",
+    "White Master Chef",
+    "Pink Master Chef",
+    "Rainbow Master Chef",  
+    // Mafia Boss
+    "Yellow Mafia Boss",
+    "Green Mafia Boss",
+    "Red Mafia Boss",
+    "Pink Mafia Boss",
+    "White Mafia Boss",
+    "Blue Mafia Boss",
+    "Rainbow Mafia Boss",
   ];
 
   private shopPayment!: (amount: string) => Promise<void>;
@@ -666,24 +706,26 @@ export class Shop extends Scene {
     // Define sprite options based on color
     const spriteOptions: Record<string, number[]> = {
       Red: [
-        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115,
+        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115, 122, 130, 136, 145, 152
       ],
       Blue: [
-        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116,
+        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116, 127, 134, 140, 144, 155
       ],
       Yellow: [
-        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118,
+        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118, 126, 132, 138, 146, 150
       ],
       Green: [
-        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117,
+        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117, 123, 131, 139, 143, 151
       ],
       Pink: [
-        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120,
+        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120, 124, 129, 137, 148, 153
       ],
       White: [
-        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119,
+        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119, 125, 133, 141, 147, 154
       ],
-      Rainbow: [97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121],
+      Rainbow: [
+        97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121, 128, 135, 142, 149, 156
+      ],
     };
 
     const possibleSprites = spriteOptions[this.character.color];

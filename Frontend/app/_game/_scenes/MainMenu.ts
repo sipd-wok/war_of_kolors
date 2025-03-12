@@ -553,28 +553,31 @@ export class MainMenu extends Scene {
         padding: { x: 20, y: 10 },
       })
       .setOrigin(0.5)
-      .on("pointerover", () => {
-        this.openShop.setStyle({ color: "#ffff00" });
-      })
-      .on("pointerout", () => {
-        this.openShop.setStyle({ color: "#ffffff" });
-      })
-      .on("pointerdown", () => {
-        console.log("Opening shop...");
-        this.scene.start("Shop");
-      });
+      .setInteractive();
+
+    this.openShop.on("pointerover", () => {
+      this.openShop.setStyle({ color: "#ffff00" });
+    });
+
+    this.openShop.on("pointerout", () => {
+      this.openShop.setStyle({ color: "#ffffff" });
+    });
+
+    this.openShop.on("pointerdown", () => {
+      this.scene.start("Shop", { socket: this.openShop }); // Change to open the Shop scene
+    });
 
     // --- Open Profile Button ---
-    const profileButton = this.add.image(cameraX - 630, cameraY - 410, "profile")
-      .setInteractive({ useHandCursor: true })
-      .setDisplaySize(100, 100);
+    const profileButton = this.add.image(cameraX - 530, cameraY - 310, "profile")
+    .setInteractive({ useHandCursor: true })
+    .setDisplaySize(100, 100);
 
     profileButton.on("pointerdown", () => {
       this.scene.start("Profile");
     });
 
     this.getUsername().then((username) => {
-      this.add.text(cameraX - 560, cameraY - 420, `${username}`, {
+      this.add.text(cameraX - 430, cameraY - 320, `${username}`, {
         fontFamily: "Arial",
         fontSize: 24,
         color: "#000000",
