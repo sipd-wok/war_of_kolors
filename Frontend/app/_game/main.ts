@@ -8,6 +8,7 @@ import { Room } from "./_scenes/Room";
 import { RoomList } from "./_scenes/RoomList";
 import { WaitingRoom } from "./_scenes/WaitingRoom";
 import { Shop } from "./_scenes/Shop";
+import { Profile } from "./_scenes/Profile";
 // impert ang mga scenes diri
 
 //  Find out more information about the Game Config at:
@@ -26,6 +27,7 @@ const config: Phaser.Types.Core.GameConfig = {
     RoomList,
     WaitingRoom,
     Shop,
+    Profile,
     // butang d ang scene mo
   ],
 };
