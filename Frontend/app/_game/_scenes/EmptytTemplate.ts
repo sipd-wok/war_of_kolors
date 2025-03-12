@@ -10,6 +10,9 @@ export class MainMenu extends Scene {
     // diri ka create sprites or mga objects
 
     EventBus.emit("current-scene-ready", this);
+
+
+    
   }
 
   update(): void {
