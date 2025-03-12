@@ -143,13 +143,13 @@ this.defaultColor = [
             
             //Text, Elements, Colors, and prizes
             
-            let totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
+            const totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
     
-            let prizeWOK = totalBet
+            const prizeWOK = totalBet
     
             const text_color = "#000"
             
-            let walletBal = this.playersLogs[0].walletBal //Wallets --  to Show Current Balances
+            const walletBal = this.playersLogs[0].walletBal //Wallets --  to Show Current Balances
     
         // Main Board && GamePlay System && Rules
             this.add.rectangle(
@@ -934,7 +934,7 @@ this.defaultColor = [
  
    // Special Effect: Rotate Attack
  rotateAttack(index: any) {
-     let imgData = this.imageAttack[index]; // Get stored image
+     const imgData = this.imageAttack[index]; // Get stored image
  
      // Prevent error if index is out of range
      if (!imgData || !imgData.image) return;
