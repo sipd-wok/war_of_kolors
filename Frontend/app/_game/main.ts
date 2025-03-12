@@ -32,13 +32,22 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const StartGame = (
   parent: string,
-  buyCharacter: (amount: string) => Promise<void>,
+  shopPayment: (amount: string) => Promise<void>,
+  buyAndmint: (amount: string,walletAddress: string, metadataURI: string) => Promise<void>,
+  walletAddress: string | null,
+  balance: string | null
 ) => {
+  if (!walletAddress) {
+    console.error('Wallet address is missing.');
+    return null; // Or handle this case appropriately
+  }
   const game = new Game({ ...config, parent });
 
-  // Store buyCharacter in the game registry so scenes can access it
-  game.registry.set("buyCharacter", buyCharacter);
-
+  // Store shopPayment in the game registry so scenes can access it
+  game.registry.set("shopPayment", shopPayment);
+  game.registry.set("buyAndmint", buyAndmint);
+  game.registry.set("walletAddress",  walletAddress);
+  game.registry.set("balance",  balance);
   return game;
 };
 
