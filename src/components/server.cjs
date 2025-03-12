@@ -7,7 +7,7 @@ const server = http.createServer();
 // Start Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all origins (for flexibility)
+        origin: "*",,// Allow all origins (for flexibility)
         methods: ["GET", "POST"]
     }
 });
