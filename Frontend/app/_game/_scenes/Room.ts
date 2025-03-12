@@ -143,13 +143,13 @@ this.defaultColor = [
             
             //Text, Elements, Colors, and prizes
             
-            var totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
+            let totalBet = this.playersLogs.reduce((sum, player) => sum + player.bet, 0);
     
-            var prizeWOK = totalBet
+            let prizeWOK = totalBet
     
-            var text_color = "#000"
+            const text_color = "#000"
             
-            var walletBal = this.playersLogs[0].walletBal //Wallets --  to Show Current Balances
+            let walletBal = this.playersLogs[0].walletBal //Wallets --  to Show Current Balances
     
         // Main Board && GamePlay System && Rules
             this.add.rectangle(
@@ -208,7 +208,7 @@ this.defaultColor = [
                 fontStyle: 'bold'
             }).setOrigin(0.5)            
     
-            var count = 5
+            let count = 5
             //5 second Delay before Start the Game
             this.container_countdown_respin = this.add.text(this.cameraX, this.cameraY + 90, [
                 'Re - rolling in ' + count + ' sec...'
@@ -218,7 +218,7 @@ this.defaultColor = [
                 fontStyle: 'bold',
             }).setOrigin(0.5)
   
-                let countDown = this.time.addEvent({
+                const countDown = this.time.addEvent({
                 delay: 1000,
                 callback: () => {
                     count -= 1
@@ -283,9 +283,9 @@ this.defaultColor = [
     
                 this.spinning = setInterval(() => {
 
-                    let Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-                    let Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-                    let Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
 
                     const color1 = this.defaultColor[Value1]?.img
                     const color2 = this.defaultColor[Value2]?.img
@@ -347,7 +347,7 @@ this.defaultColor = [
                 }
                 
     
-                let round_result = round += 1
+                const round_result = round += 1
                 
                 this.socket.emit("round", round_result)
                 
@@ -360,9 +360,9 @@ this.defaultColor = [
                 setTimeout(() => {
                     
                     this.spinning = setInterval(() => {
-                        let Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-                    let Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-                    let Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
 
                     const color1 = this.defaultColor[Value1]?.img
                     const color2 = this.defaultColor[Value2]?.img
@@ -562,7 +562,7 @@ this.defaultColor = [
            
            for (let i = 1; i < this.playersLogs.length; i++) {
                
-               let info_text = this.add.text(
+               const info_text = this.add.text(
                    this.player_info_p[i].x,
                    this.player_info_p[i].y,
                    
@@ -598,19 +598,19 @@ this.defaultColor = [
                     
                 )
     
-                let dead = this.add.image(
+                const dead = this.add.image(
                     this.player_ar[i].x,
                     this.player_ar[i].y,
                     this.playersLogs[i].img
                 ).setDisplaySize(140, 140).setVisible(false)
                 
-                let images = this.add.image(
+                const images = this.add.image(
                     this.player_ar[i].x,
                     this.player_ar[i].y,
                     this.playersLogs[i].img
                 ).setDisplaySize(140, 140)
     
-                let attack = this.add.image(
+                const attack = this.add.image(
                     this.player_ar[i].x,
                     this.player_ar[i].y,
                     'sword'
@@ -653,7 +653,7 @@ this.defaultColor = [
                     this.playersLogs[0].img
                 ).setDisplaySize(180, 180)
                 
-            var potionsbg = this.add.rectangle(
+            const potionsbg = this.add.rectangle(
                 this.cameraX,
                 this.cameraY + 340,
                 520,
@@ -661,7 +661,7 @@ this.defaultColor = [
                 0x000000
                 ).setVisible(false)
                   
-            var potions = this.add.rectangle(
+            const potions = this.add.rectangle(
                 this.cameraX,
                 this.cameraY + 340,
                 510,
@@ -669,7 +669,7 @@ this.defaultColor = [
                 0xffffff
                 ).setVisible(false)
                
-            var potion_img1 = this.add.image(
+            const potion_img1 = this.add.image(
                 this.cameraX - 100,
                 this.cameraY + 300,
                 'dpotion'
@@ -681,7 +681,7 @@ this.defaultColor = [
                 this.buttonClick1();
             });
            
-            var potion_name_1 = this.add.text(
+            const potion_name_1 = this.add.text(
                 this.cameraX - 140,
                 this.cameraY + 370,
                 'Dpotion',
@@ -703,7 +703,7 @@ this.defaultColor = [
                 }
             ).setVisible(false)
             
-             let potion_img2 = this.add.image(
+             const potion_img2 = this.add.image(
                 this.cameraX + 100,
                 this.cameraY + 300,
                 'leppot'
@@ -743,7 +743,7 @@ this.defaultColor = [
             ).setVisible(false)
             
             
-            var potion_name_2 = this.add.text(
+            const potion_name_2 = this.add.text(
                 this.cameraX + 60,
                 this.cameraY + 370,
                 'Leppot',
@@ -754,7 +754,7 @@ this.defaultColor = [
                 }
             ).setVisible(false)
     
-            var bag = this.add.image(
+            const bag = this.add.image(
                 this.cameraX + 540,
                 this.cameraY + 370,
                 'bag2'
@@ -796,7 +796,7 @@ this.defaultColor = [
             }
 
 
-            let waiting = this.add.text(this.cameraX, this.cameraY, "Conneting...", {
+            const waiting = this.add.text(this.cameraX, this.cameraY, "Conneting...", {
                 font: '34px',
                 color: '#000',
                 fontStyle: 'bold'
@@ -809,7 +809,7 @@ this.defaultColor = [
             })
             
             
-            let roomText = this.add.text(this.cameraX, this.cameraY - 440, "Finding Rooms Available", {
+            const roomText = this.add.text(this.cameraX, this.cameraY - 440, "Finding Rooms Available", {
                 font: '34px',
                 color: '#000',
                 fontStyle: 'bold'
@@ -828,13 +828,13 @@ this.defaultColor = [
             
             waiting.destroy()
             
-            let players = String(this.socket.id ?? "")
+            const players = String(this.socket.id ?? "")
             
-            let index = data.findIndex((player: any) => player.id === players)
+            const index = data.findIndex((player: any) => player.id === players)
             
             if (index !== -1) {
                 
-                let currentPlayer = data.splice(index, 1)[0]
+                const currentPlayer = data.splice(index, 1)[0]
                 
                 if (currentPlayer) {
                     
@@ -866,7 +866,7 @@ this.defaultColor = [
   buttonClick1() {
          
      if (this.playersLogs[0].lifePoints <= 5) {
-         let randomNumber = Math.random() < 0.7 ? -2 : 7;
+         const randomNumber = Math.random() < 0.7 ? -2 : 7;
  
          this.playersLogs[0].lifePoints = Math.max(1, this.playersLogs[0].lifePoints + randomNumber);
          
@@ -891,7 +891,7 @@ this.defaultColor = [
          
              if (this.playersLogs[0].LM >= 0) {
                  
-                 var Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10
+                 const Value = Math.floor(Phaser.Math.FloatBetween(0.2, 0.8) * 10) / 10
                  
                  if (this.playersLogs[0].leppot >= 1) {
                 
@@ -951,7 +951,7 @@ this.defaultColor = [
      //Special Effects
    shakeDmg(index: any) {
  
-     let imgData = this.imageShake[index]; // Get stored image and original position
+     const imgData = this.imageShake[index]; // Get stored image and original position
  
      // Prevent error if index is out of range
      if (!imgData || !imgData.image) return; 
