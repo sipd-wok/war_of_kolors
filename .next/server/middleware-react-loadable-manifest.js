@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST='{"app/page.js -> ../components/phaser":{"id":9990,"files":["static/chunks/8f005c66.7a4aaa0114135d1f.js","static/chunks/298.b581237ae09ab39d.js","static/chunks/990.eb71a8a1abf20272.js"]}}';
