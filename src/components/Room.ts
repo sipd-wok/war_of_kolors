@@ -44,6 +44,7 @@ export class Room extends Phaser.Scene {
   private imageAttack_ani: Phaser.GameObjects.Image[] = [];
   private container_countdown_respin: Phaser.GameObjects.Text = null!;
   private spinning: ReturnType<typeof setInterval>
+  private updatePlayer: ReturnType<typeof setInterval>
   private bounceBox: boolean = true
   private updateFunction: boolean = false
 
@@ -122,6 +123,31 @@ export class Room extends Phaser.Scene {
   this.playersLogs = [
     // {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, health_potion: 5, walletBal: 999},
   ] 
+
+  this.socket.on("ClearAllInterval", (data) => {
+
+    if(data) {
+        clearInterval(this.updatePlayer)
+    }
+
+  })
+
+  this.updatePlayer = setInterval(() => {
+    const playersOrginalValue = [
+        this.playersLogs[0].id, 
+        this.playersLogs[0].LM, 
+        this.playersLogs[0].lifePoints,
+        this.playersLogs[0].walletBal,
+        this.playersLogs[0].leppot,
+        this.playersLogs[0].dpotion,
+        this.playersLogs[0].health_potion, 
+        this.room
+    ]
+
+    this.socket.emit("UpdatePlayer1", playersOrginalValue)
+  }, 500)
+
+  
 
   ///6 Collors
 this.defaultColor = [
@@ -303,7 +329,7 @@ this.defaultColor = [
     
                 this.rotateBounce(this.box3, this.bounceBox)
                 
-            }, 2400)
+            }, 1800)
     
             //Arrays for Dmg Recieve
             
@@ -324,38 +350,51 @@ this.defaultColor = [
             this.socket.emit("GenerateColors", this.room)            
 
             this.socket.on("ReceiveColor", (data) => {
-                
-                const playersOrginalValue = [
-                    this.playersLogs[0].id, 
-                    this.playersLogs[0].LM, 
-                    this.playersLogs[0].lifePoints,
-                    this.playersLogs[0].walletBal,
-                    this.playersLogs[0].leppot,
-                    this.playersLogs[0].dpotion,
-                    this.playersLogs[0].health_potion, 
-                    this.room
-                ]
-
-                this.socket.emit("UpdatePlayer1", playersOrginalValue)
 
                 this.socket.on("UpdatePlayer1Final", (data) => {
 
-                    const playersId = this.socket.id
+                            const playersId = this.socket.id
 
-                    const index = this.playersLogs.findIndex(player => player.id === playersId)
+                            const index = this.playersLogs.findIndex(player => player.id === playersId)
 
-                    if (index === -1) return
+                            if (index === -1) return
 
-                    console.log("Data: ", data)
-                    console.log("PLayers Id: ", index)
+                            this.playersLogs[index] = data
 
+                            console.log(this.playersLogs[index])
+
+                        })
+
+                        this.socket.on("UpdateAll", (data) => {
+                            
+                            const players = this.socket.id
+
+                    interface Player {  
+                        id: string | number
+                    }
+                    
+                    const index = data.findIndex((player: Player) => player.id === players)
+                    
+                    if (index !== -1) {
+                        
+                        const currentPlayer = data.splice(index, 1)[0]
+                        
+                        if (currentPlayer) {
+                            
+                            data.unshift(currentPlayer)
+                            
+                        }
+                
+            }
+                 
+            this.playersLogs = data
+                    
+                    
                 })
 
                 this.boxResult = data
 
                 if(!closedGame) return
-
-                console.log("BoxResult", data)
 
                 this.box1?.setTexture(data[0].img)
                 this.box2?.setTexture(data[1].img)
@@ -683,9 +722,9 @@ this.defaultColor = [
                 potion_img2.disableInteractive()
     
               if (isNaN(this.playersLogs[0].lifePoints) || this.playersLogs[0].lifePoints >= 15 || 
-    this.playersLogs[1].lifePoints >= 15 || this.playersLogs[2].lifePoints >= 15 || 
-    this.playersLogs[3].lifePoints >= 15 || this.playersLogs[4].lifePoints >= 15 || 
-    this.playersLogs[5].lifePoints >= 15) {
+                    this.playersLogs[1].lifePoints >= 15 || this.playersLogs[2].lifePoints >= 15 || 
+                    this.playersLogs[3].lifePoints >= 15 || this.playersLogs[4].lifePoints >= 15 || 
+                    this.playersLogs[5].lifePoints >= 15) {
     
                     potion_img2.disableInteractive()
     

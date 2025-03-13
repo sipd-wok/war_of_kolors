@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/page.js -> ../components/phaser":{"id":7167,"files":["static/chunks/8f005c66.7a4aaa0114135d1f.js","static/chunks/298.b581237ae09ab39d.js","static/chunks/167.050eb4fba3613b28.js"]}}';
+self.__REACT_LOADABLE_MANIFEST='{"app/page.js -> ../components/phaser":{"id":7167,"files":["static/chunks/8f005c66.7a4aaa0114135d1f.js","static/chunks/298.b581237ae09ab39d.js","static/chunks/167.0cfdee64c1180468.js"]}}';

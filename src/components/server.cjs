@@ -34,6 +34,8 @@ io.on("connection", (socket) => {
             {color: 0x0000ff, img: 'blue'},
             {color: 0xff00ff, img: 'pink'},
         ]
+
+        const players_length = 2 //Change this For Testing
         
         let random = color[Math.floor(Math.random() * color.length)];
 console.log(random);
@@ -42,7 +44,7 @@ console.log(random);
         
         //Assign to this All players at their current Value
         
-           let roomName = Object.keys(rooms).find((room) => rooms[room].length < 6)
+           let roomName = Object.keys(rooms).find((room) => rooms[room].length < players_length)
            
            //If rooms already full add another room
            if (!roomName) {
@@ -57,7 +59,7 @@ console.log(random);
             io.to(roomName).emit("SetCount", rooms[roomName].length)
             
             //start the game if it's room is full
-            if (rooms[roomName].length === 6) {   
+            if (rooms[roomName].length === players_length) {   
               io.to(roomName).emit("InputPlayer", (rooms[roomName]))
                 
             }
@@ -107,28 +109,40 @@ console.log(random);
 
                 const CurrentRoom = rooms[roomId]
 
-                console.log("ID: ", id)
-                console.log("Player Name: ", Pname)
-                console.log("Room: ", CurrentRoom)
-                console.log("PrizeWOK", prizeWok)
+                const index = CurrentRoom.findIndex(player => player.id === id)
                 
+                console.log("Congrast to ", Pname)
+
+                index.walletBal += prizeWok
+                
+                if (roomData.interval) {
+                    clearInterval(roomData.interval);
+                    roomData.interval = null;  // Reset the interval reference
+                    io.emit("ClearAllInterval", CurrentRoom)
+                }
+
             })
 
-        
-            // 🚀 Start new interval
-            //roomIntervals[data] = 
-            setInterval(() => {
-                let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
-        
-                io.to(data).emit("ReceiveColor", selectedColor);
-        
-                setTimeout(() => {
-                    io.to(data).emit("colorHistory", selectedColor);
-                }, 3000);
-            }, 5000); // Runs every 5 seconds
+            if(!roomData) return
+
+            if (roomData.length === players_length) {
+                if (!roomData.interval) {
+                    roomData.interval = setInterval(() => {
+                        let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
+                
+                        io.to(data).emit("ReceiveColor", selectedColor);
+                
+                        setTimeout(() => {
+                            io.to(data).emit("colorHistory", selectedColor);
+                        }, 3000);
+                    }, 5000); // Runs every 5 seconds
+
+                }
+            
+            }
+            
         });
-    
-    
+
         socket.on("UpdatePlayer1", (
             [
             id, 
@@ -164,7 +178,11 @@ console.log(random);
                 health_potion 
             });
 
+            console.log("Players Update", Room_01[index])
+
             io.emit("UpdatePlayer1Final", Room_01[index])
+
+            io.emit("UpdateAll", Room_01)
 
         })
 
