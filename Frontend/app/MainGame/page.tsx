@@ -7,7 +7,7 @@ const MainGame = async () => {
   if (!session) {
     redirect("/");
   } else {
-    console.log("Session found at /MainGame");
+    console.log("Session found at /mainGame");
     console.log(session);
     console.log("user_id: " + session.user?.user_id);
   }

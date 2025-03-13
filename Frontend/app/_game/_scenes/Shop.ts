@@ -151,6 +151,64 @@ export class Shop extends Scene {
     "White Dragon Tamer",
     "Pink Dragon Tamer",
     "Rainbow Dragon Tamer",
+    // Medusa
+    "Red Medusa",
+    "Green Medusa",
+    "Pink Medusa",
+    "White Medusa",
+    "Yellow Medusa",
+    "Blue Medusa",
+    "Rainbow Medusa",
+    // Sniper
+    "Pink Sniper",
+    "Red Sniper",
+    "Green Sniper",
+    "Yellow Sniper",
+    "White Sniper",
+    "Blue Sniper",
+    "Rainbow Sniper",
+    // Wrestler
+    "Red Wrestler",
+    "Pink Wrestler",
+    "Yellow Wrestler",
+    "Green Wrestler",
+    "Blue Wrestler",
+    "White Wrestler",
+    "Rainbow Wrestler",
+    // Master Chef
+    "Green Master Chef",
+    "Blue Master Chef",
+    "Red Master Chef",
+    "Yellow Master Chef",
+    "White Master Chef",
+    "Pink Master Chef",
+    "Rainbow Master Chef",  
+    // Mafia Boss
+    "Yellow Mafia Boss",
+    "Green Mafia Boss",
+    "Red Mafia Boss",
+    "Pink Mafia Boss",
+    "White Mafia Boss",
+    "Blue Mafia Boss",
+    "Rainbow Mafia Boss",
+    // Rainbow Death God
+    "Rainbow Death God",
+    //Indian
+    "Pink Indian",
+    "Blue Indian",
+    "Yellow Indian",
+    "Red Indian",
+    "Green Indian",
+    "White Indian",
+    "Rainbow Indian",
+    // Capt Dober
+    "Red Capt Dober",
+    "Blue Capt Dober",
+    "Green Capt Dober",
+    "Yellow Capt Dober",
+    "Pink Capt Dober",
+    "White Capt Dober",
+    "Rainbow Capt Dober",
   ];
 
   private shopPayment!: (amount: string) => Promise<void>;
@@ -494,7 +552,17 @@ export class Shop extends Scene {
   private transactionFail: boolean = false;
   private pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
   private pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
-  private async uploadToPinata(file: File, price: string): Promise<string | null> {
+  private async uploadToPinata(file: File, price: string, metadata: object): Promise<string | null> {
+    const meta = metadata as { 
+      name: string; 
+      atk: number; 
+      color: string; 
+      def: number; 
+      hp: number; 
+      luck: number; 
+      sprite: string; 
+      tier: string;
+  };
     const buyAndmint = this.game.registry.get('buyAndmint');
     const walletAddress = this.game.registry.get('walletAddress');
     const balance = this.game.registry.get('balance');
@@ -532,12 +600,15 @@ export class Shop extends Scene {
       const imageData = await image.json();
       const imageURI = `https://bronze-active-seahorse-192.mypinata.cloud/ipfs/${imageData.IpfsHash}`;
   
-      const metadata = {
-        name: "My NFT",
-        description: "An NFT minted on Core DAO",
-        image: imageURI,
-      };
-  
+      // const metadata = {
+      //   name: "My NFT",
+      //   description: "An NFT minted on Core DAO",
+      //   image: imageURI,
+      // };
+      const newMetadata = {
+        ...meta,
+        image: imageURI
+      }
       // Upload metadata to Pinata
       const metadataRes = await fetch(
         "https://api.pinata.cloud/pinning/pinJSONToIPFS",
@@ -548,7 +619,7 @@ export class Shop extends Scene {
             pinata_api_key: this.pinataApiKey as string,
             pinata_secret_api_key: this.pinataSecretApiKey as string,
           },
-          body: JSON.stringify(metadata),
+          body: JSON.stringify(newMetadata),
         },
       );
   
@@ -557,9 +628,7 @@ export class Shop extends Scene {
   
       // 🔹 Mint NFT with metadataURI
       try {
-        console.log("Calling buyAndmint with:", price, walletAddress, metadataURI);
         const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
-        console.log("Buy and mint response:", buyandmint);
         if (buyandmint.message === 'TSFailed') {
           this.transactionFail = true;
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
@@ -582,15 +651,16 @@ export class Shop extends Scene {
       alert("NFT Minting Failed!");
       return null
     }
+    return null
   }
-  private async uploadImageToPinata(imagePath: string, price: string): Promise<string | null> {
+  private async uploadImageToPinata(imagePath: string, price: string, metadata: object): Promise<string | null> {
     try {
       const response = await fetch(imagePath);
       const blob = await response.blob();
       const file = new File([blob], `char_${Date.now()}.png`, {
         type: blob.type,
       });
-      return await this.uploadToPinata(file, price);
+      return await this.uploadToPinata(file, price, metadata);
     } catch (error) {
       console.error("Error converting image to File:", error);
       return null;
@@ -666,39 +736,50 @@ export class Shop extends Scene {
     // Define sprite options based on color
     const spriteOptions: Record<string, number[]> = {
       Red: [
-        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115,
+        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115, 122, 130, 136, 145, 152, 161, 165
       ],
       Blue: [
-        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116,
+        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116, 127, 134, 140, 144, 155, 159, 166
       ],
       Yellow: [
-        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118,
+        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118, 126, 132, 138, 146, 150, 160, 168
       ],
       Green: [
-        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117,
+        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117, 123, 131, 139, 143, 151, 162, 167
       ],
       Pink: [
-        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120,
+        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120, 124, 129, 137, 148, 153, 158, 169
       ],
       White: [
-        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119,
+        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119, 125, 133, 141, 147, 154, 163, 170
       ],
-      Rainbow: [97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121],
+      Rainbow: [
+        97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121, 128, 135, 142, 149, 156, 157, 164, 171
+      ],
     };
 
     const possibleSprites = spriteOptions[this.character.color];
     const randomIndex = this.getRandomInt(0, possibleSprites.length - 1);
     this.character.sprite = `characterSprite${possibleSprites[randomIndex]}`;
-
+    
     this.character.name =
       this.characterNames[
         parseInt(this.character.sprite.replace("characterSprite", "")) - 1
       ];
+      const metadata = {
+        tier: this.character.tier,
+        color: this.character.color,
+        hp: this.character.hp,
+        atk: this.character.atk,
+        def: this.character.def,
+        luck: this.character.luck,
+        sprite: this.character.sprite,
+        name: this.character.name,
+}
     await this.uploadImageToPinata(
-      `assets/char_${possibleSprites[randomIndex]}.png`,price
+      `assets/char_${possibleSprites[randomIndex]}.png`,price,metadata
     );
     // Show the modal to display the character details
-    console.log(this.transactionFail)
     if(this.transactionFail === false){
       this.showCharacterModal();
       // Save character using API endpoint
