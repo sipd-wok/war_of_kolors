@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
-import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
+// import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
 import { useEffect, useState } from "react";
 import { useWallet } from "@/context/WalletContext";
 import { useRouter } from "next/navigation";
@@ -24,6 +24,8 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
     if (walletAddress) {
       fetchBalance(walletAddress);
       console.log("Wallet address is set:", walletAddress, balance);
+      router.push("/welcome");
+      // Perform actions that require walletAddress here
     }
   }, [walletAddress, fetchBalance, balance]);
 
@@ -53,32 +55,15 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
 
       // Set wallet connected immediately for better UX
       setWalletConnected(true);
-
-      // Complete authentication before redirecting
-      try {
-        console.log("Starting authentication with address:", address);
-        const result = await metaMaskSignInAction(address);
-        console.log("Authentication result:", result);
-
-        if (!result.success) {
-          console.error("Authentication failed:", result.message);
-          setError(
-            `Authentication failed: ${result.message || "Unknown error"}`,
-          );
-          // Don't reset walletConnected here to avoid UI flickering
-        }
-      } catch (error) {
-        // Log detailed error info
-        console.error("Authentication error details:", error);
-        setError(`Auth error: ${(error as Error).message || "Unknown error"}`);
-        // Continue with wallet connected for better UX
-      }
-
-      router.push("/welcome");
+      // Now call the server action with the wallet address
+      // if(walletAddress){
+      //   await metaMaskSignInAction(address).then(() => {
+      //     router.push("/welcome");
+      //   });
+      // }
     } catch (error) {
       // Log detailed error info
-      console.error("Authentication error details:", error);
-      setError(`Auth error: ${(error as Error).message || "Unknown error"}`);
+      console.error("Error connecting to wallet:", error);
       // Continue with wallet connected for better UX
     } finally {
       setIsConnecting(false);

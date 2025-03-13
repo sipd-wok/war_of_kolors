@@ -9,6 +9,7 @@ import { Room } from "./_scenes/Room";
 import { RoomList } from "./_scenes/RoomList";
 import { WaitingRoom } from "./_scenes/WaitingRoom";
 import { Shop } from "./_scenes/Shop";
+import { Profile } from "./_scenes/Profile";
 import { Marketplace } from "./_scenes/(marketplace)/Marketplace";
 import { SellCharacters } from "./_scenes/(marketplace)/SellCharacters";
 // impert ang mga scenes diri
@@ -29,6 +30,7 @@ const config: Phaser.Types.Core.GameConfig = {
     RoomList,
     WaitingRoom,
     Shop,
+    Profile,
     Marketplace,
     SellCharacters,
     // butang d ang scene mo
