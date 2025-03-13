@@ -148,6 +148,7 @@ console.log(random);
             id, 
             LM, 
             lifePoints,
+            name,
             walletBal,
             leppot,
             dpotion,
@@ -170,7 +171,8 @@ console.log(random);
             if (index === -1) return
 
             Object.assign(Room_01[index], { 
-                lifePoints, 
+                lifePoints,
+                name, 
                 leppot, 
                 LM, 
                 walletBal, 

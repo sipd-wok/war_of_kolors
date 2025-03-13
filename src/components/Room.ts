@@ -134,7 +134,8 @@ export class Room extends Phaser.Scene {
 
   this.updatePlayer = setInterval(() => {
     const playersOrginalValue = [
-        this.playersLogs[0].id, 
+        this.playersLogs[0].id,
+        this.playersLogs[0].name, 
         this.playersLogs[0].LM, 
         this.playersLogs[0].lifePoints,
         this.playersLogs[0].walletBal,
@@ -143,7 +144,6 @@ export class Room extends Phaser.Scene {
         this.playersLogs[0].health_potion, 
         this.room
     ]
-
     this.socket.emit("UpdatePlayer1", playersOrginalValue)
   }, 500)
 
@@ -353,15 +353,13 @@ this.defaultColor = [
 
                 this.socket.on("UpdatePlayer1Final", (data) => {
 
-                            const playersId = this.socket.id
+                        const playersId = this.socket.id
 
-                            const index = this.playersLogs.findIndex(player => player.id === playersId)
+                        const index = this.playersLogs.findIndex(player => player.id === playersId)
 
-                            if (index === -1) return
+                        if (index === -1) return
 
-                            this.playersLogs[index] = data
-
-                            console.log(this.playersLogs[index])
+                        this.playersLogs[index] = data
 
                         })
 
