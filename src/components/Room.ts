@@ -43,8 +43,8 @@ export class Room extends Phaser.Scene {
   }[] = [];
   private imageAttack_ani: Phaser.GameObjects.Image[] = [];
   private container_countdown_respin: Phaser.GameObjects.Text = null!;
-  private spinning: ReturnType<typeof setInterval>
-  private updatePlayer: ReturnType<typeof setInterval>
+  private spinning: ReturnType<typeof setInterval> | null = null
+  private updatePlayer: ReturnType<typeof setInterval> | null = null
   private bounceBox: boolean = true
   private updateFunction: boolean = false
 
@@ -126,7 +126,7 @@ export class Room extends Phaser.Scene {
 
   this.socket.on("ClearAllInterval", (data) => {
 
-    if(data) {
+    if(data && this.updatePlayer !== null) {
         clearInterval(this.updatePlayer)
     }
 
@@ -312,13 +312,13 @@ this.defaultColor = [
                     const color3 = this.defaultColor[Value3]?.img
 
                     if (color1) {
-                        this.box1.setTexture(color1).setVisible(true)
+                        this.box1?.setTexture(color1).setVisible(true)
                     }
                     if (color2) {
-                        this.box2.setTexture(color2).setVisible(true)
+                        this.box2?.setTexture(color2).setVisible(true)
                     }
                     if (color3) {
-                        this.box3.setTexture(color3).setVisible(true)
+                        this.box3?.setTexture(color3).setVisible(true)
                     }
             
                 }, 100)
@@ -412,7 +412,7 @@ this.defaultColor = [
 
                 for (let i = 0; i < this.playersLogs.length; i++) {
                     
-                    const matchingColors = this.boxResult.filter(box => box.color === this.playersLogs[i].color).length;
+                    const matchingColors = this.boxResult?.filter(box => box.color === this.playersLogs[i].color).length ?? 0;
 
                         if (matchingColors > 0) {
                             this.playersLogs[i].lifePoints += matchingColors; // Increase life points based on matches
@@ -515,13 +515,13 @@ this.defaultColor = [
                         const color3 = this.defaultColor[Value3]?.img
     
                         if (color1) {
-                            this.box1.setTexture(color1).setVisible(true)
+                            this.box1?.setTexture(color1).setVisible(true)
                         }
                         if (color2) {
-                            this.box2.setTexture(color2).setVisible(true)
+                            this.box2?.setTexture(color2).setVisible(true)
                         }
                         if (color3) {
-                            this.box3.setTexture(color3).setVisible(true)
+                            this.box3?.setTexture(color3).setVisible(true)
                         }
                         }, 100)
         
