@@ -96,7 +96,7 @@
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "/mnt/f/Kali/war_of_kolors",
+    "outputFileTracingRoot": "/workspaces/war_of_kolors",
     "experimental": {
       "nodeMiddleware": false,
       "cacheLife": {
@@ -174,7 +174,7 @@
       "forceSwcTransforms": false,
       "largePageDataBytes": 128000,
       "turbo": {
-        "root": "/mnt/f/Kali/war_of_kolors"
+        "root": "/workspaces/war_of_kolors"
       },
       "typedRoutes": false,
       "typedEnv": false,
@@ -280,7 +280,7 @@
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.mjs"
   },
-  "appDir": "/mnt/f/Kali/war_of_kolors",
+  "appDir": "/workspaces/war_of_kolors",
   "relativeAppDir": "",
   "files": [
     ".next/routes-manifest.json",

@@ -24,6 +24,7 @@ export class Room extends Phaser.Scene {
     LM: number;
     dpotion: number;
     leppot: number;
+    health_potion: number;
     walletBal: number;
   }> = [];
 
@@ -119,12 +120,7 @@ export class Room extends Phaser.Scene {
    //Players Logs || Waiting Other Player Logs
   //Just change for main session to index 0 as main character in their Own Devices
   this.playersLogs = [
-    // {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, walletBal: 999},
-      // {lifePoints: 10 ,name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
+    // {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, health_potion: 5, walletBal: 999},
   ] 
 
   ///6 Collors
@@ -329,6 +325,32 @@ this.defaultColor = [
 
             this.socket.on("ReceiveColor", (data) => {
                 
+                const playersOrginalValue = [
+                    this.playersLogs[0].id, 
+                    this.playersLogs[0].LM, 
+                    this.playersLogs[0].lifePoints,
+                    this.playersLogs[0].walletBal,
+                    this.playersLogs[0].leppot,
+                    this.playersLogs[0].dpotion,
+                    this.playersLogs[0].health_potion, 
+                    this.room
+                ]
+
+                this.socket.emit("UpdatePlayer1", playersOrginalValue)
+
+                this.socket.on("UpdatePlayer1Final", (data) => {
+
+                    const playersId = this.socket.id
+
+                    const index = this.playersLogs.findIndex(player => player.id === playersId)
+
+                    if (index === -1) return
+
+                    console.log("Data: ", data)
+                    console.log("PLayers Id: ", index)
+
+                })
+
                 this.boxResult = data
 
                 if(!closedGame) return
@@ -344,7 +366,7 @@ this.defaultColor = [
                 this.socket.emit("round", round_result)
                 
                 this.socket.on("round_result", (data) => {
-                    
+
                 this.container_countdown_respin.setText('Round ' + data) 
                     
                 })
@@ -381,31 +403,31 @@ this.defaultColor = [
           
                       } else if (this.playersLogs[i].lifePoints >= 15){
                           
-                          //here Add to Recieve the WOK Prize to Transfer Wok Wallet
-                          
-                          this.socket.emit("Winners is", this.playersLogs[i].name)
-          
+                        const winners = [this.playersLogs[i].id, this.playersLogs[i].name, this.room, prizeWOK]
+
+                        this.socket.emit("WinnersIs", winners)
+
                           setTimeout(() => {
                               
                               closedGame = false
           
                               setTimeout(() => {
                          
-                      this.add.rectangle(
-                      this.cameraX,
-                      this.cameraY,
-                      560,
-                      310,
-                      0x000000
-                      )
-                         
-                      this.add.rectangle(
-                      this.cameraX,
-                      this.cameraY,
-                      550,
-                      300,
-                      0xffffff
-                      )
+                                this.add.rectangle(
+                                this.cameraX,
+                                this.cameraY,
+                                560,
+                                310,
+                                0x000000
+                                )
+                                    
+                                this.add.rectangle(
+                                this.cameraX,
+                                this.cameraY,
+                                550,
+                                300,
+                                0xffffff
+                                )
                                  
                   this.add.text(this.cameraX, this.cameraY - 100, [
                       'TOTAL PRIZE = ' + prizeWOK + ' Wok'

@@ -11,12 +11,13 @@ const server = http.createServer();
 // Start Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000", // Allow all origins (for flexibility)
+        origin: "*", // Allow all origins (for flexibility)
         methods: ["GET", "POST"]
     }
 });
 
-let rooms = {} // Add rooms for every 6 Player
+let rooms = {} // If you Want the Data Of All Players each Room Just call this to access their Information And Input to Database
+//In This Structure This Rooms Is very Important, All players personal information get here every time will updates its value  By Cordy ;)
 
 // Handle player connections
 io.on("connection", (socket) => {
@@ -37,7 +38,7 @@ io.on("connection", (socket) => {
         let random = color[Math.floor(Math.random() * color.length)];
 console.log(random);
         
-        let NewPlayers = {id: socket.id, lifePoints: 10 ,name: socket.id, color: random.color, luck: 6, bet: 2000, img: random.img, LM: 0, dpotion: 2, leppot: 4, walletBal: 999}
+        let NewPlayers = {id: socket.id, lifePoints: 10 ,name: socket.id, color: random.color, luck: 6, bet: 2000, img: random.img, LM: 0, dpotion: 2, leppot: 4, health_potion: 3, walletBal: 999}
         
         //Assign to this All players at their current Value
         
@@ -52,8 +53,6 @@ console.log(random);
             socket.join(roomName)
             
             rooms[roomName].push(NewPlayers)
-            
-            console.log(rooms)
             
             io.to(roomName).emit("SetCount", rooms[roomName].length)
             
@@ -103,13 +102,23 @@ console.log(random);
             // if (roomIntervals[data]) {
             //     clearInterval(roomIntervals[data]);
             // }
+
+            socket.on("WinnersIs", ([id, Pname, roomId, prizeWok]) => {
+
+                const CurrentRoom = rooms[roomId]
+
+                console.log("ID: ", id)
+                console.log("Player Name: ", Pname)
+                console.log("Room: ", CurrentRoom)
+                console.log("PrizeWOK", prizeWok)
+                
+            })
+
         
             // 🚀 Start new interval
             //roomIntervals[data] = 
             setInterval(() => {
                 let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
-        
-                console.log("Sending colors to", data, selectedColor);
         
                 io.to(data).emit("ReceiveColor", selectedColor);
         
@@ -120,6 +129,45 @@ console.log(random);
         });
     
     
+        socket.on("UpdatePlayer1", (
+            [
+            id, 
+            LM, 
+            lifePoints,
+            walletBal,
+            leppot,
+            dpotion,
+            health_potion, 
+            roomData
+            ]) => {
+            
+            const Room_01 = rooms[roomData]
+
+            // interface Player {  
+            //     id: string | number
+            // }
+            
+            //const index = data.findIndex((player: Player) => player.id === players)
+
+            if(!Room_01 || Room_01.length === 0) return
+
+            const index = Room_01.findIndex(player => player.id === id)
+            
+            if (index === -1) return
+
+            Object.assign(Room_01[index], { 
+                lifePoints, 
+                leppot, 
+                LM, 
+                walletBal, 
+                dpotion, 
+                health_potion 
+            });
+
+            io.emit("UpdatePlayer1Final", Room_01[index])
+
+        })
+
     socket.on("round", (data) => {
         
         io.emit("round_result", data)
