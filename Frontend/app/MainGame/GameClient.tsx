@@ -1,17 +1,19 @@
+// GameClient.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import dynamic from "next/dynamic";
-import type { IRefPhaserGame } from "../_game/PhaserGame";
+// import type { IRefPhaserGame } from "../_game/PhaserGame";
 import { WalletProvider } from "@/context/WalletContext";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 
-// Dynamically import PhaserGame with SSR disabled
-const PhaserGame = dynamic(
-  () => import("../_game/PhaserGame").then((mod) => mod.PhaserGame),
-  { ssr: false },
+// Memoize the PhaserGame component to prevent re-renders when parent state changes
+const PhaserGame = memo(
+  dynamic(() => import("../_game/PhaserGame").then((mod) => mod.PhaserGame), {
+    ssr: false,
+  }),
 );
 
 const style = {
@@ -26,8 +28,35 @@ const style = {
   p: 4,
 };
 
+// Separate modal component to prevent Phaser canvas re-renders
+const GameModal = ({
+  open,
+  handleClose,
+}: {
+  open: boolean;
+  handleClose: () => void;
+}) => (
+  <Modal
+    open={open}
+    onClose={handleClose}
+    aria-labelledby="modal-modal-title"
+    aria-describedby="modal-modal-description"
+    disableAutoFocus
+    keepMounted
+  >
+    <Box sx={style}>
+      <Typography id="modal-modal-title" variant="h6" component="h2">
+        Text in a modal
+      </Typography>
+      <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+        Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+      </Typography>
+    </Box>
+  </Modal>
+);
+
 export default function GameClient() {
-  const phaserRef = useRef<IRefPhaserGame | null>(null);
+  // const phaserRef = useRef<IRefPhaserGame | null>(null);
   const [open, setOpen] = useState(false);
   const handleClose = () => setOpen(false);
 
@@ -53,24 +82,11 @@ export default function GameClient() {
   return (
     <WalletProvider>
       <div id="app" className="relative">
-        <div>
-          <Modal
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <Box sx={style}>
-              <Typography id="modal-modal-title" variant="h6" component="h2">
-                Text in a modal
-              </Typography>
-              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-              </Typography>
-            </Box>
-          </Modal>
-        </div>
-        <PhaserGame ref={phaserRef} />
+        {/* Modal is rendered separately */}
+        <GameModal open={open} handleClose={handleClose} />
+
+        {/* Game container won't re-render when modal state changes */}
+        <PhaserGame />
       </div>
     </WalletProvider>
   );
