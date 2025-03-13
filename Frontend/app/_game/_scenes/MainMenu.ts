@@ -70,6 +70,22 @@ export class MainMenu extends Scene {
     }
   }
 
+  private async getUsername(): Promise<string> {
+    try {
+      const response = await fetch("/api/getUser", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      return data.user.username;
+    } catch (error) {
+      console.error("Error fetching username:", error);
+      return "Unknown";
+    }
+  }
+
   private updateCharacterBasedUI() {
     console.log("Selected character: ", this.selectedCharacter);
     if (this.selectedCharacter) {
