@@ -25,6 +25,7 @@
     "get-port": "^7.1.0",
     "leva": "^0.10.0",
     "lightningcss": "^1.29.2",
+    "lucide-react": "^0.479.0",
     "next": "15.2.0",
     "next-auth": "^5.0.0-beta.25",
     "phaser": "^3.88.2",
