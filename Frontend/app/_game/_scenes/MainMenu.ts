@@ -8,6 +8,7 @@ export class MainMenu extends Scene {
   createRoomBttn!: GameObjects.Text;
   openShop!: GameObjects.Text;
   socket!: Socket;
+  showProfile!: GameObjects.Image;
   canvasFrame!: GameObjects.Image;
   characterFrame!: GameObjects.Image;
   characterImage!: GameObjects.Image;
@@ -51,6 +52,22 @@ export class MainMenu extends Scene {
     super("MainMenu");
 
     this.socket = io("localhost:3000");
+  }
+
+  private async getUsername(): Promise<string> {
+    try {
+      const response = await fetch("/api/getUser", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      return data.user.username;
+    } catch (error) {
+      console.error("Error fetching username:", error);
+      return "Unknown";
+    }
   }
 
   private updateCharacterBasedUI() {
@@ -550,6 +567,23 @@ export class MainMenu extends Scene {
       this.scene.start("Shop", { socket: this.openShop }); // Change to open the Shop scene
     });
 
+    // --- Open Profile Button ---
+    const profileButton = this.add.image(cameraX - 530, cameraY - 310, "profile")
+    .setInteractive({ useHandCursor: true })
+    .setDisplaySize(100, 100);
+
+    profileButton.on("pointerdown", () => {
+      this.scene.start("Profile");
+    });
+
+    this.getUsername().then((username) => {
+      this.add.text(cameraX - 430, cameraY - 320, `${username}`, {
+        fontFamily: "Arial",
+        fontSize: 24,
+        color: "#000000",
+      });
+    });
+
     EventBus.emit("current-scene-ready", this);
   }
 
@@ -557,3 +591,4 @@ export class MainMenu extends Scene {
     this.scene.start(sceneName);
   }
 }
+
