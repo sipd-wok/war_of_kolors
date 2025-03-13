@@ -53,7 +53,7 @@ export class MainMenu extends Scene {
 
     this.socket = io("localhost:3000");
   }
-
+  private shopPayment!: (amount: string) => Promise<void>;
   private async getUsername(): Promise<string> {
     try {
       const response = await fetch("/api/getUser", {
@@ -207,7 +207,16 @@ export class MainMenu extends Scene {
       console.error("Error fetching characters:", error);
     }
   }
-
+private async payRoom(price: string) {
+  const payment = this.game.registry.get("shopPayment")
+  try{
+    await payment(price); 
+    return({message: 'Success'})
+  }catch(err){
+    console.log(err)
+    return({message: 'Failed'})
+  }
+}
   create() {
     this.sound.add("ambiance", { loop: true }).play();
 
@@ -517,28 +526,33 @@ export class MainMenu extends Scene {
       .on("pointerout", () => {
         this.joinRoomBttn.setStyle({ color: "#ffffff" });
       })
-      .on("pointerdown", () => {
-        console.log("Joining room...");
-
-        this.socket.emit(
-          "getAvailableRoom",
-          this.selectedCharacter?.color.toLowerCase(),
-          (roomID: string, colorRepresentativesIndex: string) => {
-            let roomtoJoin = "";
-            roomtoJoin = roomID;
-            if (this.selectedCharacter) {
-              this.selectedCharacter.color = colorRepresentativesIndex;
-            }
-            console.log("Joining room: " + roomtoJoin);
-
-            this.scene.start("WaitingRoom", {
-              roomID: roomID,
-              user: this.user,
-              character: this.selectedCharacter,
-              potions: this.potions,
-            });
-          },
-        );
+      .on("pointerdown", async() => {
+        const payment = await this.payRoom('10');
+        if(payment.message === 'Failed'){
+          return null
+        }
+        else{
+          console.log("Joining room...");
+          this.socket.emit(
+            "getAvailableRoom",
+            this.selectedCharacter?.color.toLowerCase(),
+            (roomID: string, colorRepresentativesIndex: string) => {
+              let roomtoJoin = "";
+              roomtoJoin = roomID;
+              if (this.selectedCharacter) {
+                this.selectedCharacter.color = colorRepresentativesIndex;
+              }
+              console.log("Joining room: " + roomtoJoin);
+  
+              this.scene.start("WaitingRoom", {
+                roomID: roomID,
+                user: this.user,
+                character: this.selectedCharacter,
+                potions: this.potions,
+              });
+            },
+          );
+        }
       });
 
     EventBus.emit("current-scene-ready", this);
