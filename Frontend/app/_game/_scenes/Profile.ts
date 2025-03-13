@@ -124,33 +124,40 @@ displayBestCharacters() {
     return b.luck - a.luck; // Sort by luck in descending order if tiers are the same
   });
 
-  // Pick the top 5 characters
-  const bestCharacters = sortedCharacters.slice(0, 5);
+  const bestCharacters = sortedCharacters;
 
   const cameraX = this.cameras.main.width / 2;
-  const startY = this.cameras.main.height / 2;
-  const startX = cameraX - (bestCharacters.length - 1) * 100; // Adjust starting X position
+  const startY = this.cameras.main.height / 2 - 140; // Adjust starting Y position
+  const startX = cameraX - 400; // Adjust starting X position
+
+  const charactersPerRow = 5;
+  const characterSpacingX = 200;
+  const characterSpacingY = 200;
 
   bestCharacters.forEach((character, index) => {
-    const x = startX + index * 200; // Adjust spacing between characters
+    const row = Math.floor(index / charactersPerRow);
+    const col = index % charactersPerRow;
+
+    const x = startX + col * characterSpacingX;
+    const y = startY + row * characterSpacingY;
 
     // Display character sprite
-    this.add.image(x, startY, character.sprite).setDisplaySize(100, 100).setOrigin(0.5);
+    this.add.image(x, y, character.sprite).setDisplaySize(100, 100).setOrigin(0.5);
 
     // Display character details
-    this.add.text(x, startY + 60, `${character.name}`, {
+    this.add.text(x, y + 60, `${character.name}`, {
       fontFamily: "Arial",
       fontSize: "20px",
       color: "#000000",
     }).setOrigin(0.5);
 
-    this.add.text(x, startY + 90, `Tier: ${character.tier}`, {
+    this.add.text(x, y + 90, `Tier: ${character.tier}`, {
       fontFamily: "Arial",
       fontSize: "16px",
       color: "#000000",
     }).setOrigin(0.5);
 
-    this.add.text(x, startY + 120, `Luck: ${character.luck}`, {
+    this.add.text(x, y + 120, `Luck: ${character.luck}`, {
       fontFamily: "Arial",
       fontSize: "16px",
       color: "#000000",
@@ -179,19 +186,21 @@ displayBestCharacters() {
   
     // Placeholder text to avoid undefined error
     this.getUsername().then((username) => {
-    this.userInfo = this.add.text(cameraX + 100, cameraY - 200, `Username: ${username}` , {
+    this.userInfo = this.add.text(cameraX + 100, cameraY - 260, `Username: ${username}` , {
       fontFamily: "Arial",
       fontSize: "24px",
       color: "#000000",
     }).setOrigin(0.5);
     });
 
-    this.userImage = this.add.image(cameraX - 150, cameraY - 200, "profile").setDisplaySize(100, 100);
+    this.userImage = this.add.image(cameraX - 150, cameraY - 260, "profile").setDisplaySize(100, 100);
   
-    this.backButton = this.add.text(cameraX, cameraY + 200, "Back", {
+    this.backButton = this.add.text(cameraX - 650, cameraY - 350, "Back", {
       fontFamily: "Arial",
-      fontSize: "28px",
-      color: "#ff0000",
+      fontSize: 24,
+      color: "#ffffff",
+      backgroundColor: "#4e342e",
+      padding: { x: 20, y: 10 },
     }).setOrigin(0.5).setInteractive();
   
     this.backButton.on("pointerdown", () => {
