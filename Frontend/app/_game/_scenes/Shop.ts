@@ -534,7 +534,17 @@ export class Shop extends Scene {
   private transactionFail: boolean = false;
   private pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
   private pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
-  private async uploadToPinata(file: File, price: string): Promise<string | null> {
+  private async uploadToPinata(file: File, price: string, metadata: object): Promise<string | null> {
+    const meta = metadata as { 
+      name: string; 
+      atk: number; 
+      color: string; 
+      def: number; 
+      hp: number; 
+      luck: number; 
+      sprite: string; 
+      tier: string;
+  };
     const buyAndmint = this.game.registry.get('buyAndmint');
     const walletAddress = this.game.registry.get('walletAddress');
     const balance = this.game.registry.get('balance');
@@ -572,12 +582,15 @@ export class Shop extends Scene {
       const imageData = await image.json();
       const imageURI = `https://bronze-active-seahorse-192.mypinata.cloud/ipfs/${imageData.IpfsHash}`;
   
-      const metadata = {
-        name: "My NFT",
-        description: "An NFT minted on Core DAO",
-        image: imageURI,
-      };
-  
+      // const metadata = {
+      //   name: "My NFT",
+      //   description: "An NFT minted on Core DAO",
+      //   image: imageURI,
+      // };
+      const newMetadata = {
+        ...meta,
+        image: imageURI
+      }
       // Upload metadata to Pinata
       const metadataRes = await fetch(
         "https://api.pinata.cloud/pinning/pinJSONToIPFS",
@@ -588,7 +601,7 @@ export class Shop extends Scene {
             pinata_api_key: this.pinataApiKey as string,
             pinata_secret_api_key: this.pinataSecretApiKey as string,
           },
-          body: JSON.stringify(metadata),
+          body: JSON.stringify(newMetadata),
         },
       );
   
@@ -597,9 +610,7 @@ export class Shop extends Scene {
   
       // 🔹 Mint NFT with metadataURI
       try {
-        console.log("Calling buyAndmint with:", price, walletAddress, metadataURI);
         const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
-        console.log("Buy and mint response:", buyandmint);
         if (buyandmint.message === 'TSFailed') {
           this.transactionFail = true;
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
@@ -622,15 +633,16 @@ export class Shop extends Scene {
       alert("NFT Minting Failed!");
       return null
     }
+    return null
   }
-  private async uploadImageToPinata(imagePath: string, price: string): Promise<string | null> {
+  private async uploadImageToPinata(imagePath: string, price: string, metadata: object): Promise<string | null> {
     try {
       const response = await fetch(imagePath);
       const blob = await response.blob();
       const file = new File([blob], `char_${Date.now()}.png`, {
         type: blob.type,
       });
-      return await this.uploadToPinata(file, price);
+      return await this.uploadToPinata(file, price, metadata);
     } catch (error) {
       console.error("Error converting image to File:", error);
       return null;
@@ -731,16 +743,25 @@ export class Shop extends Scene {
     const possibleSprites = spriteOptions[this.character.color];
     const randomIndex = this.getRandomInt(0, possibleSprites.length - 1);
     this.character.sprite = `characterSprite${possibleSprites[randomIndex]}`;
-
+    
     this.character.name =
       this.characterNames[
         parseInt(this.character.sprite.replace("characterSprite", "")) - 1
       ];
+      const metadata = {
+        tier: this.character.tier,
+        color: this.character.color,
+        hp: this.character.hp,
+        atk: this.character.atk,
+        def: this.character.def,
+        luck: this.character.luck,
+        sprite: this.character.sprite,
+        name: this.character.name,
+}
     await this.uploadImageToPinata(
-      `assets/char_${possibleSprites[randomIndex]}.png`,price
+      `assets/char_${possibleSprites[randomIndex]}.png`,price,metadata
     );
     // Show the modal to display the character details
-    console.log(this.transactionFail)
     if(this.transactionFail === false){
       this.showCharacterModal();
       // Save character using API endpoint

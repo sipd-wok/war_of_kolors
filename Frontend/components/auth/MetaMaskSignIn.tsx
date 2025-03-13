@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
-import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
+// import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/context/WalletContext";
@@ -23,7 +23,7 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
       
       fetchBalance(walletAddress);
       console.log('Wallet address is set:', walletAddress, balance);
-      // router.push("/welcome");
+      router.push("/welcome");
       // Perform actions that require walletAddress here
     }
   }, [walletAddress, fetchBalance, balance]);
@@ -72,11 +72,11 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
       setWalletAddress(address);
       setWalletConnected(true);
       // Now call the server action with the wallet address
-      if(walletAddress){
-        await metaMaskSignInAction(address).then(() => {
-          router.push("/welcome");
-        });
-      }
+      // if(walletAddress){
+      //   await metaMaskSignInAction(address).then(() => {
+      //     router.push("/welcome");
+      //   });
+      // }
     } catch (error) {
       console.error("Error connecting to wallet:", error);
     } finally {
