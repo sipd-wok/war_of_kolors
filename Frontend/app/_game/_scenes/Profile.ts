@@ -124,7 +124,8 @@ displayBestCharacters() {
     return b.luck - a.luck; // Sort by luck in descending order if tiers are the same
   });
 
-  const bestCharacters = sortedCharacters;
+  // Limit display to 15 characters
+  const bestCharacters = sortedCharacters.slice(0, 15);
 
   const cameraX = this.cameras.main.width / 2;
   const startY = this.cameras.main.height / 2 - 140; // Adjust starting Y position
