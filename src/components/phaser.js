@@ -2,7 +2,7 @@
 import React from "react";
 import { useEffect } from "react";
 import Phaser from "phaser"; // ✅ Import Phaser directly
-import { Start } from "./Start";
+import { Room } from "./Room";
 
 const PhaserComponent = () => {
   useEffect(() => {
@@ -14,7 +14,7 @@ const PhaserComponent = () => {
         parent: "game-container",
         width: 1296,
         height: 926,
-        scene: [Start],
+        scene: [Room],
         backgroundColor: "#87CEEB",
         scale: {
           mode: Phaser.Scale.FIT,
@@ -23,6 +23,7 @@ const PhaserComponent = () => {
       };
 
       window.game = new Phaser.Game(config);
+
     }
 
     return () => {
@@ -38,3 +39,4 @@ const PhaserComponent = () => {
 };
 
 export default PhaserComponent;
+
