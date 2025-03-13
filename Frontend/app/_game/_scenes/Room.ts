@@ -42,8 +42,8 @@ export class Room extends Phaser.Scene {
   }[] = [];
   private imageAttack_ani: Phaser.GameObjects.Image[] = [];
   private container_countdown_respin: Phaser.GameObjects.Text = null!;
-  private spinning: NodeJS.Timeout | number | undefined
-  private bounceBox: boolean = false
+  private spinning: ReturnType<typeof setInterval>
+  private bounceBox: boolean = true
   private updateFunction: boolean = false
 
   //For Every Players Info
@@ -119,7 +119,7 @@ export class Room extends Phaser.Scene {
    //Players Logs || Waiting Other Player Logs
   //Just change for main session to index 0 as main character in their Own Devices
   this.playersLogs = [
-    {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, walletBal: 999},
+    // {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, walletBal: 999},
       // {lifePoints: 10 ,name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
       // {lifePoints: 10 ,name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
       // {lifePoints: 10 ,name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
@@ -236,7 +236,7 @@ this.defaultColor = [
                 this.cameraX - 130,
                 this.cameraY, 
                 this.defaultColor[0].img
-                ).setDisplaySize(120, 120).setVisible(true)
+                ).setDisplaySize(120, 120).setVisible(false)
     
             this.box2 = this.add.image(
                 this.cameraX,
@@ -279,8 +279,6 @@ this.defaultColor = [
     
                 this.boxStart?.destroy()
 
-                
-    
                 this.spinning = setInterval(() => {
 
                     const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
@@ -291,28 +289,27 @@ this.defaultColor = [
                     const color2 = this.defaultColor[Value2]?.img
                     const color3 = this.defaultColor[Value3]?.img
 
-                    if (color1 && this.box1) {
+                    if (color1) {
                         this.box1.setTexture(color1).setVisible(true)
                     }
-                    if (color2 && this.box2) {
+                    if (color2) {
                         this.box2.setTexture(color2).setVisible(true)
                     }
-                    if (color3 && this.box3) {
+                    if (color3) {
                         this.box3.setTexture(color3).setVisible(true)
                     }
             
                 }, 100)
-
+                
                 this.rotateBounce(this.box1, this.bounceBox)
     
                 this.rotateBounce(this.box2, this.bounceBox)
     
                 this.rotateBounce(this.box3, this.bounceBox)
-    
-            }, 7200)
+                
+            }, 2400)
     
             //Arrays for Dmg Recieve
-            
             
             this.imageDead = []
             
@@ -327,65 +324,156 @@ this.defaultColor = [
             let round = 0
     
             let closedGame = true
-            
-            this.boxResult = null
-             
-                //Server Emit Sender Connection and Receiver
-               
-            const setColors = () => {
-    
+
+            this.socket.emit("GenerateColors", this.room)            
+
+            this.socket.on("ReceiveColor", (data) => {
+                
+                this.boxResult = data
+
                 if(!closedGame) return
+
+                console.log("BoxResult", data)
+
+                this.box1?.setTexture(data[0].img)
+                this.box2?.setTexture(data[1].img)
+                this.box3?.setTexture(data[2].img)
                 
-                clearInterval(this.spinning)
-             
-                this.socket.emit("GenerateColors", this.room)            
-                
-                if(this.boxResult) {
-                    this.box1?.setTexture(this.boxResult[0].img)
-                    this.box2?.setTexture(this.boxResult[1].img)
-                    this.box3?.setTexture(this.boxResult[2].img)
-                }
-                
-    
                 const round_result = round += 1
                 
                 this.socket.emit("round", round_result)
                 
                 this.socket.on("round_result", (data) => {
                     
-                   this.container_countdown_respin.setText('Round ' + data) 
+                this.container_countdown_respin.setText('Round ' + data) 
                     
                 })
-                
-                setTimeout(() => {
+
+                for (let i = 0; i < this.playersLogs.length; i++) {
                     
-                    this.spinning = setInterval(() => {
-                    const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-                    const Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-                    const Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                    const matchingColors = this.boxResult.filter(box => box.color === this.playersLogs[i].color).length;
 
-                    const color1 = this.defaultColor[Value1]?.img
-                    const color2 = this.defaultColor[Value2]?.img
-                    const color3 = this.defaultColor[Value3]?.img
+                        if (matchingColors > 0) {
+                            this.playersLogs[i].lifePoints += matchingColors; // Increase life points based on matches
 
-                    if (color1 && this.box1) {
-                        this.box1.setTexture(color1).setVisible(true)
+                            this.imageAttack_ani[i].setVisible(true);
+                            setTimeout(() => {
+                                this.imageAttack_ani[i].setVisible(false);
+                            }, 1000);
+
+                            this.rotateAttack(i);
+                        } else {
+                            setTimeout(() => {
+                                this.playersLogs[i].lifePoints -= 1; // Reduce life points if no match
+                                this.shakeDmg(i);
+                            }, 700);
+                        }
+
+                      //Winners and Lossers  
+                      if (this.playersLogs[i].lifePoints <= 1) {
+          
+                          this.playersLogs[i].lifePoints = NaN
+                          this.playersLogs[i].luck = 0
+                          this.playersLogs[i].name = "Dead"
+                          this.imageDead[i].setVisible(false)
+                          this.skull[i].setTexture('skull').setVisible(true)
+                          this.imageAttack_ani[i].destroy()
+          
+                      } else if (this.playersLogs[i].lifePoints >= 15){
+                          
+                          //here Add to Recieve the WOK Prize to Transfer Wok Wallet
+                          
+                          this.socket.emit("Winners is", this.playersLogs[i].name)
+          
+                          setTimeout(() => {
+                              
+                              closedGame = false
+          
+                              setTimeout(() => {
+                         
+                      this.add.rectangle(
+                      this.cameraX,
+                      this.cameraY,
+                      560,
+                      310,
+                      0x000000
+                      )
+                         
+                      this.add.rectangle(
+                      this.cameraX,
+                      this.cameraY,
+                      550,
+                      300,
+                      0xffffff
+                      )
+                                 
+                  this.add.text(this.cameraX, this.cameraY - 100, [
+                      'TOTAL PRIZE = ' + prizeWOK + ' Wok'
+                  ], {
+                      fontSize: '28px',
+                      color: text_color,
+                      fontStyle: 'bold'
+                  }).setOrigin(0.5)
+                  
+                  this.add.text(this.cameraX, this.cameraY + 100, [
+                      'The Winner is ' + this.playersLogs[i].name
+                  ], {
+                      fontSize: '28px',
+                      color: text_color,
+                      fontStyle: 'bold'
+                  }).setOrigin(0.5)
+                  
+                  this.add.image(
+                      this.cameraX,
+                      this.cameraY,
+                      this.playersLogs[i].img
+                  ).setDisplaySize(120, 120)
+                                  
+                                  
+                              }, 1000)
+                              
+                          }, 2000)
+                          
+                      }
+                          
+                      }
+
+                      if (this.spinning !== null) {
+                        clearInterval(this.spinning)//Bugging
                     }
-                    if (color2 && this.box2) {
-                        this.box2.setTexture(color2).setVisible(true)
-                    }
-                    if (color3 && this.box3) {
-                        this.box3.setTexture(color3).setVisible(true)
-                    }
-                    }, 100)
     
-                    this.rotateBounce(this.box1, this.bounceBox)
+                    setTimeout(() => {
+                        
+                        this.spinning = setInterval(() => {
+                        const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                        const Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+                        const Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
     
-                    this.rotateBounce(this.box2, this.bounceBox)
+                        const color1 = this.defaultColor[Value1]?.img
+                        const color2 = this.defaultColor[Value2]?.img
+                        const color3 = this.defaultColor[Value3]?.img
     
-                    this.rotateBounce(this.box3, this.bounceBox)
-    
-    
+                        if (color1) {
+                            this.box1.setTexture(color1).setVisible(true)
+                        }
+                        if (color2) {
+                            this.box2.setTexture(color2).setVisible(true)
+                        }
+                        if (color3) {
+                            this.box3.setTexture(color3).setVisible(true)
+                        }
+                        }, 100)
+        
+                        this.rotateBounce(this.box1, this.bounceBox)
+        
+                        this.rotateBounce(this.box2, this.bounceBox)
+        
+                        this.rotateBounce(this.box3, this.bounceBox)
+        
+                   }, 2000)
+
+            });
+
             this.socket.on("colorHistory", (data) => {
                  
                 this.box1h?.setTexture(data[0].img)
@@ -393,151 +481,11 @@ this.defaultColor = [
                 this.box2h?.setTexture(data[1].img)
 
                 this.box3h?.setTexture(data[2].img)
-                 
+            
             })
-                    
-    
-                }, 4100)
-    
-                for (let i = 0; i < this.playersLogs.length; i++) {
-                    
-              if (this.boxResult?.some(box => box.color === this.playersLogs[i].color)) {
-                 this.imageAttack_ani[i].setVisible(true)
-                 
-                 setTimeout(() => {
-                    this.imageAttack_ani[i].setVisible(false)
-                 }, 1000)
-    
-                 this.rotateAttack(i)
-                 
-                 this.playersLogs[i].lifePoints += 1
-                  
-                } else {
-                 
-    
-                 setTimeout(() => {
-                     this.playersLogs[i].lifePoints -= 1
-                    this.shakeDmg(i)
-                 }, 700)
-    
-                }
-                
-                if (this.boxResult?.some(box => box.color === this.playersLogs[i].color)) {
-
-                this.rotateAttack(i)
-               
-                this.imageAttack_ani[i].setVisible(true)
-    
-                setTimeout(() => {
-                    this.imageAttack_ani[i].setVisible(false)
-                 }, 1000)
-    
-                 this.playersLogs[i].lifePoints += 1
-                
-                } 
-                
-                if (this.boxResult?.some(box => box.color === this.playersLogs[i].color)) {
-                
-                this.rotateAttack(i)
-    
-                setTimeout(() => {
-                    this.imageAttack_ani[i].setVisible(false)
-                 }, 1000)
-    
-               this.playersLogs[i].lifePoints += 1
-               
-                this.imageAttack_ani[i].setVisible(true)
-                }
-                
-    
-                //Winners and Lossers  
-                if (this.playersLogs[i].lifePoints <= 0) {
-    
-                    this.playersLogs[i].lifePoints = NaN
-                    this.playersLogs[i].luck = 0
-                    this.playersLogs[i].name = "Dead"
-                    this.imageDead[i].setVisible(false)
-                    this.skull[i].setTexture('skull').setVisible(true)
-                    this.imageAttack_ani[i].destroy()
-    
-                } else if (this.playersLogs[i].lifePoints >= 15){
-                    
-                    //here Add to Recieve the WOK Prize to Transfer Wok Wallet
-                    
-                    this.socket.emit("Winners is", this.playersLogs[i].name)
-    
-                    setTimeout(() => {
-                        
-                        closedGame = false
-    
-                        setTimeout(() => {
-                   
-                this.add.rectangle(
-                this.cameraX,
-                this.cameraY,
-                560,
-                310,
-                0x000000
-                )
-                   
-                this.add.rectangle(
-                this.cameraX,
-                this.cameraY,
-                550,
-                300,
-                0xffffff
-                )
-                   
-                            
-            this.add.text(this.cameraX, this.cameraY - 100, [
-                'TOTAL PRIZE = ' + prizeWOK + ' Wok'
-            ], {
-                fontSize: '28px',
-                color: text_color,
-                fontStyle: 'bold'
-            }).setOrigin(0.5)
-            
-            this.add.text(this.cameraX, this.cameraY + 100, [
-                'The Winner is ' + this.playersLogs[i].name
-            ], {
-                fontSize: '28px',
-                color: text_color,
-                fontStyle: 'bold'
-            }).setOrigin(0.5)
-            
-            this.add.image(
-                this.cameraX,
-                this.cameraY,
-                this.playersLogs[i].img
-            ).setDisplaySize(120, 120)
-                            
-                            
-                        }, 1000)
-                        
-                    }, 2000)
-                    
-                }
-                    
-                }
-            }
-            
-            this.socket.emit("GenerateColors", this.room)
-               
-            this.socket.on("ReceiveColor", (data) => {
-        
-                this.boxResult = data
-                
-            });
-                setTimeout(() => {
-                   
-                    setInterval(setColors, 5000)//Set Colors Every 5 Seconds  
-        
-                           
-                }, 2000)  
-              
-    
+      
             //Other Player 
-            //This Code Dont Touch For maintenance only
+            //Position
            this.player_info_p = [
                {x: this.cameraX - 590, y: this.cameraY - 70},
                {x: this.cameraX - 570, y: this.cameraY + 70},
@@ -566,20 +514,16 @@ this.defaultColor = [
                    this.player_info_p[i].x,
                    this.player_info_p[i].y,
                    
-                   
                    this.playersLogs[i].name + '\n' +
                    'LM - ' + this.playersLogs[i].LM + '\n' +
                    
-                   'LP - ' + this.playersLogs[i].lifePoints
-                   
-                   ,
+                   'LP - ' + this.playersLogs[i].lifePoints,
                    
                    {
                        fontSize: '24px',
                        color: text_color,
                        fontStyle: 'bold'
                    }
-                   
                    
                )
               
@@ -796,7 +740,7 @@ this.defaultColor = [
             }
 
 
-            const waiting = this.add.text(this.cameraX, this.cameraY, "Conneting...", {
+            const waiting = this.add.text(this.cameraX, this.cameraY, "Connecting...", {
                 font: '34px',
                 color: '#000',
                 fontStyle: 'bold'
@@ -809,7 +753,7 @@ this.defaultColor = [
             })
             
             
-            const roomText = this.add.text(this.cameraX, this.cameraY - 440, "Finding Rooms Available", {
+            const roomText = this.add.text(this.cameraX, this.cameraY - 440, "-----", {
                 font: '34px',
                 color: '#000',
                 fontStyle: 'bold'
@@ -929,7 +873,7 @@ this.defaultColor = [
          ease: 'Sine.easeInOut',  
          duration: 150,
          yoyo: true,
-         repeat: 2,
+         repeat: 9,
          });
          
  }
