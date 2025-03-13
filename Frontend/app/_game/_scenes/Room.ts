@@ -24,6 +24,7 @@ export class Room extends Phaser.Scene {
     LM: number;
     dpotion: number;
     leppot: number;
+    health_potion: number;
     walletBal: number;
   }> = [];
 
@@ -43,6 +44,7 @@ export class Room extends Phaser.Scene {
   private imageAttack_ani: Phaser.GameObjects.Image[] = [];
   private container_countdown_respin: Phaser.GameObjects.Text = null!;
   private spinning: ReturnType<typeof setInterval> | null = null
+  private updatePlayer: ReturnType<typeof setInterval> | null = null
   private bounceBox: boolean = true
   private updateFunction: boolean = false
 
@@ -73,7 +75,7 @@ export class Room extends Phaser.Scene {
   
   preload() {
 
-    this.load.setPath("assets/img");
+    //this.load.setPath("public/img");
         
     //Characters
     this.load.image('blue', 'img/blue.png')
@@ -119,13 +121,33 @@ export class Room extends Phaser.Scene {
    //Players Logs || Waiting Other Player Logs
   //Just change for main session to index 0 as main character in their Own Devices
   this.playersLogs = [
-    // {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, walletBal: 999},
-      // {lifePoints: 10 ,name: "Player 2", color: 0xffff00, luck: 6, bet: 2000, img: 'yellow', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 3", color: 0x00ff00, luck: 6, bet: 2000, img: 'green', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 4", color: 0xffffff, luck: 6, bet: 2000, img: 'white', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 5", color: 0x0000ff, luck: 6, bet: 2000, img: 'blue', LM: 0, dpotion: 2, leppot: 4},
-      // {lifePoints: 10 ,name: "Player 6", color: 0xff00ff, luck: 6, bet: 2000, img: 'pink', LM: 0, dpotion: 2, leppot: 4},
+    // {id: 'playersId', lifePoints: 10 ,name: 'Player 1', color: 0xff0000, luck: 6, bet: 2000, img: 'red', LM: 0, dpotion: 2, leppot: 4, health_potion: 5, walletBal: 999},
   ] 
+
+  this.socket.on("ClearAllInterval", (data) => {
+
+    if(data && this.updatePlayer !== null) {
+        clearInterval(this.updatePlayer)
+    }
+
+  })
+
+  this.updatePlayer = setInterval(() => {
+    const playersOrginalValue = [
+        this.playersLogs[0].id, 
+        this.playersLogs[0].LM, 
+        this.playersLogs[0].lifePoints,
+        this.playersLogs[0].walletBal,
+        this.playersLogs[0].leppot,
+        this.playersLogs[0].dpotion,
+        this.playersLogs[0].health_potion, 
+        this.room
+    ]
+
+    this.socket.emit("UpdatePlayer1", playersOrginalValue)
+  }, 500)
+
+  
 
   ///6 Collors
 this.defaultColor = [
@@ -307,7 +329,7 @@ this.defaultColor = [
     
                 this.rotateBounce(this.box3, this.bounceBox)
                 
-            }, 2400)
+            }, 1800)
     
             //Arrays for Dmg Recieve
             
@@ -328,12 +350,51 @@ this.defaultColor = [
             this.socket.emit("GenerateColors", this.room)            
 
             this.socket.on("ReceiveColor", (data) => {
+
+                this.socket.on("UpdatePlayer1Final", (data) => {
+
+                            const playersId = this.socket.id
+
+                            const index = this.playersLogs.findIndex(player => player.id === playersId)
+
+                            if (index === -1) return
+
+                            this.playersLogs[index] = data
+
+                            console.log(this.playersLogs[index])
+
+                        })
+
+                        this.socket.on("UpdateAll", (data) => {
+                            
+                            const players = this.socket.id
+
+                    interface Player {  
+                        id: string | number
+                    }
+                    
+                    const index = data.findIndex((player: Player) => player.id === players)
+                    
+                    if (index !== -1) {
+                        
+                        const currentPlayer = data.splice(index, 1)[0]
+                        
+                        if (currentPlayer) {
+                            
+                            data.unshift(currentPlayer)
+                            
+                        }
                 
+            }
+                 
+            this.playersLogs = data
+                    
+                    
+                })
+
                 this.boxResult = data
 
                 if(!closedGame) return
-
-                console.log("BoxResult", data)
 
                 this.box1?.setTexture(data[0].img)
                 this.box2?.setTexture(data[1].img)
@@ -344,14 +405,14 @@ this.defaultColor = [
                 this.socket.emit("round", round_result)
                 
                 this.socket.on("round_result", (data) => {
-                    
+
                 this.container_countdown_respin.setText('Round ' + data) 
                     
                 })
 
                 for (let i = 0; i < this.playersLogs.length; i++) {
                     
-                    const matchingColors = this.boxResult?.filter(box => box.color === this.playersLogs[i].color).length ?? 0 
+                    const matchingColors = this.boxResult?.filter(box => box.color === this.playersLogs[i].color).length ?? 0;
 
                         if (matchingColors > 0) {
                             this.playersLogs[i].lifePoints += matchingColors; // Increase life points based on matches
@@ -381,31 +442,31 @@ this.defaultColor = [
           
                       } else if (this.playersLogs[i].lifePoints >= 15){
                           
-                          //here Add to Recieve the WOK Prize to Transfer Wok Wallet
-                          
-                          this.socket.emit("Winners is", this.playersLogs[i].name)
-          
+                        const winners = [this.playersLogs[i].id, this.playersLogs[i].name, this.room, prizeWOK]
+
+                        this.socket.emit("WinnersIs", winners)
+
                           setTimeout(() => {
                               
                               closedGame = false
           
                               setTimeout(() => {
                          
-                      this.add.rectangle(
-                      this.cameraX,
-                      this.cameraY,
-                      560,
-                      310,
-                      0x000000
-                      )
-                         
-                      this.add.rectangle(
-                      this.cameraX,
-                      this.cameraY,
-                      550,
-                      300,
-                      0xffffff
-                      )
+                                this.add.rectangle(
+                                this.cameraX,
+                                this.cameraY,
+                                560,
+                                310,
+                                0x000000
+                                )
+                                    
+                                this.add.rectangle(
+                                this.cameraX,
+                                this.cameraY,
+                                550,
+                                300,
+                                0xffffff
+                                )
                                  
                   this.add.text(this.cameraX, this.cameraY - 100, [
                       'TOTAL PRIZE = ' + prizeWOK + ' Wok'
@@ -661,9 +722,9 @@ this.defaultColor = [
                 potion_img2.disableInteractive()
     
               if (isNaN(this.playersLogs[0].lifePoints) || this.playersLogs[0].lifePoints >= 15 || 
-    this.playersLogs[1].lifePoints >= 15 || this.playersLogs[2].lifePoints >= 15 || 
-    this.playersLogs[3].lifePoints >= 15 || this.playersLogs[4].lifePoints >= 15 || 
-    this.playersLogs[5].lifePoints >= 15) {
+                    this.playersLogs[1].lifePoints >= 15 || this.playersLogs[2].lifePoints >= 15 || 
+                    this.playersLogs[3].lifePoints >= 15 || this.playersLogs[4].lifePoints >= 15 || 
+                    this.playersLogs[5].lifePoints >= 15) {
     
                     potion_img2.disableInteractive()
     
