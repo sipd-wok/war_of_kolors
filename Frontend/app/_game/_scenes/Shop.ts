@@ -701,6 +701,23 @@ export class Shop extends Scene {
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
           return null;
         } else {
+          // Save character using API endpoint
+      try {
+        const response = await fetch("/api/createCharacter", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newMetadata),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to save character:", errorData);
+        }
+      } catch (error) {
+        console.error("Error saving character:", error);
+      }
           this.transactionFail = false;
           return metadataURI;
         }
@@ -850,32 +867,7 @@ export class Shop extends Scene {
     // Show the modal to display the character details
     if (this.transactionFail === false) {
       this.showCharacterModal();
-      // Save character using API endpoint
-      try {
-        const response = await fetch("/api/createCharacter", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            tier: this.character.tier,
-            color: this.character.color,
-            hp: this.character.hp,
-            atk: this.character.atk,
-            def: this.character.def,
-            luck: this.character.luck,
-            sprite: this.imageURI,
-            name: this.character.name,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Failed to save character:", errorData);
-        }
-      } catch (error) {
-        console.error("Error saving character:", error);
-      }
+      
     } else {
       console.log("transaction failed.");
     }
