@@ -790,6 +790,7 @@ export class Shop extends Scene {
     const colors = ["Red", "Blue", "Yellow", "Green", "Pink", "White", "Rainbow"];
     const spriteOptions: Record<string, number[]> = {};
 
+    //Dynamic sprite options
     colors.forEach((color, index) => {
       spriteOptions[color] = Array.from({ length: 28 }, (_, i) => index + 1 + i * 7);
     });
