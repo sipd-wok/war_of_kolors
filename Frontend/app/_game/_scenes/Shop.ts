@@ -14,201 +14,254 @@ export class Shop extends Scene {
     // Death Gods
     "Red Death God",
     "Blue Death God",
+    "Yellow Death God",
     "Green Death God",
     "Pink Death God",
     "White Death God",
-    "Yellow Death God",
+    "Rainbow Death God",
+    
     // Knights
     "Red Knight",
-    "Yellow Knight",
     "Blue Knight",
-    "White Knight",
-    "Pink Knight",
+    "Yellow Knight",
     "Green Knight",
+    "Pink Knight",
+    "White Knight",
+    "Rainbow Knight",
+    
     // Spear Warriors
-    "Blue Spear Warrior",
-    "Green Spear Warrior",
     "Red Spear Warrior",
+    "Blue Spear Warrior",
+    "Yellow Spear Warrior",
+    "Green Spear Warrior",
     "Pink Spear Warrior",
     "White Spear Warrior",
-    "Yellow Spear Warrior",
+    "Rainbow Spear Warrior",
+    
     // Monks
-    "White Monk",
     "Red Monk",
     "Blue Monk",
-    "Pink Monk",
     "Yellow Monk",
     "Green Monk",
+    "Pink Monk",
+    "White Monk",
+    "Rainbow Monk",
+    
     // Vanguard
-    "Yellow Vanguard",
     "Red Vanguard",
-    "Pink Vanguard",
     "Blue Vanguard",
-    "White Vanguard",
+    "Yellow Vanguard",
     "Green Vanguard",
+    "Pink Vanguard",
+    "White Vanguard",
+    "Rainbow Vanguard",
+    
     // Beast Riders
-    "Green Beast Rider",
-    "Blue Beast Rider",
     "Red Beast Rider",
+    "Blue Beast Rider",
+    "Yellow Beast Rider",
+    "Green Beast Rider",
     "Pink Beast Rider",
     "White Beast Rider",
-    "Yellow Beast Rider",
+    "Rainbow Beast Rider",
+    
     // Mages
-    "Green Mages",
-    "Red Mages",
-    "Pink Mages",
-    "White Mages",
-    "Yellow Mages",
-    "Blue Mages",
+    "Red Mage",
+    "Blue Mage",
+    "Yellow Mage",
+    "Green Mage",
+    "Pink Mage",
+    "White Mage",
+    "Rainbow Mage",
+    
     // Warrior Princesses
-    "Blue Warrior Princess",
-    "White Warrior Princess",
-    "Yellow Warrior Princess",
     "Red Warrior Princess",
+    "Blue Warrior Princess",
+    "Yellow Warrior Princess",
     "Green Warrior Princess",
     "Pink Warrior Princess",
+    "White Warrior Princess",
+    "Rainbow Warrior Princess",
+    
     // Ninjas
     "Red Ninja",
-    "Pink Ninja",
-    "Green Ninja",
-    "Yellow Ninja",
     "Blue Ninja",
+    "Yellow Ninja",
+    "Green Ninja",
+    "Pink Ninja",
     "White Ninja",
+    "Rainbow Ninja",
+    
     // Tribal Chiefs
-    "Blue Tribal Chief",
-    "Green Tribal Chief",
-    "Yellow Tribal Chief",
-    "White Tribal Chief",
     "Red Tribal Chief",
+    "Blue Tribal Chief",
+    "Yellow Tribal Chief",
+    "Green Tribal Chief",
     "Pink Tribal Chief",
+    "White Tribal Chief",
+    "Rainbow Tribal Chief",
+    
     // Great Elders
-    "White Great Elder",
-    "Pink Great Elder",
-    "Yellow Great Elder",
     "Red Great Elder",
-    "Green Great Elder",
     "Blue Great Elder",
-    // Sumo Wrestler
+    "Yellow Great Elder",
+    "Green Great Elder",
+    "Pink Great Elder",
+    "White Great Elder",
+    "Rainbow Great Elder",
+    
+    // Sumo Wrestlers
     "Red Sumo Wrestler",
     "Blue Sumo Wrestler",
-    "Green Sumo Wrestler",
-    "White Sumo Wrestler",
     "Yellow Sumo Wrestler",
+    "Green Sumo Wrestler",
     "Pink Sumo Wrestler",
+    "White Sumo Wrestler",
+    "Rainbow Sumo Wrestler",
+    
     // Zombies
+    "Red Zombie",
+    "Blue Zombie",
+    "Yellow Zombie",
     "Green Zombie",
     "Pink Zombie",
-    "Blue Zombie",
-    "Red Zombie",
-    "Yellow Zombie",
     "White Zombie",
+    "Rainbow Zombie",
+    
     // Vikings
+    "Red Viking",
+    "Blue Viking",
     "Yellow Viking",
     "Green Viking",
     "Pink Viking",
-    "Blue Viking",
     "White Viking",
-    "Red Viking",
-    // Vaklyries
-    "Pink Valkyrie",
-    "Green Valkyrie",
-    "Blue Valkyrie",
-    "Red Valkyrie",
-    "Yellow Valkyrie",
-    "White Valkyrie",
-    // Mech Warriors
-    "Red Mecha Warrior",
-    "Green Mecha Warrior",
-    "Blue Mecha Warrior",
-    "Pink Mecha Warrior",
-    "Yellow Mecha Warrior",
-    "White Mecha Warrior",
-    // Rainbow
     "Rainbow Viking",
+    
+    // Valkyries
+    "Red Valkyrie",
+    "Blue Valkyrie",
+    "Yellow Valkyrie",
+    "Green Valkyrie",
+    "Pink Valkyrie",
+    "White Valkyrie",
     "Rainbow Valkyrie",
-    "Rainbow Beast Rider",
-    "Rainbow Mage",
-    "Rainbow Ninja",
-    "Rainbow Tribal Chief",
-    "Rainbow Great Elder",
-    "Rainbow Knight",
-    "Rainbow Sumo Wrestler",
-    "Rainbow Mech Warrior",
-    "Rainbow Monk",
-    // Elemntalist
-    "Green Elementalist",
+    
+    // Mecha Warriors
+    "Red Mecha Warrior",
+    "Blue Mecha Warrior",
+    "Yellow Mecha Warrior",
+    "Green Mecha Warrior",
+    "Pink Mecha Warrior",
+    "White Mecha Warrior",
+    "Rainbow Mecha Warrior",
+    
+    // Elementalists
     "Red Elementalist",
-    "White Elementalist",
-    "Yellow Elementalist",
     "Blue Elementalist",
+    "Yellow Elementalist",
+    "Green Elementalist",
     "Pink Elementalist",
+    "White Elementalist",
     "Rainbow Elementalist",
-    // Dragon Tamer
+    
+    // Dragon Tamers
     "Red Dragon Tamer",
     "Blue Dragon Tamer",
-    "Green Dragon Tamer",
     "Yellow Dragon Tamer",
-    "White Dragon Tamer",
+    "Green Dragon Tamer",
     "Pink Dragon Tamer",
+    "White Dragon Tamer",
     "Rainbow Dragon Tamer",
-    // Medusa
+    
+    // Medusas
     "Red Medusa",
+    "Blue Medusa",
+    "Yellow Medusa",
     "Green Medusa",
     "Pink Medusa",
     "White Medusa",
-    "Yellow Medusa",
-    "Blue Medusa",
     "Rainbow Medusa",
-    // Sniper
-    "Pink Sniper",
+    
+    // Snipers
     "Red Sniper",
-    "Green Sniper",
-    "Yellow Sniper",
-    "White Sniper",
     "Blue Sniper",
+    "Yellow Sniper",
+    "Green Sniper",
+    "Pink Sniper",
+    "White Sniper",
     "Rainbow Sniper",
-    // Wrestler
+    
+    // Wrestlers
     "Red Wrestler",
-    "Pink Wrestler",
+    "Blue Wrestler",
     "Yellow Wrestler",
     "Green Wrestler",
-    "Blue Wrestler",
+    "Pink Wrestler",
     "White Wrestler",
     "Rainbow Wrestler",
-    // Master Chef
-    "Green Master Chef",
-    "Blue Master Chef",
+    
+    // Master Chefs
     "Red Master Chef",
+    "Blue Master Chef",
     "Yellow Master Chef",
-    "White Master Chef",
+    "Green Master Chef",
     "Pink Master Chef",
-    "Rainbow Master Chef",  
-    // Mafia Boss
+    "White Master Chef",
+    "Rainbow Master Chef",
+    
+    // Mafia Bosses
+    "Red Mafia Boss",
+    "Blue Mafia Boss",
     "Yellow Mafia Boss",
     "Green Mafia Boss",
-    "Red Mafia Boss",
     "Pink Mafia Boss",
     "White Mafia Boss",
-    "Blue Mafia Boss",
     "Rainbow Mafia Boss",
-    // Rainbow Death God
-    "Rainbow Death God",
-    //Indian
-    "Pink Indian",
-    "Blue Indian",
-    "Yellow Indian",
-    "Red Indian",
-    "Green Indian",
-    "White Indian",
-    "Rainbow Indian",
-    // Capt Dober
+    
+    // Farmers
+    "Red Farmer",
+    "Blue Farmer",
+    "Yellow Farmer",
+    "Green Farmer",
+    "Pink Farmer",
+    "White Farmer",
+    "Rainbow Farmer",
+    
+    // Capt Dobers
     "Red Capt Dober",
     "Blue Capt Dober",
-    "Green Capt Dober",
     "Yellow Capt Dober",
+    "Green Capt Dober",
     "Pink Capt Dober",
     "White Capt Dober",
     "Rainbow Capt Dober",
+    
+    // Spider Queens
+    "Red Spider Queen",
+    "Blue Spider Queen",
+    "Yellow Spider Queen",
+    "Green Spider Queen",
+    "Pink Spider Queen",
+    "White Spider Queen",
+    "Rainbow Spider Queen",
+    
+    // Dark Archers
+    "Dark Red Archer",
+    "Dark Blue Archer",
+    "Dark Yellow Archer",
+    "Dark Green Archer",
+    "Dark Pink Archer",
+    "Dark White Archer",
+    "Dark Rainbow Archer",
+    
+    // Drag Queens
+    "Red Drag Queen",
+    "Blue Drag Queen",
+    "Yellow Drag Queen",
+    "Green Drag Queen",
+    "Pink Drag Queen",
+    "White Drag Queen",
+    "Rainbow Drag Queen",
   ];
 
   private shopPayment!: (amount: string) => Promise<void>;
@@ -734,29 +787,14 @@ export class Shop extends Scene {
     );
 
     // Define sprite options based on color
-    const spriteOptions: Record<string, number[]> = {
-      Red: [
-        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115, 122, 130, 136, 145, 152, 161, 165
-      ],
-      Blue: [
-        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116, 127, 134, 140, 144, 155, 159, 166
-      ],
-      Yellow: [
-        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118, 126, 132, 138, 146, 150, 160, 168
-      ],
-      Green: [
-        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117, 123, 131, 139, 143, 151, 162, 167
-      ],
-      Pink: [
-        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120, 124, 129, 137, 148, 153, 158, 169
-      ],
-      White: [
-        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119, 125, 133, 141, 147, 154, 163, 170
-      ],
-      Rainbow: [
-        97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121, 128, 135, 142, 149, 156, 157, 164, 171
-      ],
-    };
+    const colors = ["Red", "Blue", "Yellow", "Green", "Pink", "White", "Rainbow"];
+    const spriteOptions: Record<string, number[]> = {};
+
+    colors.forEach((color, index) => {
+      spriteOptions[color] = Array.from({ length: 28 }, (_, i) => index + 1 + i * 7);
+    });
+
+    console.log(spriteOptions);
 
     const possibleSprites = spriteOptions[this.character.color];
     const randomIndex = this.getRandomInt(0, possibleSprites.length - 1);
