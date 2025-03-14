@@ -264,6 +264,14 @@ export class Shop extends Scene {
     "Pink Drag Queen",
     "White Drag Queen",
     "Rainbow Drag Queen",
+    //Boomer
+    "Red Boomer",
+    "Blue Boomer",
+    "Yellow Boomer",
+    "Green Boomer",
+    "Pink Boomer",
+    "White Boomer",
+    "Rainbow Boomer",
   ];
 
   private shopPayment!: (amount: string) => Promise<void>;
@@ -811,7 +819,7 @@ export class Shop extends Scene {
 
     //Dynamic sprite options
     colors.forEach((color, index) => {
-      spriteOptions[color] = Array.from({ length: 28 }, (_, i) => index + 1 + i * 7);
+      spriteOptions[color] = Array.from({ length: 29 }, (_, i) => index + 1 + i * 7);
     });
 
     console.log(spriteOptions);
