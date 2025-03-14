@@ -235,19 +235,18 @@ export class MainMenu extends Scene {
     );
 
     this.add
-      .image(75, 75, "marketplace")
-      .setDisplaySize(50, 50)
+      .image(75, 200, "marketplace")
+      .setDisplaySize(50, 50) // Fix the display size
       .setInteractive()
       .on("pointerdown", () => {
-        // Emit a browser event for testing
+        // Emit a browser event to navigate to marketplace
         if (typeof window !== "undefined") {
           window.dispatchEvent(
-            new CustomEvent("phaser-scene-change", {
+            new CustomEvent("go-to-marketplace", {
               detail: "Marketplace",
             }),
           );
         }
-        this.scene.start("Marketplace", { socket: this.socket });
       });
 
     if (visualViewportWidth !== undefined && visualViewportWidth < 1024) {
