@@ -7,7 +7,7 @@ import { getTokenContract } from "@/utils/tokencontract";
 import {
   sendTokens as SendTokens,
   shopPayment as ShopPayment,
-  buyAndMintCharacter as BuyandMint
+  buyAndMintCharacter as BuyandMint,
 } from "@/app/transactions/tokenTransactions";
 import {
   mintNFT as MintNFT,
@@ -21,9 +21,13 @@ interface WalletContextType {
   sendTokens: (recipient: string, amount: string) => Promise<void>;
   shopPayment: (amount: string) => Promise<void>;
   mintNFT: (walletAddress: string, metadataURI: string) => Promise<void>;
-  buyAndmint: (amount: string, walletAddress: string, metadataURI: string) => Promise<{ message: string; }>;
+  buyAndmint: (
+    amount: string,
+    walletAddress: string,
+    metadataURI: string,
+  ) => Promise<{ message: string }>;
   transferNFT: (to: string, tokenId: string) => Promise<void>;
-  fetchBalance: (address: string) =>Promise<void>;
+  fetchBalance: (address: string) => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -81,8 +85,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
     MintNFT(walletAddress!, metadataURI);
   const transferNFT = (to: string, tokenId: string) =>
     TransferNFT(walletAddress!, to, tokenId);
-  const buyAndmint = (amount:string,walletAddress: string, metadataURI: string) =>
-    BuyandMint(amount, walletAddress!, metadataURI, fetchBalance);
+  const buyAndmint = (
+    amount: string,
+    walletAddress: string,
+    metadataURI: string,
+  ) => BuyandMint(amount, walletAddress!, metadataURI, fetchBalance);
   return (
     <WalletContext.Provider
       value={{
@@ -95,7 +102,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
         mintNFT,
         transferNFT,
         buyAndmint,
-        fetchBalance
+        fetchBalance,
       }}
     >
       {children}
