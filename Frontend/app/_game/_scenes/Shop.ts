@@ -806,29 +806,15 @@ export class Shop extends Scene {
     );
 
     // Define sprite options based on color
-    const spriteOptions: Record<string, number[]> = {
-      Red: [
-        1, 7, 15, 20, 26, 33, 38, 46, 49, 59, 64, 67, 76, 86, 88, 91, 109, 115, 122, 130, 136, 145, 152, 161, 165
-      ],
-      Blue: [
-        2, 9, 13, 21, 28, 32, 42, 43, 53, 55, 66, 68, 75, 82, 87, 93, 112, 116, 127, 134, 140, 144, 155, 159, 166
-      ],
-      Yellow: [
-        6, 8, 18, 23, 25, 36, 41, 45, 52, 57, 63, 71, 77, 79, 89, 95, 111, 118, 126, 132, 138, 146, 150, 160, 168
-      ],
-      Green: [
-        3, 12, 14, 24, 30, 31, 37, 47, 51, 56, 65, 69, 73, 80, 86, 92, 108, 117, 123, 131, 139, 143, 151, 162, 167
-      ],
-      Pink: [
-        4, 11, 16, 22, 27, 34, 39, 48, 50, 60, 62, 72, 74, 81, 94, 113, 120, 124, 129, 137, 148, 153, 158, 169
-      ],
-      White: [
-        5, 10, 17, 19, 29, 35, 40, 44, 54, 58, 61, 70, 78, 83, 90, 96, 110, 119, 125, 133, 141, 147, 154, 163, 170
-      ],
-      Rainbow: [
-        97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 114, 121, 128, 135, 142, 149, 156, 157, 164, 171
-      ],
-    };
+    const colors = ["Red", "Blue", "Yellow", "Green", "Pink", "White", "Rainbow"];
+    const spriteOptions: Record<string, number[]> = {};
+
+    //Dynamic sprite options
+    colors.forEach((color, index) => {
+      spriteOptions[color] = Array.from({ length: 28 }, (_, i) => index + 1 + i * 7);
+    });
+
+    console.log(spriteOptions);
 
     const possibleSprites = spriteOptions[this.character.color];
     const randomIndex = this.getRandomInt(0, possibleSprites.length - 1);
