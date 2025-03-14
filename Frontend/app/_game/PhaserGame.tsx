@@ -18,7 +18,13 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
     const { shopPayment, buyAndmint, walletAddress, balance } = useWallet();
     useLayoutEffect(() => {
       if (game.current === null) {
-        game.current = StartGame("game-container", shopPayment, buyAndmint, walletAddress, balance);
+        game.current = StartGame(
+          "game-container",
+          shopPayment,
+          buyAndmint,
+          walletAddress,
+          balance,
+        );
         if (typeof ref === "function") {
           ref({ game: game.current, scene: null });
         } else if (ref) {
@@ -62,7 +68,6 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
     return (
       <>
         <div id="game-container"></div>
-        {/* <LevaPanel /> */}
       </>
     );
   },

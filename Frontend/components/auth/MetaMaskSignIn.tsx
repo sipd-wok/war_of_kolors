@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
-// import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
+import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useWallet } from "@/context/WalletContext";
+import { useRouter } from "next/navigation";
 
 interface MetaMaskSignInProps {
   setWalletConnected: (connected: boolean) => void;
@@ -14,38 +14,20 @@ interface MetaMaskSignInProps {
 const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
   setWalletConnected,
 }) => {
-  const { walletAddress,setWalletAddress, fetchBalance, balance } = useWallet();
+  const router = useRouter();
+  const { walletAddress, setWalletAddress, fetchBalance, balance } =
+    useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+
   useEffect(() => {
     if (walletAddress) {
-      
       fetchBalance(walletAddress);
-      console.log('Wallet address is set:', walletAddress, balance);
-      router.push("/welcome");
+      console.log("Wallet address is set:", walletAddress, balance);
+      // router.push("/welcome");
       // Perform actions that require walletAddress here
     }
   }, [walletAddress, fetchBalance, balance]);
-  // useEffect(() => {
-  //   const checkIfWalletIsConnected = async () => {
-  //     if (typeof window !== "undefined" && window.ethereum) {
-  //       try {
-  //         const accounts = await window.ethereum.request({
-  //           method: "eth_accounts",
-  //         });
-
-  //         if (accounts && accounts.length > 0) {
-  //           await connectWallet();
-  //         }
-  //       } catch (error) {
-  //         console.error("Error checking wallet connection:", error);
-  //       }
-  //     }
-  //   };
-
-  //   checkIfWalletIsConnected();
-  // }, []);
 
   const connectWallet = async () => {
     setIsConnecting(true);
@@ -69,16 +51,39 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
       }
       const address = accounts[0];
       console.log("Connected address:", address);
+
       setWalletAddress(address);
-      setWalletConnected(true);
-      // Now call the server action with the wallet address
-      // if(walletAddress){
-      //   await metaMaskSignInAction(address).then(() => {
-      //     router.push("/welcome");
-      //   });
-      // }
+
+      try {
+        // Complete the server action first and wait for it to finish
+        await metaMaskSignInAction(address);
+
+        // Only set walletConnected after successful authentication
+        console.log("Authentication successful, setting wallet connected");
+        setWalletConnected(true);
+
+        // Direct navigation here can help ensure redirect happens
+        router.push("/welcome");
+      } catch (authError: unknown) {
+        const errorMessage =
+          authError instanceof Error ? authError.message : String(authError);
+
+        // Check if this is NextAuth's redirect "error" (which is not really an error)
+        if (errorMessage === "NEXT_REDIRECT") {
+          console.log("NextAuth redirect detected - authentication successful");
+          setWalletConnected(true);
+          // The redirect will happen automatically through NextAuth
+          return;
+        }
+
+        console.error("Authentication error details:", errorMessage);
+        setError(`Authentication failed: ${errorMessage || "Unknown error"}`);
+        return; // Exit early on actual auth error
+      }
     } catch (error) {
+      // Log detailed error info
       console.error("Error connecting to wallet:", error);
+      // Continue with wallet connected for better UX
     } finally {
       setIsConnecting(false);
     }

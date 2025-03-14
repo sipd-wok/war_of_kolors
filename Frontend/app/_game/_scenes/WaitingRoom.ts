@@ -1,6 +1,7 @@
 import { GameObjects, Scene } from "phaser";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { EventBus } from "../EventBus";
+import { socketService } from "../SocketService";
 
 // Define player interface to replace 'any' types
 interface Player {
@@ -119,24 +120,34 @@ export class WaitingRoom extends Scene {
     this.character = data.character;
     this.potions = data.potions;
 
-    this.socket = io("localhost:3000");
+    // Use the shared socket service
+    this.socket = socketService.getSocket();
 
-    this.socket.on("connect", () => {
-      console.log("Connected with ID:", this.socket.id);
-
-      // Join the waiting room when socket connects
-      this.socket.emit(
-        "joinWaitingRoom",
-        this.roomID,
-        this.socket.id,
-        this.user,
-        this.character,
-        this.potions,
-      );
-    });
+    // Join the waiting room when scene initializes
+    if (this.socket.connected) {
+      this.joinWaitingRoom();
+    } else {
+      this.socket.on("connect", () => {
+        this.joinWaitingRoom();
+      });
+    }
 
     // Set up socket listeners in init to prevent duplication
     this.setupSocketListeners();
+  }
+
+  joinWaitingRoom() {
+    console.log("Connected with ID:", this.socket.id);
+
+    // Join the waiting room
+    this.socket.emit(
+      "joinWaitingRoom",
+      this.roomID,
+      this.socket.id,
+      this.user,
+      this.character,
+      this.potions,
+    );
   }
 
   setupSocketListeners() {

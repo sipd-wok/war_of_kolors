@@ -1,6 +1,7 @@
 import { GameObjects, Scene } from "phaser";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { EventBus } from "../EventBus";
+import { socketService } from "../SocketService";
 
 export class MainMenu extends Scene {
   background!: GameObjects.Image;
@@ -51,7 +52,30 @@ export class MainMenu extends Scene {
   constructor() {
     super("MainMenu");
 
-    this.socket = io("localhost:3000");
+    // Use the shared socket service instead of creating a new connection
+    this.socket = socketService.getSocket();
+  }
+
+  preload() {
+    this.load.image("marketplace", "assets/shop-icon.png");
+  }
+
+  private shopPayment!: (amount: string) => Promise<void>;
+
+  private async getUsername(): Promise<string> {
+    try {
+      const response = await fetch("/api/getUser", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      return data.user.username;
+    } catch (error) {
+      console.error("Error fetching username:", error);
+      return "Unknown";
+    }
   }
   private shopPayment!: (amount: string) => Promise<void>;
 
@@ -72,26 +96,20 @@ export class MainMenu extends Scene {
   }
 
   private updateCharacterBasedUI() {
-    console.log("Selected character: ", this.selectedCharacter);
     if (this.selectedCharacter) {
       this.characterNameText.setText(this.selectedCharacter.name);
       this.luckText.setText(
         "Luck: " + this.selectedCharacter.luck?.toString() || "0",
       );
-
-      console.log("Selected character tier: ", this.selectedCharacter.tier);
       if (this.selectedCharacter.tier.toLowerCase() === "gold") {
         this.ui_frame = "toy-frame-gold";
         this.banner.setTexture("banner-gold");
-        console.log("Current Frame: ", this.ui_frame);
       } else if (this.selectedCharacter.tier.toLowerCase() === "silver") {
         this.ui_frame = "toy-frame-silver";
         this.banner.setTexture("banner-silver");
-        console.log("Current Frame: ", this.ui_frame);
       } else if (this.selectedCharacter.tier.toLowerCase() === "bronze") {
         this.ui_frame = "toy-frame-bronze";
         this.banner.setTexture("banner-bronze");
-        console.log("Current Frame: ", this.ui_frame);
       }
       this.canvasFrame.setTexture(this.ui_frame);
       this.characterFrame.setTexture(this.ui_frame);
@@ -100,9 +118,6 @@ export class MainMenu extends Scene {
       // Get original dimensions of the sprite
       const texture = this.textures.get(this.selectedCharacter.sprite);
       const frame = texture.get();
-      console.log(
-        `Original sprite dimensions: ${frame.width} x ${frame.height}`,
-      );
       if ((frame.width = 480)) {
         this.characterImage.setDisplaySize(200, 200);
       } else if ((frame.width = 1024)) {
@@ -149,9 +164,7 @@ export class MainMenu extends Scene {
         console.error("Failed to fetch user:", errorData);
       } else {
         const data = await response.json();
-        console.log("User fetched successfully: ", data);
         this.user = data.user;
-        console.log("User: ", this.user);
 
         // Emit event to notify that characters are loaded
         this.events.emit("user-loaded");
@@ -173,9 +186,7 @@ export class MainMenu extends Scene {
         console.error("Failed to fetch characters:", errorData);
       } else {
         const data = await response.json();
-        console.log("Characters fetched successfully: ", data);
         this.characters = data.characters;
-        console.log("These are the characters: ", this.characters);
 
         // Emit event to notify that characters are loaded
         this.events.emit("characters-loaded");
@@ -197,9 +208,7 @@ export class MainMenu extends Scene {
         console.error("Failed to get inventory:", errorData);
       } else {
         const data = await response.json();
-        console.log("inventory fetched successfully: ", data);
         this.potions = data.potions;
-        console.log("Potions: ", this.potions);
 
         // Emit event to notify that characters are loaded
         this.events.emit("potions-loaded");
@@ -208,23 +217,22 @@ export class MainMenu extends Scene {
       console.error("Error fetching characters:", error);
     }
   }
-private async payRoom(price: string) {
-  const payment = this.game.registry.get("shopPayment")
-  try{
-    await payment(price); 
-    return({message: 'Success'})
-  }catch(err){
-    console.log(err)
-    return({message: 'Failed'})
+  private async payRoom(price: string) {
+    const payment = this.game.registry.get("shopPayment");
+    try {
+      await payment(price);
+      return { message: "Success" };
+    } catch (err) {
+      console.log(err);
+      return { message: "Failed" };
+    }
   }
-}
   create() {
     this.sound.add("ambiance", { loop: true }).play();
 
     const cameraX = this.cameras.main.width / 2;
     const cameraY = this.cameras.main.height / 2;
-    console.log("Camera X: ", cameraX);
-    console.log("Camera Y: ", cameraY);
+
     const visualViewportWidth = window.visualViewport?.width || 1024;
     const visualViewportHeight = window.visualViewport?.height || 768;
 
@@ -242,6 +250,22 @@ private async payRoom(price: string) {
       cameraY - 10,
       "toy-frame-silver",
     );
+
+    this.add
+      .image(75, 75, "marketplace")
+      .setDisplaySize(50, 50)
+      .setInteractive()
+      .on("pointerdown", () => {
+        // Emit a browser event for testing
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("phaser-scene-change", {
+              detail: "Marketplace",
+            }),
+          );
+        }
+        this.scene.start("Marketplace", { socket: this.socket });
+      });
 
     if (visualViewportWidth !== undefined && visualViewportWidth < 1024) {
       canvasFrameConfig.width = visualViewportWidth + 80;
@@ -378,11 +402,11 @@ private async payRoom(price: string) {
           .setOrigin(0.5);
 
         // Get and log original sprite dimensions
-        const texture = this.textures.get(this.characterImage.texture.key);
-        const frame = texture.get();
-        console.log(
-          `Original character sprite dimensions: ${frame.width} x ${frame.height}`,
-        );
+        // const texture = this.textures.get(this.characterImage.texture.key);
+        // const frame = texture.get();
+        // console.log(
+        //   `Original character sprite dimensions: ${frame.width} x ${frame.height}`,
+        // );
 
         this.updateCharacterBasedUI();
 
@@ -394,7 +418,6 @@ private async payRoom(price: string) {
             Phaser.Geom.Triangle.Contains,
           )
           .on("pointerdown", () => {
-            console.log("Next character");
             if (this.selectedIndex < this.characters.length - 1) {
               this.selectedIndex++;
               this.selectedCharacter = this.characters[this.selectedIndex];
@@ -412,7 +435,6 @@ private async payRoom(price: string) {
             Phaser.Geom.Triangle.Contains,
           )
           .on("pointerdown", () => {
-            console.log("Previous character");
             if (this.selectedIndex > 0) {
               this.selectedIndex--;
               this.selectedCharacter = this.characters[this.selectedIndex];
@@ -500,8 +522,6 @@ private async payRoom(price: string) {
         this.socket.emit("createPlayerRoom", (roomID: string) => {
           roomToJoin = roomID;
 
-          console.log("Room created: " + roomToJoin);
-
           this.scene.start("WaitingRoom", {
             roomID: roomToJoin,
             user: this.user,
@@ -527,12 +547,11 @@ private async payRoom(price: string) {
       .on("pointerout", () => {
         this.joinRoomBttn.setStyle({ color: "#ffffff" });
       })
-      .on("pointerdown", async() => {
-        const payment = await this.payRoom('10');
-        if(payment.message === 'Failed'){
-          return null
-        }
-        else{
+      .on("pointerdown", async () => {
+        const payment = await this.payRoom("10");
+        if (payment.message === "Failed") {
+          return null;
+        } else {
           console.log("Joining room...");
           this.socket.emit(
             "getAvailableRoom",
@@ -544,7 +563,7 @@ private async payRoom(price: string) {
                 this.selectedCharacter.color = colorRepresentativesIndex;
               }
               console.log("Joining room: " + roomtoJoin);
-  
+
               this.scene.start("WaitingRoom", {
                 roomID: roomID,
                 user: this.user,
@@ -555,8 +574,6 @@ private async payRoom(price: string) {
           );
         }
       });
-
-    EventBus.emit("current-scene-ready", this);
 
     // --- Open Shop Button---
     this.openShop = this.add
@@ -583,9 +600,10 @@ private async payRoom(price: string) {
     });
 
     // --- Open Profile Button ---
-    const profileButton = this.add.image(cameraX - 530, cameraY - 310, "profile")
-    .setInteractive({ useHandCursor: true })
-    .setDisplaySize(100, 100);
+    const profileButton = this.add
+      .image(cameraX - 530, cameraY - 310, "profile")
+      .setInteractive({ useHandCursor: true })
+      .setDisplaySize(100, 100);
 
     profileButton.on("pointerdown", () => {
       this.scene.start("Profile");
@@ -602,8 +620,5 @@ private async payRoom(price: string) {
     EventBus.emit("current-scene-ready", this);
   }
 
-  changeScene(sceneName: string) {
-    this.scene.start(sceneName);
-  }
+  update() {}
 }
-

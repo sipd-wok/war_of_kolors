@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx nodemon server.ts",
+    "nodemon": "npx nodemon server.ts",
     "prettier": "prettier --write .",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "start": "node ts-node server.ts"
   },
   "keywords": [],
   "author": "",
