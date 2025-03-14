@@ -38,16 +38,13 @@ export class Preloader extends Scene {
   preload() {
     //  Load the assets for the game - Replace with your own assets
     this.load.setPath("assets");
-
     this.load.image("loader", "loader.png");
-
     this.load.image("toy-frame-silver", "toy-frame-silver.png");
     this.load.image("toy-frame-gold", "toy-frame-gold.png");
     this.load.image("toy-frame-bronze", "toy-frame-bronze.png");
     this.load.image("banner-bronze", "bronzetier.png");
     this.load.image("banner-silver", "silvertier.png");
     this.load.image("banner-gold", "goldtier.png");
-
     this.load.image("wokArena", "/gameRoom/wokarena.png");
     this.load.image("die-1", "/gameRoom/die-1.png");
     this.load.image("die-2", "/gameRoom/die-2.png");
@@ -68,7 +65,6 @@ export class Preloader extends Scene {
     for (let i = 1; i <= 171; i++) {
       this.load.image(`characterSprite${i}`, `char_${i}.png`);
     }
-
     this.load.audio("ambiance", "/bgm/ambiance.mp3");
     this.load.audio("action", "/bgm/action.mp3");
   }
