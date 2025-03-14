@@ -36,8 +36,6 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log("Characters: ", characters);
-
     return NextResponse.json({ characters });
   } catch (error) {
     console.error(error);

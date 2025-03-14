@@ -7,7 +7,7 @@
     "nodemon": "npx nodemon server.ts",
     "prettier": "prettier --write .",
     "lint": "eslint . --ext .ts",
-    "start": "node ts-node server.ts"
+    "start": "npx node ts-node server.ts"
   },
   "keywords": [],
   "author": "",
