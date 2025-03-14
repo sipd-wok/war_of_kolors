@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { MetaMaskSVG } from "@/components/ui/metaMaskSVG";
-// import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
+import { metaMaskSignInAction } from "@/lib/auth/metaMaskSignInAction";
 import { useEffect, useState } from "react";
 import { useWallet } from "@/context/WalletContext";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
     if (walletAddress) {
       fetchBalance(walletAddress);
       console.log("Wallet address is set:", walletAddress, balance);
-      router.push("/welcome");
+      // router.push("/welcome");
       // Perform actions that require walletAddress here
     }
   }, [walletAddress, fetchBalance, balance]);
@@ -51,16 +51,35 @@ const MetaMaskSignIn: React.FC<MetaMaskSignInProps> = ({
       }
       const address = accounts[0];
       console.log("Connected address:", address);
+
       setWalletAddress(address);
 
-      // Set wallet connected immediately for better UX
-      setWalletConnected(true);
-      // Now call the server action with the wallet address
-      // if(walletAddress){
-      //   await metaMaskSignInAction(address).then(() => {
-      //     router.push("/welcome");
-      //   });
-      // }
+      try {
+        // Complete the server action first and wait for it to finish
+        await metaMaskSignInAction(address);
+
+        // Only set walletConnected after successful authentication
+        console.log("Authentication successful, setting wallet connected");
+        setWalletConnected(true);
+
+        // Direct navigation here can help ensure redirect happens
+        router.push("/welcome");
+      } catch (authError: unknown) {
+        const errorMessage =
+          authError instanceof Error ? authError.message : String(authError);
+
+        // Check if this is NextAuth's redirect "error" (which is not really an error)
+        if (errorMessage === "NEXT_REDIRECT") {
+          console.log("NextAuth redirect detected - authentication successful");
+          setWalletConnected(true);
+          // The redirect will happen automatically through NextAuth
+          return;
+        }
+
+        console.error("Authentication error details:", errorMessage);
+        setError(`Authentication failed: ${errorMessage || "Unknown error"}`);
+        return; // Exit early on actual auth error
+      }
     } catch (error) {
       // Log detailed error info
       console.error("Error connecting to wallet:", error);
