@@ -4,6 +4,8 @@ import cors from "cors";
 import http from "http";
 import { v4 as uuidv4 } from "uuid";
 import { instrument } from "@socket.io/admin-ui";
+import { Socket } from "dgram";
+import { stringToBytes } from "uuid/dist/cjs/v35";
 
 interface GuestRoom {
   roomID: string;
@@ -83,6 +85,7 @@ const guestWaitingRooms: GuestRoom[] = [];
 const playersWaitingRooms: PlayerRoom[] = [];
 const battleRooms: BattleRoom[] = [];
 
+
 // Create express app
 const app = express();
 app.use(express.json());
@@ -106,9 +109,11 @@ instrument(io, {
 io.on("connection", (socket) => {
   console.log("A user connected! " + socket.id);
 
+  const players_length = 1 //Change this For Testing
+
   function cleanAndListRooms() {
     const roomList = [];
-
+    
     // Create a copy of the array to safely remove items during iteration
     const roomsToCheck = [...playersWaitingRooms, ...battleRooms];
 
@@ -164,7 +169,7 @@ io.on("connection", (socket) => {
   // add ang new room sa guest rooms
   socket.on("createPlayerRoom", (callback) => {
     console.log("All Player Rooms: ", playersWaitingRooms.length);
-
+    
     console.log("Available Guest Rooms: ", cleanAndListRooms());
 
     const roomId = uuidv4(); // Generate a unique room ID
@@ -234,8 +239,11 @@ io.on("connection", (socket) => {
     callback(roomID, colorRepresentativesIndex);
   });
 
+  //Current Players
+
   socket.on("joinWaitingRoom", (roomID, socketID, user, character, potions) => {
     const room = playersWaitingRooms.find((room) => room.roomID === roomID);
+
     if (room) {
       // Validate player data to ensure no null or undefined values
       if (!user || !character) {
@@ -279,9 +287,10 @@ io.on("connection", (socket) => {
           user: sanitizedUser,
           character: sanitizedCharacter,
           potions: sanitizedPotions,
-        });
-
+        });   
+        
         console.log(`Room joined: ${roomID} by ${socketID}`);
+
       } else {
         console.log(`Player ${socketID} already in room ${roomID}`);
       }
@@ -297,13 +306,232 @@ io.on("connection", (socket) => {
         room.players,
       );
 
-      if (room.players.length === 6) {
+      if (room.players.length === players_length) {
+
         io.to(roomID).emit("proceedToGame", room);
+
+        io.to(roomID).emit("roomAssign", "Connected");
+
       }
-    } else {
-      console.log("Room not found: ", roomID);
-    }
+
+        } else {
+
+          console.log("Room not found: ", roomID);
+
+        }
+
   });
+
+
+  //This Code Structure To make in game
+
+  interface Player {
+    id: string;
+    lifePoints: number;
+    name: string;
+    color?: number;
+    luck: number;
+    bet: number;
+    img?: string;
+    LM: number;
+    dpotion: number;
+    leppot: number;
+    health_potion: number;
+    walletBal: number |null;
+  }
+
+  interface Room {
+    [key: string]: Player[];
+  }
+
+  const DemoRooms: Room = {}
+
+  socket.on("Create_BattleField", (data) => {
+
+    console.log("Players LogIn ", data);
+    
+    let colors = [
+        { color: 0xff0000, img: 'red' },
+        { color: 0xffff00, img: 'yellow' },
+        { color: 0x00ff00, img: 'green' },
+        { color: 0xffffff, img: 'white' },
+        { color: 0x0000ff, img: 'blue' },
+        { color: 0xff00ff, img: 'pink' },
+    ];
+
+    let roomName = Object.keys(DemoRooms).find((room) => DemoRooms[room].length < players_length);
+
+    if (!roomName) {
+        roomName = `Connected Demo Room ${Object.keys(DemoRooms).length + 1}`;
+        DemoRooms[roomName] = [];
+    }
+
+    // Assigning unique color to each player
+    let availableColors = [...colors]; // Clone the array to avoid modifying the original
+
+    const demoNames = ["Rainbow ", "Earth ", "DemiGod ", "Hacker ", "Water ", "Fire "]
+
+    if (socket.id) {
+
+        let NewName = demoNames[Math.floor(Math.random() * demoNames.length)] + "_" + socket.id.substring(0, 2);
+
+        console.log("Demo Assign ", NewName)
+
+        let newPlayer: Player = {
+          id: socket.id,
+          lifePoints: 10,
+          name: NewName, // Temporary Names
+          luck: 6,
+          bet: 2000,
+          LM: 0,
+          dpotion: 2,
+          leppot: 4,
+          health_potion: 3,
+          walletBal: 999,
+      };
+
+      // Assign a unique color if available
+      if (availableColors.length > 0) {
+          let randomIndex = Math.floor(Math.random() * availableColors.length);
+          let chosenColor = availableColors.splice(randomIndex, 1)[0]; // Remove chosen color
+          newPlayer.color = chosenColor.color;
+          newPlayer.img = chosenColor.img;
+      } else {
+          console.log("No more unique colors available!");
+          newPlayer.color = 0x000000; // Default to black if no colors are left
+          newPlayer.img = "default";
+      }
+
+      socket.join(roomName);
+      DemoRooms[roomName].push(newPlayer);
+
+    }    
+
+    io.to(roomName).emit("SetCount", DemoRooms[roomName].length);
+
+    // Start the game when the room is full
+    if (DemoRooms[roomName].length === players_length) {
+        io.to(roomName).emit("InputPlayer", DemoRooms[roomName]);
+    }
+
+    io.to(roomName).emit("roomAssign", roomName);
+
+    console.log("Created Demo Rooms ", Object.keys(DemoRooms).length);
+
+
+  })
+    
+  socket.on("round", (data) => {
+        
+    io.emit("round_result", data)
+    
+  })
+
+  const roomIntervals: Record<string, NodeJS.Timeout> = {};
+        
+  socket.on("GenerateColors", (data) => {
+
+    console.log("Generating Colors In ", data)
+
+    let roomData = DemoRooms[data];
+
+    if (!roomData || roomData.length === 0) return; // Avoid errors
+
+    let totalLuck = roomData.reduce((sum, player) => sum + player.luck, 0);
+
+    let defaultColor = [
+        { color: 0xff0000, img: "redDice" },
+        { color: 0xffff00, img: "yellowDice" },
+        { color: 0x00ff00, img: "greenDice" },
+        { color: 0xffffff, img: "whiteDice" },
+        { color: 0x0000ff, img: "blueDice" },
+        { color: 0xff00ff, img: "pinkDice" },
+    ];
+
+    function RandomColors() {
+        let random = Math.random() * 100;
+        let cumu = 0;
+
+        for (let i = 0; i < roomData.length; i++) {
+            cumu += (roomData[i].luck / totalLuck) * 100;
+            if (random < cumu) {
+                return defaultColor[i];
+            }
+        }
+        return defaultColor[0];
+    }
+
+    //🛑 Stop any existing interval for this room
+    if (roomIntervals[data]) {
+        clearInterval(roomIntervals[data]);
+        delete roomIntervals[data]
+    }
+
+    if(!roomData) return
+
+    if (roomData.length === players_length) {
+      if(!roomIntervals[data]) {
+       roomIntervals[data] = setInterval(() => {
+
+                let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
+      
+                io.to(data).emit("ReceiveColor", selectedColor);
+
+                const totalBet = roomData.reduce((sum, player) => sum + player.bet, 0);
+
+                for (let i = 0; i < roomData.length; i++) {
+
+                  const matchingColors = selectedColor?.filter(box => box.color === roomData[i].color).length ?? 0;
+
+                      if (matchingColors > 0) {
+
+                          roomData[i].lifePoints += matchingColors; // Increase life points based on matches
+
+                          // this.imageAttack_ani[i].setVisible(true);
+                          // setTimeout(() => {
+                          //     this.imageAttack_ani[i].setVisible(false);
+                          // }, 1000);
+
+                          io.to(data).emit("Update_Life_P", roomData)
+
+                         // this.rotateAttack(i);
+                      } else {
+                         // setTimeout(() => {
+                              roomData[i].lifePoints -= 1; // Reduce life points if no match
+
+                              io.to(data).emit("Update_Life_R", roomData)
+                             // this.shakeDmg(i);
+                         // }, 700);
+                      }
+
+                      //Winners and Lossers  
+                      if (roomData[i].lifePoints <= 1) {
+          
+                        roomData[i].lifePoints = NaN
+                        roomData[i].luck = 0
+                        roomData[i].name = "Dead"
+        
+                    } else if (roomData[i].lifePoints >= 15) {
+
+                        console.log("Congrats To Player: ", roomData[i].name)
+                        clearInterval(roomIntervals[data]);
+                        delete roomIntervals[data]
+                        console.log("Claim Your Prize ", roomData[i])
+                        
+                    }
+
+                }
+
+                setTimeout(() => {
+                    io.to(data).emit("colorHistory", selectedColor);
+                }, 3000);
+            }, 5000); // Runs every 5 seconds
+
+        }
+      }
+    
+});
+
 
   // Track ready players for each room
   const roomReadyPlayers: { [roomID: string]: string[] } = {};
@@ -322,6 +550,7 @@ io.on("connection", (socket) => {
 
     if (room && room.votesToStart === room.players.length) {
       io.to(roomID).emit("proceedToGame");
+
     }
   });
 
