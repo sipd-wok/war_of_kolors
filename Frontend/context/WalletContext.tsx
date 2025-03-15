@@ -26,7 +26,7 @@ interface WalletContextType {
     walletAddress: string,
     metadataURI: string,
   ) => Promise<{ message: string }>;
-  transferNFT: (to: string, tokenId: string) => Promise<void>;
+  transferNFT: (from: string,to: string, tokenId: string) => Promise<void>;
   fetchBalance: (address: string) => Promise<void>;
 }
 
@@ -83,8 +83,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   // NFTS
   const mintNFT = (walletAddress: string, metadataURI: string) =>
     MintNFT(walletAddress!, metadataURI);
-  const transferNFT = (to: string, tokenId: string) =>
-    TransferNFT(walletAddress!, to, tokenId);
+  const transferNFT = (from: string,to: string, tokenId: string) =>
+    TransferNFT(from, to, tokenId);
   const buyAndmint = (
     amount: string,
     walletAddress: string,

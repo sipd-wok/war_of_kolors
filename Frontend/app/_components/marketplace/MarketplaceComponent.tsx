@@ -20,6 +20,7 @@ import {
   TrendingUp,
   User,
 } from "lucide-react";
+import { useWallet } from "@/context/WalletContext";
 
 export class WOKCharacter {
   id!: string;
@@ -99,7 +100,7 @@ const MarketplaceComponent = () => {
   const [ownedCharacters, setOwnedCharacters] = useState<WOKCharacter[]>([]);
   const [selectedCharacter, setSelectedCharacter] =
     useState<WOKCharacter | null>(null);
-
+  const {transferNFT} = useWallet()
   const [characterModalIsOpen, setCharacterModalOpen] = useState(false);
   const handleCharacterModalOpen = (character: WOKCharacter) => {
     setSelectedCharacter(character);
@@ -529,7 +530,7 @@ const MarketplaceComponent = () => {
                   </div>
 
                   <div className="flex justify-between items-center mt-4">
-                    <button className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                    <button onClick={()=> transferNFT('0x2fC625C6D97af5aF6f8199E7c1198889ad400Ae6','0x5066884a20647CB4EB196dBB79D8c0899f68CAAD','7')}  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
                       <ShoppingBag className="h-3 w-3 mr-1" /> Buy Now
                     </button>
                     <button className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">

@@ -71,16 +71,20 @@ export const buyAndMintCharacter = async (
     );
     await tx1.wait();
     console.log("Tokens transferred!");
-
-    // Step 2: Mint NFT immediately after payment
     console.log("Minting NFT...");
-    await mintNFT(walletAddress.toString(), metadataURI);
+    const mintResult = await mintNFT(walletAddress.toString(), metadataURI);
+    if (!mintResult || mintResult.success === false) {
+      alert("Transaction Failed");
+      return { message: "TSFailed", tokenId: null };
+    }
     alert("Character purchased and NFT minted successfully!");
     fetchBalance(walletAddress);
-    return { message: "TSSuccess" };
+    return { message: "TSSuccess", tokenId: mintResult.tokenId };
   } catch (error) {
     console.error("Transaction failed:", error);
     alert("Transaction failed!");
-    return { message: "TSFailed" };
+    return { message: "TSFailed", tokenId: null };
   }
 };
+
+

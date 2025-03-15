@@ -667,16 +667,11 @@ export class Shop extends Scene {
       const imageData = await image.json();
       this.imageURI = `https://bronze-active-seahorse-192.mypinata.cloud/ipfs/${imageData.IpfsHash}`;
 
-      // const metadata = {
-      //   name: "My NFT",
-      //   description: "An NFT minted on Core DAO",
-      //   image: imageURI,
-      // };
+
       const newMetadata = {
         ...meta,
         image: this.imageURI,
       };
-      // Upload metadata to Pinata
       const metadataRes = await fetch(
         "https://api.pinata.cloud/pinning/pinJSONToIPFS",
         {
@@ -696,13 +691,20 @@ export class Shop extends Scene {
       // 🔹 Mint NFT with metadataURI
       try {
         const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
+        
         if (buyandmint.message === "TSFailed") {
           this.transactionFail = true;
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
           return null;
         } else {
           // Save character using API endpoint
-      try {
+          
+      const newMetadata = {
+        ...meta,
+        image: this.imageURI,
+        token: buyandmint.tokenId
+      };
+        try {
         const response = await fetch("/api/createCharacter", {
           method: "POST",
           headers: {
@@ -710,7 +712,7 @@ export class Shop extends Scene {
           },
           body: JSON.stringify(newMetadata),
         });
-
+        console.log(newMetadata)
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Failed to save character:", errorData);
