@@ -16,8 +16,8 @@ import { Profile } from "./_scenes/Profile";
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
-  width: window.visualViewport?.width || 1024,
-  height: window.visualViewport?.height || 768,
+  width: 1024,
+  height: 768,
   parent: "game-container",
   backgroundColor: "#028af8",
   scene: [
@@ -30,7 +30,10 @@ const config: Phaser.Types.Core.GameConfig = {
     Shop,
     Profile,
     // butang d ang scene mo
-  ],
+  ], scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
 };
 
 const StartGame = (
