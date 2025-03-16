@@ -4,7 +4,11 @@ import { WelcomeForm } from "@/app/welcome/WelcomeForm";
 
 const Page = async () => {
   const session = await auth();
-  if (!session) redirect("/");
+  if (!session) {
+    redirect("/");
+  } else if (session.user?.username && session.user?.username !== "") {
+    redirect("/MainGame");
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-6 h-screen grid place-content-center">
