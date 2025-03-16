@@ -21,7 +21,7 @@ export class Shop extends Scene {
     "Pink Death God",
     "White Death God",
     "Rainbow Death God",
-    
+
     // Knights
     "Red Knight",
     "Blue Knight",
@@ -30,7 +30,7 @@ export class Shop extends Scene {
     "Pink Knight",
     "White Knight",
     "Rainbow Knight",
-    
+
     // Spear Warriors
     "Red Spear Warrior",
     "Blue Spear Warrior",
@@ -39,7 +39,7 @@ export class Shop extends Scene {
     "Pink Spear Warrior",
     "White Spear Warrior",
     "Rainbow Spear Warrior",
-    
+
     // Monks
     "Red Monk",
     "Blue Monk",
@@ -48,7 +48,7 @@ export class Shop extends Scene {
     "Pink Monk",
     "White Monk",
     "Rainbow Monk",
-    
+
     // Vanguard
     "Red Vanguard",
     "Blue Vanguard",
@@ -57,7 +57,7 @@ export class Shop extends Scene {
     "Pink Vanguard",
     "White Vanguard",
     "Rainbow Vanguard",
-    
+
     // Beast Riders
     "Red Beast Rider",
     "Blue Beast Rider",
@@ -66,7 +66,7 @@ export class Shop extends Scene {
     "Pink Beast Rider",
     "White Beast Rider",
     "Rainbow Beast Rider",
-    
+
     // Mages
     "Red Mage",
     "Blue Mage",
@@ -75,7 +75,7 @@ export class Shop extends Scene {
     "Pink Mage",
     "White Mage",
     "Rainbow Mage",
-    
+
     // Warrior Princesses
     "Red Warrior Princess",
     "Blue Warrior Princess",
@@ -84,7 +84,7 @@ export class Shop extends Scene {
     "Pink Warrior Princess",
     "White Warrior Princess",
     "Rainbow Warrior Princess",
-    
+
     // Ninjas
     "Red Ninja",
     "Blue Ninja",
@@ -93,7 +93,7 @@ export class Shop extends Scene {
     "Pink Ninja",
     "White Ninja",
     "Rainbow Ninja",
-    
+
     // Tribal Chiefs
     "Red Tribal Chief",
     "Blue Tribal Chief",
@@ -102,7 +102,7 @@ export class Shop extends Scene {
     "Pink Tribal Chief",
     "White Tribal Chief",
     "Rainbow Tribal Chief",
-    
+
     // Great Elders
     "Red Great Elder",
     "Blue Great Elder",
@@ -111,7 +111,7 @@ export class Shop extends Scene {
     "Pink Great Elder",
     "White Great Elder",
     "Rainbow Great Elder",
-    
+
     // Sumo Wrestlers
     "Red Sumo Wrestler",
     "Blue Sumo Wrestler",
@@ -120,7 +120,7 @@ export class Shop extends Scene {
     "Pink Sumo Wrestler",
     "White Sumo Wrestler",
     "Rainbow Sumo Wrestler",
-    
+
     // Zombies
     "Red Zombie",
     "Blue Zombie",
@@ -129,7 +129,7 @@ export class Shop extends Scene {
     "Pink Zombie",
     "White Zombie",
     "Rainbow Zombie",
-    
+
     // Vikings
     "Red Viking",
     "Blue Viking",
@@ -138,7 +138,7 @@ export class Shop extends Scene {
     "Pink Viking",
     "White Viking",
     "Rainbow Viking",
-    
+
     // Valkyries
     "Red Valkyrie",
     "Blue Valkyrie",
@@ -147,7 +147,7 @@ export class Shop extends Scene {
     "Pink Valkyrie",
     "White Valkyrie",
     "Rainbow Valkyrie",
-    
+
     // Mecha Warriors
     "Red Mecha Warrior",
     "Blue Mecha Warrior",
@@ -156,7 +156,7 @@ export class Shop extends Scene {
     "Pink Mecha Warrior",
     "White Mecha Warrior",
     "Rainbow Mecha Warrior",
-    
+
     // Elementalists
     "Red Elementalist",
     "Blue Elementalist",
@@ -165,7 +165,7 @@ export class Shop extends Scene {
     "Pink Elementalist",
     "White Elementalist",
     "Rainbow Elementalist",
-    
+
     // Dragon Tamers
     "Red Dragon Tamer",
     "Blue Dragon Tamer",
@@ -174,7 +174,7 @@ export class Shop extends Scene {
     "Pink Dragon Tamer",
     "White Dragon Tamer",
     "Rainbow Dragon Tamer",
-    
+
     // Medusas
     "Red Medusa",
     "Blue Medusa",
@@ -183,7 +183,7 @@ export class Shop extends Scene {
     "Pink Medusa",
     "White Medusa",
     "Rainbow Medusa",
-    
+
     // Snipers
     "Red Sniper",
     "Blue Sniper",
@@ -192,7 +192,7 @@ export class Shop extends Scene {
     "Pink Sniper",
     "White Sniper",
     "Rainbow Sniper",
-    
+
     // Wrestlers
     "Red Wrestler",
     "Blue Wrestler",
@@ -201,7 +201,7 @@ export class Shop extends Scene {
     "Pink Wrestler",
     "White Wrestler",
     "Rainbow Wrestler",
-    
+
     // Master Chefs
     "Red Master Chef",
     "Blue Master Chef",
@@ -210,7 +210,7 @@ export class Shop extends Scene {
     "Pink Master Chef",
     "White Master Chef",
     "Rainbow Master Chef",
-    
+
     // Mafia Bosses
     "Red Mafia Boss",
     "Blue Mafia Boss",
@@ -219,7 +219,7 @@ export class Shop extends Scene {
     "Pink Mafia Boss",
     "White Mafia Boss",
     "Rainbow Mafia Boss",
-    
+
     // Farmers
     "Red Farmer",
     "Blue Farmer",
@@ -228,7 +228,7 @@ export class Shop extends Scene {
     "Pink Farmer",
     "White Farmer",
     "Rainbow Farmer",
-    
+
     // Capt Dobers
     "Red Capt Dober",
     "Blue Capt Dober",
@@ -237,7 +237,7 @@ export class Shop extends Scene {
     "Pink Capt Dober",
     "White Capt Dober",
     "Rainbow Capt Dober",
-    
+
     // Spider Queens
     "Red Spider Queen",
     "Blue Spider Queen",
@@ -246,7 +246,7 @@ export class Shop extends Scene {
     "Pink Spider Queen",
     "White Spider Queen",
     "Rainbow Spider Queen",
-    
+
     // Dark Archers
     "Dark Red Archer",
     "Dark Blue Archer",
@@ -255,7 +255,7 @@ export class Shop extends Scene {
     "Dark Pink Archer",
     "Dark White Archer",
     "Dark Rainbow Archer",
-    
+
     // Drag Queens
     "Red Drag Queen",
     "Blue Drag Queen",
@@ -667,7 +667,6 @@ export class Shop extends Scene {
       const imageData = await image.json();
       this.imageURI = `https://bronze-active-seahorse-192.mypinata.cloud/ipfs/${imageData.IpfsHash}`;
 
-
       const newMetadata = {
         ...meta,
         image: this.imageURI,
@@ -691,36 +690,36 @@ export class Shop extends Scene {
       // 🔹 Mint NFT with metadataURI
       try {
         const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
-        
+
         if (buyandmint.message === "TSFailed") {
           this.transactionFail = true;
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
           return null;
         } else {
           // Save character using API endpoint
-          
-      const newMetadata = {
-        ...meta,
-        image: this.imageURI,
-        token: buyandmint.tokenId,
-        ownerWallet: walletAddress
-      };
-        try {
-        const response = await fetch("/api/createCharacter", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newMetadata),
-        });
-        console.log(newMetadata)
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Failed to save character:", errorData);
-        }
-      } catch (error) {
-        console.error("Error saving character:", error);
-      }
+
+          const newMetadata = {
+            ...meta,
+            image: this.imageURI,
+            token: buyandmint.tokenId,
+            ownerWallet: walletAddress,
+          };
+          try {
+            const response = await fetch("/api/createCharacter", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(newMetadata),
+            });
+            console.log(newMetadata);
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error("Failed to save character:", errorData);
+            }
+          } catch (error) {
+            console.error("Error saving character:", error);
+          }
           this.transactionFail = false;
           return metadataURI;
         }
@@ -834,12 +833,23 @@ export class Shop extends Scene {
     );
 
     // Define sprite options based on color
-    const colors = ["Red", "Blue", "Yellow", "Green", "Pink", "White", "Rainbow"];
+    const colors = [
+      "Red",
+      "Blue",
+      "Yellow",
+      "Green",
+      "Pink",
+      "White",
+      "Rainbow",
+    ];
     const spriteOptions: Record<string, number[]> = {};
 
     //Dynamic sprite options
     colors.forEach((color, index) => {
-      spriteOptions[color] = Array.from({ length: 29 }, (_, i) => index + 1 + i * 7);
+      spriteOptions[color] = Array.from(
+        { length: 29 },
+        (_, i) => index + 1 + i * 7,
+      );
     });
 
     console.log(spriteOptions);
@@ -870,7 +880,6 @@ export class Shop extends Scene {
     // Show the modal to display the character details
     if (this.transactionFail === false) {
       this.showCharacterModal();
-      
     } else {
       console.log("transaction failed.");
     }
