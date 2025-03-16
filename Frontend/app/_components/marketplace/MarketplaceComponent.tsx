@@ -67,6 +67,12 @@ export class WOKCharacter {
   }
 }
 
+interface User {
+  id: string;
+  user_id: string;
+  username: string;
+}
+
 // Helper functions
 function getColorClass(color: string) {
   switch (color.toLowerCase()) {
@@ -108,7 +114,7 @@ function getTierBadgeClass(tier: string) {
 }
 
 const MarketplaceComponent = () => {
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<User>();
   const [nfts, setNfts] = useState<WOKCharacter[]>([]);
   const [ownedCharacters, setOwnedCharacters] = useState<WOKCharacter[]>([]);
   const [selectedCharacter, setSelectedCharacter] =
@@ -235,7 +241,7 @@ const MarketplaceComponent = () => {
         }
 
         setNfts(data.characters);
-        console.log(data)
+        console.log(data);
       }
     } catch (error) {
       console.error("Error fetching NFTs:", error);
