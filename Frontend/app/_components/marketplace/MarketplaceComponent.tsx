@@ -499,6 +499,14 @@ const MarketplaceComponent = () => {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Sword className="h-12 w-12 text-white opacity-30" />
                     </div>
+                    <div className="absolute inset-0 flex items-center justify-center w-full h-full">
+                      <div
+                        className="aspect-square bg-cover bg-center w-6/7 p-6"
+                        style={{
+                          backgroundImage: `url(${nft.image || "assets/char_" + nft.sprite.replace(/\D/g, "") + ".png"})`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
 
                   {/* Overlay Actions on Hover */}
