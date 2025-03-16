@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import supabase from "@/lib/db/db";
 import { ethers } from "ethers";
-
-// Define the amount of WOK tokens to give per request
-const WOK_REWARD_AMOUNT = "1000"; // 1000 WOK tokens
-
+const WOK_REWARD_AMOUNT = "1000000"; 
 export async function GET(
   request: Request,
   { params }: { params: { walletaddress: string } },

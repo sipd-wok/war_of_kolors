@@ -44,6 +44,7 @@ export class WOKCharacter {
   def!: number;
   hp!: number;
 
+
   constructor() {
     this.id = "";
     this.owner_id = "";
