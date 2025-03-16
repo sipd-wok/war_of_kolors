@@ -19,6 +19,7 @@ import {
   Gamepad2,
   TrendingUp,
   User,
+  Shield,
 } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
@@ -39,6 +40,9 @@ export class WOKCharacter {
   image!: string;
   token!: string;
   ownerWallet!: string;
+  atk!: number;
+  def!: number;
+  hp!: number;
 
   constructor() {
     this.id = "";
@@ -57,6 +61,9 @@ export class WOKCharacter {
     this.image = "";
     this.token = "";
     this.ownerWallet = "";
+    this.atk = 0;
+    this.def = 0;
+    this.hp = 0;
   }
 }
 
@@ -165,7 +172,11 @@ const MarketplaceComponent = () => {
           character.games_played = char.games_played || 0;
           character.games_won = char.games_won || 0;
           character.image = char.image || "";
-          character.token = char.token || "";
+          character.token = char.token_id || "";
+          character.ownerWallet = char.owner_wallet || "";
+          character.atk = char.atk;
+          character.def = char.def;
+          character.hp = char.hp;
 
           // For characters that are on sale, fetch the price and currency
           if (char.on_sale) {
@@ -224,6 +235,7 @@ const MarketplaceComponent = () => {
         }
 
         setNfts(data.characters);
+        console.log(data)
       }
     } catch (error) {
       console.error("Error fetching NFTs:", error);
@@ -374,6 +386,22 @@ const MarketplaceComponent = () => {
                     </div>
                   </div>
 
+                  {/* Combat Stats */}
+                  <div className="grid grid-cols-3 gap-1 mt-2">
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Sword className="h-3 w-3 mr-1 text-red-500" />
+                      ATK: {character.atk}
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Shield className="h-3 w-3 mr-1 text-blue-500" />
+                      DEF: {character.def}
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Heart className="h-3 w-3 mr-1 text-green-500" />
+                      HP: {character.hp}
+                    </div>
+                  </div>
+
                   {character.on_sale ? (
                     <button
                       className="mt-3 w-full py-2 bg-gray-400 text-white rounded-lg flex items-center justify-center cursor-not-allowed"
@@ -471,6 +499,14 @@ const MarketplaceComponent = () => {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Sword className="h-12 w-12 text-white opacity-30" />
                     </div>
+                    <div className="absolute inset-0 flex items-center justify-center w-full h-full">
+                      <div
+                        className="aspect-square bg-cover bg-center w-6/7 p-6"
+                        style={{
+                          backgroundImage: `url(${nft.image || "assets/char_" + nft.sprite.replace(/\D/g, "") + ".png"})`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
 
                   {/* Overlay Actions on Hover */}
@@ -541,9 +577,25 @@ const MarketplaceComponent = () => {
                       % Win Rate
                     </div>
                   </div>
-                  {/* onClick={()=> transferNFT(nft.ownerWallet,userInfo.user_id,nft.token)}  */}
+
+                  {/* Combat Stats */}
+                  <div className="grid grid-cols-3 gap-1 mt-2">
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Sword className="h-3 w-3 mr-1 text-red-500" />
+                      ATK: {nft.atk}
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Shield className="h-3 w-3 mr-1 text-blue-500" />
+                      DEF: {nft.def}
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Heart className="h-3 w-3 mr-1 text-green-500" />
+                      HP: {nft.hp}
+                    </div>
+                  </div>
+
                   <div className="flex justify-between items-center mt-4">
-                    <button className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                    <button onClick={()=> transferNFT(nft.ownerWallet,userInfo.user_id,nft.token)}  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
                       <ShoppingBag className="h-3 w-3 mr-1" /> Buy Now
                     </button>
                     <button className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">
