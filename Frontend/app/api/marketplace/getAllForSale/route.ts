@@ -15,7 +15,9 @@ class WOKCharacter {
   currency!: string;
   games_played!: number;
   games_won!: number;
-
+  image!:string;
+  token!: string;
+  ownerWallet!:string;
   constructor() {
     this.id = "";
     this.owner_id = "";
@@ -30,6 +32,9 @@ class WOKCharacter {
     this.currency = "";
     this.games_played = 0;
     this.games_won = 0;
+    this.image = "";
+    this.token = "";
+    this.ownerWallet = "";
   }
 }
 
@@ -98,7 +103,9 @@ export async function GET() {
       character.currency = item.currency || "WOK";
       character.games_played = characterData.games_played || 0;
       character.games_won = characterData.games_won || 0;
-
+      character.image = character.image;
+      character.token = character.token;
+      character.ownerWallet = character.ownerWallet
       characters.push(character);
     }
 

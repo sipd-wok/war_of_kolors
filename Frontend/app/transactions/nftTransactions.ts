@@ -30,7 +30,7 @@ export const transferNFT = async (
     const signer = await getSigner();
     const contract = getNFTContract(signer);
 
-    const tx = await contract.transferFrom(from, to, tokenId);
+    const tx = await contract.safeTransferFrom(from, to, tokenId);
     await tx.wait();
 
     alert("NFT Transferred Successfully!");

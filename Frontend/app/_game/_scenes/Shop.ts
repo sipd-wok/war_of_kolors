@@ -702,7 +702,8 @@ export class Shop extends Scene {
       const newMetadata = {
         ...meta,
         image: this.imageURI,
-        token: buyandmint.tokenId
+        token: buyandmint.tokenId,
+        ownerWallet: walletAddress
       };
         try {
         const response = await fetch("/api/createCharacter", {
