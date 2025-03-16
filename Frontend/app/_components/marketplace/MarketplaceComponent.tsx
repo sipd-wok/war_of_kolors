@@ -44,7 +44,6 @@ export class WOKCharacter {
   def!: number;
   hp!: number;
 
-
   constructor() {
     this.id = "";
     this.owner_id = "";
@@ -173,7 +172,7 @@ const MarketplaceComponent = () => {
           character.games_played = char.games_played || 0;
           character.games_won = char.games_won || 0;
           character.image = char.image || "";
-          character.token = char.token || "";
+          character.token = char.token_id || "";
           character.ownerWallet = char.owner_wallet || "";
           character.atk = char.atk;
           character.def = char.def;
