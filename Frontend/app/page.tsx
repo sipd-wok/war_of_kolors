@@ -3,13 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MetaMaskSignIn } from "@/components/auth/MetaMaskSignIn";
+import { useWallet } from "@/context/WalletContext";
 
 // import { GuestSignIn } from "@/components/auth/GuestSignIn";
 
 export default function Home() {
   const router = useRouter();
-
+  const { walletAddress } = useWallet();
   const [walletConnected, setWalletConnected] = useState(false);
+
+  // Check if wallet is already connected on component mount
+  useEffect(() => {
+    if (walletAddress) {
+      setTimeout(() => {
+        setWalletConnected(true);
+      }, 10000); // 10 seconds delay
+    }
+  }, [walletAddress]);
 
   useEffect(() => {
     if (walletConnected) {
