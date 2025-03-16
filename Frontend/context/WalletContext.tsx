@@ -26,7 +26,7 @@ interface WalletContextType {
   connectWallet: () => Promise<void>;
   sendTokens: (recipient: string, amount: string) => Promise<void>;
   shopPayment: (amount: string) => Promise<void>;
-  mintNFT: (walletAddress: string, metadataURI: string) => Promise<void>;
+  mintNFT: (walletAddress: string, metadataURI: string) => Promise<{ success: boolean; tokenId: string | null }>;
   buyAndmint: (
     amount: string,
     walletAddress: string,
