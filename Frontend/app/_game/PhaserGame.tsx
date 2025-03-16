@@ -38,23 +38,26 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
 
     useLayoutEffect(() => {
       if (game.current === null) {
-        game.current = StartGame(
-          "game-container",
-          shopPayment,
-          buyAndmintWrapper,
-          walletAddress,
-          balance,
-        );
-        if (typeof ref === "function") {
-          ref({ game: game.current, scene: null });
-        } else if (ref) {
-          ref.current = { game: game.current, scene: null };
-        }
+        try {
+          // Make sure all params are defined before passing to StartGame
+          const containerId = "game-container";
 
-        if (typeof ref === "function") {
-          ref({ game: game.current, scene: null });
-        } else if (ref) {
-          ref.current = { game: game.current, scene: null };
+          game.current = StartGame(
+            containerId,
+            shopPayment || null,
+            buyAndmintWrapper,
+            walletAddress || "",
+            balance || "0",
+          );
+
+          // Update ref only once
+          if (typeof ref === "function") {
+            ref({ game: game.current, scene: null });
+          } else if (ref) {
+            ref.current = { game: game.current, scene: null };
+          }
+        } catch (error) {
+          console.error("Error starting game:", error);
         }
       }
 
