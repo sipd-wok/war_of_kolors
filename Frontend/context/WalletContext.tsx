@@ -20,13 +20,13 @@ interface WalletContextType {
   connectWallet: () => Promise<void>;
   sendTokens: (recipient: string, amount: string) => Promise<void>;
   shopPayment: (amount: string) => Promise<void>;
-  mintNFT: (walletAddress: string, metadataURI: string) => Promise<void>;
+  mintNFT: (walletAddress: string, metadataURI: string) => Promise<{ success: boolean; tokenId: string | null }>;
   buyAndmint: (
     amount: string,
     walletAddress: string,
     metadataURI: string,
   ) => Promise<{ message: string }>;
-  transferNFT: (from: string,to: string, tokenId: string) => Promise<void>;
+  transferNFT: (from: string,to: string, tokenId: string) => Promise<boolean>;
   fetchBalance: (address: string) => Promise<void>;
 }
 
