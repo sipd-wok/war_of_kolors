@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MetaMaskSignIn } from "@/components/auth/MetaMaskSignIn";
+
 // import { GuestSignIn } from "@/components/auth/GuestSignIn";
 
 export default function Home() {
   const router = useRouter();
+
   const [walletConnected, setWalletConnected] = useState(false);
 
   useEffect(() => {
