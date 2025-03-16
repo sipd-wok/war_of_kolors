@@ -165,8 +165,8 @@ const MarketplaceComponent = () => {
           character.games_played = char.games_played || 0;
           character.games_won = char.games_won || 0;
           character.image = char.image || "";
-          character.token = char.token || "";
-
+          character.token = char.token_id || "";
+          character.ownerWallet = char.owner_wallet || "";
           // For characters that are on sale, fetch the price and currency
           if (char.on_sale) {
             try {
@@ -224,6 +224,7 @@ const MarketplaceComponent = () => {
         }
 
         setNfts(data.characters);
+        console.log(data)
       }
     } catch (error) {
       console.error("Error fetching NFTs:", error);
@@ -541,9 +542,8 @@ const MarketplaceComponent = () => {
                       % Win Rate
                     </div>
                   </div>
-                  {/* onClick={()=> transferNFT(nft.ownerWallet,userInfo.user_id,nft.token)}  */}
                   <div className="flex justify-between items-center mt-4">
-                    <button className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                    <button onClick={()=> transferNFT(nft.ownerWallet,userInfo.user_id,nft.token)}  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
                       <ShoppingBag className="h-3 w-3 mr-1" /> Buy Now
                     </button>
                     <button className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">

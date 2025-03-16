@@ -46,7 +46,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           }
         }
       };
-    }, [ref, shopPayment, buyAndmint, walletAddress]);
+    }, [ref, shopPayment, buyAndmint, walletAddress, balance]);
 
     useEffect(() => {
       EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {
