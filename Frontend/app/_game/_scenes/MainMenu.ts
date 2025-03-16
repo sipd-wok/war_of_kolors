@@ -581,14 +581,15 @@ export class MainMenu extends Scene {
     this.openShop.on("pointerdown", () => {
       this.scene.start("Shop", { socket: this.openShop }); // Change to open the Shop scene
     });
+
     // GET WOK TOKEN BUTTON
     this.getWok = this.add
-    .text(cameraX, cameraY + 10, "Get Free Wok", {
+    .text(cameraX + 250, cameraY - 350 , "Get Free Wok", {
       fontFamily: "Arial",
       fontSize: 32,
       color: "#ffffff",
       backgroundColor: "#4e342e",
-      padding: { x: 10, y: 50 },
+      padding: { x: 10, y: 20 },
     })
     this.getWok.on("pointerdown",async()=>{
       const walletAddress = this.game.registry.get("walletAddress");
