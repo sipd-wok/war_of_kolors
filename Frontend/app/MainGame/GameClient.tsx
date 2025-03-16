@@ -20,21 +20,33 @@ const MarketplaceComponent = dynamic(
     ssr: false,
   },
 );
+const ProfileComponent = dynamic(
+  () => import("../_components/marketplace/ProfileComponent"),  
+  {
+    ssr: false,
+  },
+);
 
 export default function GameClient() {
   const [currentView, setCurrentView] = useState("game");
 
-  // Listen for Phaser events to switch to marketplace
+  // Listen for Phaser events to switch views
   useEffect(() => {
     const handleSceneChange = (event: CustomEvent) => {
       if (event.detail === "Marketplace") {
         setCurrentView("marketplace");
+      } else if (event.detail === "profile") {
+        setCurrentView("profile");
       }
     };
 
-    // Add event listener
+    // Add event listeners
     window.addEventListener(
       "go-to-marketplace",
+      handleSceneChange as EventListener,
+    );
+    window.addEventListener(
+      "go-to-profile",
       handleSceneChange as EventListener,
     );
 
@@ -42,6 +54,10 @@ export default function GameClient() {
     return () => {
       window.removeEventListener(
         "go-to-marketplace",
+        handleSceneChange as EventListener,
+      );
+      window.removeEventListener(
+        "go-to-profile",
         handleSceneChange as EventListener,
       );
     };
@@ -52,7 +68,7 @@ export default function GameClient() {
       <div id="app" className="relative h-screen w-screen">
         {currentView === "game" ? (
           <PhaserGame />
-        ) : (
+        ) : currentView === "marketplace" ? (
           <div className="game-marketplace-container h-screen relative w-full">
             <button
               className="absolute top-4 left-4 z-10 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -62,7 +78,17 @@ export default function GameClient() {
             </button>
             <MarketplaceComponent />
           </div>
-        )}
+        ) : currentView === "profile" ? (
+          <div className="game-profile-container h-screen relative w-full">
+            <button
+              className="absolute top-4 left-4 z-10 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setCurrentView("game")}
+            >
+              Back to Game
+            </button>
+            <ProfileComponent />
+          </div>
+        ) : null}
       </div>
     </WalletProvider>
   );
