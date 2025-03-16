@@ -1,4 +1,10 @@
-import { forwardRef, useEffect, useLayoutEffect, useRef } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+} from "react";
 import StartGame from "./main";
 import { EventBus } from "./EventBus";
 import { useWallet } from "@/context/WalletContext";
@@ -16,12 +22,26 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
   function PhaserGame({ currentActiveScene }, ref) {
     const game = useRef<Phaser.Game | null>(null!);
     const { shopPayment, buyAndmint, walletAddress, balance } = useWallet();
+
+    // Create wrapper that returns void to match the expected type
+    const buyAndmintWrapper = useCallback(
+      async (
+        amount: string,
+        walletAddress: string,
+        metadataURI: string,
+      ): Promise<void> => {
+        await buyAndmint(amount, walletAddress, metadataURI);
+        // Void return, discarding the message
+      },
+      [buyAndmint],
+    );
+
     useLayoutEffect(() => {
       if (game.current === null) {
         game.current = StartGame(
           "game-container",
           shopPayment,
-          buyAndmint,
+          buyAndmintWrapper,
           walletAddress,
           balance,
         );
@@ -46,7 +66,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           }
         }
       };
-    }, [ref, shopPayment, buyAndmint, walletAddress, balance]);
+    }, [ref, shopPayment, buyAndmintWrapper, walletAddress, balance]);
 
     useEffect(() => {
       EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {
