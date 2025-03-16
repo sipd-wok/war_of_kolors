@@ -16,8 +16,8 @@ class WOKCharacter {
   games_played!: number;
   games_won!: number;
   image!:string;
-  token!: string;
-  ownerWallet!:string;
+  token_id!: string;
+  owner_wallet!:string;
   constructor() {
     this.id = "";
     this.owner_id = "";
@@ -33,8 +33,8 @@ class WOKCharacter {
     this.games_played = 0;
     this.games_won = 0;
     this.image = "";
-    this.token = "";
-    this.ownerWallet = "";
+    this.token_id = "";
+    this.owner_wallet = "";
   }
 }
 
@@ -74,7 +74,6 @@ export async function GET() {
         );
         continue;
       }
-
       // Get owner username using owner_id
       const { data: userData, error: userError } = await supabase
         .from("users_tbl")
@@ -103,9 +102,9 @@ export async function GET() {
       character.currency = item.currency || "WOK";
       character.games_played = characterData.games_played || 0;
       character.games_won = characterData.games_won || 0;
-      character.image = character.image;
-      character.token = character.token;
-      character.ownerWallet = character.ownerWallet
+      character.image = characterData.image;
+      character.token_id = characterData.token_id;
+      character.owner_wallet = characterData.owner_wallet
       characters.push(character);
     }
 
