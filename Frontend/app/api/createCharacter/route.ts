@@ -5,8 +5,31 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     // Get character data from request
-    const { tier, color, luck, sprite, name } = await request.json();
-    console.log("Recieved payload: " + tier, color, luck, sprite, name);
+    const {
+      tier,
+      color,
+      hp,
+      atk,
+      def,
+      luck,
+      sprite,
+      name,
+      image,
+      token,
+      ownerWallet,
+    } = await request.json();
+    console.log("Received payload:", {
+      tier,
+      color,
+      hp,
+      atk,
+      def,
+      luck,
+      sprite,
+      name,
+      token,
+      ownerWallet,
+    });
 
     // Get user session server-side
     const session = await auth();
@@ -36,15 +59,21 @@ export async function POST(request: Request) {
       owner_id: user.id,
       tier,
       color: color.toLowerCase(),
+      hp,
+      atk,
+      def,
       luck,
       sprite,
       name,
+      image,
+      token_id: token,
+      owner_wallet: ownerWallet,
     });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);
