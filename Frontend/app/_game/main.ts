@@ -30,7 +30,8 @@ const config: Phaser.Types.Core.GameConfig = {
     Shop,
     Profile,
     // butang d ang scene mo
-  ], scale: {
+  ],
+  scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
@@ -51,6 +52,12 @@ const StartGame = (
     console.error("Wallet address is missing.");
     return null; // Or handle this case appropriately
   }
+
+  if (typeof shopPayment !== "function") {
+    console.error("Shop payment function is missing or invalid.");
+    return null;
+  }
+
   const game = new Game({ ...config, parent });
 
   // Store shopPayment in the game registry so scenes can access it
