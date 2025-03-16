@@ -26,7 +26,10 @@ interface WalletContextType {
   connectWallet: () => Promise<void>;
   sendTokens: (recipient: string, amount: string) => Promise<void>;
   shopPayment: (amount: string) => Promise<void>;
-  mintNFT: (walletAddress: string, metadataURI: string) => Promise<{ success: boolean; tokenId: string | null }>;
+  mintNFT: (
+    walletAddress: string,
+    metadataURI: string,
+  ) => Promise<{ success: boolean; tokenId: string | null }>;
   buyAndmint: (
     amount: string,
     walletAddress: string,
@@ -115,18 +118,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   // NFTS
-  // Create a wrapper function that returns void
+  // Make sure mintNFTWrapper returns the correct type
   const mintNFTWrapper = useCallback(
-    async (walletAddress: string, metadataURI: string): Promise<void> => {
-      await MintNFT(walletAddress, metadataURI);
-      // Return void by not returning anything
+    async (
+      walletAddress: string,
+      metadataURI: string,
+    ): Promise<{ success: boolean; tokenId: string | null }> => {
+      return MintNFT(walletAddress, metadataURI);
     },
     [],
   );
 
   const transferNFT = useCallback(
-    (from: string, to: string, tokenId: string) =>
-      TransferNFT(from, to, tokenId),
+    async (from: string, to: string, tokenId: string): Promise<void> => {
+      await TransferNFT(from, to, tokenId);
+      // Return void explicitly by not returning the boolean result
+    },
     [],
   );
 
