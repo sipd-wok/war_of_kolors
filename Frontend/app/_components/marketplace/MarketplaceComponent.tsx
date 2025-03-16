@@ -36,9 +36,9 @@ export class WOKCharacter {
   currency!: string;
   games_played!: number;
   games_won!: number;
-  image!:string;
+  image!: string;
   token!: string;
-  ownerWallet!:string;
+  ownerWallet!: string;
 
   constructor() {
     this.id = "";
@@ -106,7 +106,7 @@ const MarketplaceComponent = () => {
   const [ownedCharacters, setOwnedCharacters] = useState<WOKCharacter[]>([]);
   const [selectedCharacter, setSelectedCharacter] =
     useState<WOKCharacter | null>(null);
-  const {transferNFT} = useWallet()
+  const { transferNFT } = useWallet();
   const [characterModalIsOpen, setCharacterModalOpen] = useState(false);
   const handleCharacterModalOpen = (character: WOKCharacter) => {
     setSelectedCharacter(character);
@@ -164,6 +164,8 @@ const MarketplaceComponent = () => {
           character.on_sale = char.on_sale || false;
           character.games_played = char.games_played || 0;
           character.games_won = char.games_won || 0;
+          character.image = char.image || "";
+          character.token = char.token || "";
 
           // For characters that are on sale, fetch the price and currency
           if (char.on_sale) {
@@ -303,10 +305,15 @@ const MarketplaceComponent = () => {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Sword className="h-12 w-12 text-white opacity-30" />
                     </div>
-                    <div
-                      className="aspect-square bg-cover bg-center absolute inset-0 w-full p-6"
-                      style={{ backgroundImage: `url(assets/char_1.png)` }}
-                    ></div>
+                    <div className="absolute inset-0 flex items-center justify-center w-full h-full">
+                      <div
+                        className="aspect-square bg-cover bg-center w-6/7 p-6"
+                        style={{
+                          backgroundImage: `url(${character.image || "assets/char_" + character.sprite.replace(/\D/g, "") + ".png"})`,
+                        }}
+                      ></div>
+                    </div>
+
                     <div className="absolute bottom-5 left-1/2 w-3/5 h-3 bg-black opacity-50 rounded-full blur-lg transform -translate-x-1/2"></div>
                   </div>
 
@@ -534,9 +541,9 @@ const MarketplaceComponent = () => {
                       % Win Rate
                     </div>
                   </div>
-{/* onClick={()=> transferNFT(nft.ownerWallet,userInfo.user_id,nft.token)}  */}
+                  {/* onClick={()=> transferNFT(nft.ownerWallet,userInfo.user_id,nft.token)}  */}
                   <div className="flex justify-between items-center mt-4">
-                    <button  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                    <button className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
                       <ShoppingBag className="h-3 w-3 mr-1" /> Buy Now
                     </button>
                     <button className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">
