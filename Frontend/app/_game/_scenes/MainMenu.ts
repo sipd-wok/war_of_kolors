@@ -7,6 +7,7 @@ export class MainMenu extends Scene {
   background!: GameObjects.Image;
   title!: GameObjects.Text;
   createRoomBttn!: GameObjects.Text;
+  getWok!: GameObjects.Text;
   openShop!: GameObjects.Text;
   socket!: Socket;
   showProfile!: GameObjects.Image;
@@ -48,7 +49,6 @@ export class MainMenu extends Scene {
   devilPottionText!: GameObjects.Text;
   hpPottionText!: GameObjects.Text;
   lePottionText!: GameObjects.Text;
-
   constructor() {
     super("MainMenu");
 
@@ -430,6 +430,7 @@ export class MainMenu extends Scene {
 
         this.createRoomBttn.setInteractive();
         this.joinRoomBttn.setInteractive();
+        this.getWok.setInteractive();
       }
     });
 
@@ -580,7 +581,38 @@ export class MainMenu extends Scene {
     this.openShop.on("pointerdown", () => {
       this.scene.start("Shop", { socket: this.openShop }); // Change to open the Shop scene
     });
-
+    // GET WOK TOKEN BUTTON
+    this.getWok = this.add
+    .text(cameraX, cameraY + 10, "Get Free Wok", {
+      fontFamily: "Arial",
+      fontSize: 32,
+      color: "#ffffff",
+      backgroundColor: "#4e342e",
+      padding: { x: 10, y: 50 },
+    })
+    this.getWok.on("pointerdown",async()=>{
+      const walletAddress = this.game.registry.get("walletAddress");
+      try{
+        const response = await fetch(`/api/requestWok/${walletAddress}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        console.log(data);
+        if(response.status == 429){
+          alert(data.error)
+          return null;
+        }
+        else{
+          alert(data.message); return null;
+        }
+      }
+      catch(err){
+        console.log(err)
+      }
+    })
     // --- Open Profile Button ---
     const profileButton = this.add
       .image(cameraX - 530, cameraY - 310, "profile")
