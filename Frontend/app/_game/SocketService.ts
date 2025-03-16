@@ -17,7 +17,7 @@ class SocketService {
 
   public connect() {
     if (!this._socket) {
-      const socketUrl = "http://localhost:3000";
+      const socketUrl = "https://sipd-wok.onrender.com";
 
       console.log(`Connecting to socket server at: ${socketUrl}`);
       this._socket = io(socketUrl);
