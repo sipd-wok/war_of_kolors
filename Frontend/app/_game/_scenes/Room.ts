@@ -147,7 +147,11 @@ export class Room extends Scene {
 
     this.load.on('complete', () => {
         console.log("✅ All assets loaded! Emitting event...");
-        this.socket.emit("Create_BattleField", this.roomID, this.character)
+
+        setTimeout(() => {
+            this.socket.emit("Create_BattleField", this.roomID, this.character)
+        }, 5000)
+        
     });
 
     //Characters
@@ -219,6 +223,9 @@ export class Room extends Scene {
 //     if(data && this.updatePlayer !== null) {
 //         clearInterval(this.updatePlayer)
 //     }
+
+
+console.log("PlayerLogs: ", this.playersLogs)
 
 //   })
 
@@ -942,6 +949,8 @@ this.defaultColor = [
                 
             this.socket.on("InputPlayer", (data) => {
             
+            console.log("DUbug+++++", data)
+
             this.loadingText.destroy()
             
             const players = this.socket.id
