@@ -4,7 +4,7 @@ import supabase from "@/lib/db/db";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const characterID = searchParams.get("caharacterID");
+    const characterID = searchParams.get("characterID");
 
     const { data: character, error: lookupError } = await supabase
       .from("characters_tbl")

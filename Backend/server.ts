@@ -392,6 +392,10 @@ io.on("connection", (socket) => {
 
       console.log("Demo Assign ", NewName);
 
+      // Assign a random color first
+      let randomIndex = Math.floor(Math.random() * availableColors.length);
+      let chosenColor = availableColors.splice(randomIndex, 1)[0]; // Remove chosen color
+
       let newPlayer: Player = {
         id: socket.id,
         lifePoints: 10,
@@ -403,19 +407,9 @@ io.on("connection", (socket) => {
         leppot: 4,
         health_potion: 3,
         walletBal: 999,
+        color: chosenColor.color, // Initialize color property
+        img: chosenColor.img, // Initialize img property
       };
-
-      // Assign a unique color if available
-      if (availableColors.length > 0) {
-        let randomIndex = Math.floor(Math.random() * availableColors.length);
-        let chosenColor = availableColors.splice(randomIndex, 1)[0]; // Remove chosen color
-        newPlayer.color = chosenColor.color;
-        newPlayer.img = chosenColor.img;
-      } else {
-        console.log("No more unique colors available!");
-        newPlayer.color = 0x000000; // Default to black if no colors are left
-        newPlayer.img = "default";
-      }
 
       socket.join(roomName);
       DemoRooms[roomName].push(newPlayer);
