@@ -353,6 +353,8 @@ const emittedRooms = new Set<string>(); // Store rooms that have been handled
 
 const emittedPlayer = new Set<string>(); // Store rooms that have been handled
 
+if (socket.listenerCount("Create_BattleField") === 0) {
+
 socket.on("Create_BattleField", (roomAddress, players) => {
 
   if (emittedPlayer.has(String(roomAddress))) {
@@ -444,6 +446,7 @@ function getNextAvailableColor(): number {
 
 });
 
+}
 
 socket.once("DevilPotion", (roomID, data) => {
 
@@ -546,6 +549,7 @@ socket.once("HealthPotion", (roomID, data) => {
   })
 
 
+if (socket.listenerCount("GenerateColors") === 0) {
 
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
 
@@ -639,6 +643,8 @@ socket.on("GenerateColors", (data) => {
         }, 3000);
     }, 5000); // Runs every 5 seconds
 });
+
+}
 
 
 
