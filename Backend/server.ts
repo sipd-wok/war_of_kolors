@@ -328,10 +328,10 @@ io.on("connection", (socket) => {
 
   //This Code Structure To make in game
   interface Player {
-    id: any;
+    id: string;
     lifePoints: number;
     name: string;
-    color: any;
+    color: number;
     luck: number;
     bet: number;
     img: string;
@@ -375,9 +375,9 @@ socket.on("Create_BattleField", (roomAddress, players) => {
         const player = players[i];
         
         // Assign a color, defaulting to an available one if not specified
-        let playerColor = colors[player.character.color] || getNextAvailableColor()
+        const playerColor = colors[player.character.color] || getNextAvailableColor()
 
-        let newPlayer: Player = {
+        const newPlayer: Player = {
             id: socket.id,
             lifePoints: 10,
             name: player.user.username,
@@ -437,7 +437,7 @@ socket.once("DevilPotion", (roomID, data) => {
 
   if (player.luck >= 1) {
 
-      let randomNumber = getWeightedRandomNumber();
+      const randomNumber = getWeightedRandomNumber();
 
       // Apply the random value to lifePoints (not luck)
       const Devilresult = Math.max(1, player.luck + randomNumber);
@@ -465,7 +465,7 @@ socket.once("DevilPotion", (roomID, data) => {
 
 // Function to generate a weighted random number between -2 and 25
 function getWeightedRandomNumber(): number {
-  let rand = Math.random(); // Generates a number between 0 and 1
+  const rand = Math.random(); // Generates a number between 0 and 1
 
   if (rand < 0.7) {
       // 70% chance: Common values (-2 to 5)
@@ -516,7 +516,7 @@ socket.once("HealthPotion", (roomID, data) => {
   }
 
 })
- 
+
     
   socket.on("round", (data) => {
         
@@ -534,13 +534,13 @@ socket.once("HealthPotion", (roomID, data) => {
 
     console.log("Waiting Room: ", playersWaitingRooms)
 
-    let roomData = DemoRooms[data];
+    const roomData = DemoRooms[data];
 
     if (!roomData || roomData.length === 0) return; // Avoid errors
 
-    let totalLuck = roomData.reduce((sum, player) => sum + player.luck, 0);
+    const totalLuck = roomData.reduce((sum, player) => sum + player.luck, 0);
 
-    let defaultColor = [
+    const defaultColor = [
         { color: 0xff0000, img: "redDice" },
         { color: 0xffff00, img: "yellowDice" },
         { color: 0x00ff00, img: "greenDice" },
@@ -550,7 +550,7 @@ socket.once("HealthPotion", (roomID, data) => {
     ];
 
     function RandomColors() {
-        let random = Math.random() * 100;
+        const random = Math.random() * 100;
         let cumu = 0;
 
         for (let i = 0; i < roomData.length; i++) {
@@ -572,9 +572,9 @@ socket.once("HealthPotion", (roomID, data) => {
 
     if (roomData.length === players_length) {
       if(!roomIntervals[data]) {
-       roomIntervals[data] = setInterval(() => {
+        roomIntervals[data] = setInterval(() => {
 
-                let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
+                const selectedColor = [RandomColors(), RandomColors(), RandomColors()];
       
                 io.to(data).emit("ReceiveColor", selectedColor);
 
