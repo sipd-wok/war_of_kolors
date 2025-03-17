@@ -22,7 +22,9 @@ import {
   Shield,
 } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
-
+import { getSigner } from "@/utils/ethersProvider";
+import { getNFTContract } from "@/utils/nftcontract";
+import { ethers } from "ethers";
 export class WOKCharacter {
   id!: string;
   owner_id!: string;
@@ -235,25 +237,41 @@ const MarketplaceComponent = () => {
         }
 
         setNfts(data.characters);
-        console.log(data)
       }
     } catch (error) {
       console.error("Error fetching NFTs:", error);
     }
   };
   const [showReceipt, setReceipt] = useState(false);
-  let tokenId = "";
-  const buyNft = async(owner: string,user: string, token: string)=>{
-  //  await transferNFT(nft.owner_wallet,userInfo.user_id,nft.token_id)
-  console.log(owner,user,token)
-  const transfertx = await transferNFT(owner.toString(),user.toString(),token.toString());
-  if (transfertx === false){
-    alert('failed')
-  }else{
-    tokenId = token
-    setReceipt(true);
-  }
-}
+  let token = "";
+  const buyNft = async (owner: string, buyer: string, tokenId: string) => {
+    try {
+      console.log("Buying NFT:", { owner, buyer, tokenId });
+  
+      const signer = await getSigner();
+      const contract = getNFTContract(signer);
+  
+      // ✅ Ensure the owner is actually the NFT owner
+      const nftOwner = await contract.ownerOf(tokenId);
+      if (nftOwner.toLowerCase() !== owner.toLowerCase()) {
+        throw new Error(`Seller (${owner}) is NOT the NFT owner!`);
+      }
+  
+      // 🚀 Direct Transfer (No need to approve buyer anymore)
+      const tx = await contract["safeTransferFrom(address,address,uint256)"](owner, buyer, tokenId, {
+        gasLimit: 500000, // Correct gas limit format
+      });
+      await tx.wait();
+  
+      console.log(`✅ NFT Purchase Successful! Token ID: ${tokenId} → ${buyer}`);
+    } catch (error) {
+      console.error("❌ NFT Purchase Failed:", error);
+    }
+  };
+  
+  
+  
+  
   return (
     // Add h-screen and overflow-auto to enable scrolling
     <div className="w-full h-screen overflow-auto bg-gray-50 dark:bg-gray-900 px-4 py-8">
@@ -605,7 +623,6 @@ const MarketplaceComponent = () => {
                       HP: {nft.hp}
                     </div>
                   </div>
-
                   <div className="flex justify-between items-center mt-4">
                     <button onClick={()=> buyNft(nft.owner_wallet, userInfo.user_id, nft.token_id)}  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
                       <ShoppingBag className="h-3 w-3 mr-1" /> Buy Now
@@ -638,7 +655,7 @@ const MarketplaceComponent = () => {
           <p className="font-mono text-sm break-all text-gray-900 dark:text-gray-200">0x7f9a6Ae21981fBa73450eF15CF27C5b1000fDBB1</p>
           
           <p className="text-sm text-gray-500 mt-2">🏷 Token ID:</p>
-          <p className="font-mono text-lg text-blue-600">{tokenId}</p>
+          <p className="font-mono text-lg text-blue-600">{token}</p>
         </div>
 
         <button

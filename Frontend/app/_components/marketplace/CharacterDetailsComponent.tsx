@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { WOKCharacter } from "./MarketplaceComponent";
+import { getSigner } from "@/utils/ethersProvider";
+import { getNFTContract } from "@/utils/nftcontract";
+import { ethers } from "ethers";
 
 interface CharacterDetailsComponentProps {
   onClose?: () => void;
@@ -44,83 +47,59 @@ const CharacterDetailsComponent = ({
   };
 
   const handleListForSale = async () => {
-    // Input validation
-    if (!character) {
-      setStatus({
-        type: "error",
-        message: "Character data missing",
-      });
+    if (!character || !price) {
+      setStatus({ type: "error", message: "Character data or price missing" });
       return;
     }
-
-    if (!price || price.trim() === "") {
-      setStatus({
-        type: "error",
-        message: "Please enter a price",
-      });
-      return;
-    }
-
+  
     const priceValue = Number(price);
     if (isNaN(priceValue) || priceValue <= 0) {
-      setStatus({
-        type: "error",
-        message: "Please enter a valid positive number for price",
-      });
+      setStatus({ type: "error", message: "Invalid price value" });
       return;
     }
-
+  
     setIsLoading(true);
     setStatus({ type: "none", message: "" });
-
+  
     try {
+      const signer = await getSigner();
+      const contract = getNFTContract(signer);
+  
+      // ✅ **Owner Approves the NFT for Transfer**
+      const approveTx = await contract.setApprovalForAll(true);
+      await approveTx.wait();
+      console.log("✅ NFT Approved for Transfer by Anyone");
+      
+
+  
+      // ✅ **List NFT for Sale in Backend**
       const response = await fetch("/api/marketplace/sellCharacter", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           character_id: character.id,
           price: priceValue,
           currency: "WoK",
         }),
       });
-
+  
       const data = await response.json();
-
       if (response.ok) {
-        setStatus({
-          type: "success",
-          message: "Character successfully listed for sale!",
-        });
-
-        // Refresh data after successful listing
-        if (refreshData) {
-          await refreshData();
-        }
-
-        // Close the modal after successful listing with a slight delay
-        setTimeout(() => {
-          if (onClose) {
-            onClose();
-          }
-        }, 1500);
+        setStatus({ type: "success", message: "Character listed for sale!" });
+        if (refreshData) await refreshData();
+        setTimeout(() => onClose && onClose(), 1500);
       } else {
-        setStatus({
-          type: "error",
-          message: data.error || "Failed to list character for sale",
-        });
+        setStatus({ type: "error", message: data.error || "Failed to list character" });
       }
     } catch (error) {
       console.error("Error listing character for sale:", error);
-      setStatus({
-        type: "error",
-        message: "Network error occurred. Please try again.",
-      });
+      setStatus({ type: "error", message: "Network error occurred. Try again." });
     } finally {
       setIsLoading(false);
     }
   };
+  
+  
 
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 py-8">

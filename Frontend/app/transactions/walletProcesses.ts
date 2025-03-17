@@ -41,6 +41,7 @@ export const fetchBalance = async (
     const contract = getTokenContract(signer);
     const balanceRaw = await contract.balanceOf(address);
     setBalance(ethers.formatUnits(balanceRaw, 18));
+    return (ethers.formatUnits(balanceRaw, 18))
   } catch (error) {
     console.error("Failed to fetch balance:", error);
   }

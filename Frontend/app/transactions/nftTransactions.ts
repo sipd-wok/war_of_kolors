@@ -28,16 +28,38 @@ export const transferNFT = async (
   tokenId: string
 ): Promise<boolean> => {
   try {
-    console.log(from,to,tokenId)
+    console.log("Transfer Request:", { from, to, tokenId });
+
+    if (!ethers.isAddress(to)) {
+      console.error("Invalid recipient address:", to);
+      alert("❌ Invalid recipient address.");
+      return false;
+    }
+
     const signer = await getSigner();
-    const contract = getNFTContract(signer); 
-    const tx = await contract["safeTransferFrom"](from, to, tokenId);
+    const contract = getNFTContract(signer);
+
+    // ✅ Check if the NFT is approved
+    const approvedAddress = await contract.getApproved(tokenId);
+    console.log(`Approved Address for token ${tokenId}:`, approvedAddress);
+
+    if (approvedAddress.toLowerCase() !== to.toLowerCase()) {
+      console.error("❌ NFT is not approved for transfer to this address.");
+      alert("❌ NFT is not approved for this transaction.");
+      return false;
+    }
+
+    console.log("✅ NFT is approved. Proceeding with transfer...");
+
+    // Execute the NFT transfer
+    const tx = await contract["safeTransferFrom(address,address,uint256)"](from, to, tokenId);
     await tx.wait();
 
-    console.log(`NFT ${tokenId} transferred from ${from} to ${to}`);
+    console.log("✅ NFT Transfer Successful!");
     return true;
   } catch (error) {
-    console.error("NFT Transfer Failed:", error);
+    console.error("❌ NFT Transfer Failed:", error);
+    alert("❌ NFT Transfer Failed. Check console for details.");
     return false;
   }
 };
