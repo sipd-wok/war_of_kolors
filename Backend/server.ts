@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import { instrument } from "@socket.io/admin-ui";
 import { Socket } from "dgram";
 import { stringToBytes } from "uuid/dist/cjs/v35";
+import { callbackify } from "util";
+import { console } from "inspector";
 
 interface GuestRoom {
   roomID: string;
@@ -106,10 +108,11 @@ instrument(io, {
   auth: false,
 });
 
+
 io.on("connection", (socket) => {
   console.log("A user connected! " + socket.id);
-
-  const players_length = 6 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
+  
+  const players_length = 1 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
 
   function cleanAndListRooms() {
     const roomList = [];
@@ -197,6 +200,7 @@ io.on("connection", (socket) => {
     const createdRoom = playersWaitingRooms.find(
       (room) => room.roomID === roomId,
     );
+
     if (createdRoom) {
       console.log(`Room created: ${createdRoom.roomID}`);
     } else {
@@ -242,6 +246,7 @@ io.on("connection", (socket) => {
   //Current Players
 
   socket.on("joinWaitingRoom", (roomID, socketID, user, character, potions) => {
+
     const room = playersWaitingRooms.find((room) => room.roomID === roomID);
 
     if (room) {
@@ -309,9 +314,7 @@ io.on("connection", (socket) => {
       if (room.players.length === players_length) {
 
         io.to(roomID).emit("proceedToGame", room);
-
-        io.to(roomID).emit("roomAssign", "Connected");
-
+        
       }
 
         } else {
@@ -324,102 +327,196 @@ io.on("connection", (socket) => {
 
 
   //This Code Structure To make in game
-
   interface Player {
-    id: string;
+    id: any;
     lifePoints: number;
     name: string;
-    color?: number;
+    color: any;
     luck: number;
     bet: number;
-    img?: string;
+    img: string;
     LM: number;
     dpotion: number;
     leppot: number;
     health_potion: number;
-    walletBal: number |null;
-  }
+    walletBal: number;
+}
 
-  interface Room {
+interface Room {
     [key: string]: Player[];
-  }
+}
 
-  const DemoRooms: Room = {}
+const DemoRooms: Room = {}
+const usedColors = new Map<string, number>();
 
-  socket.on("Create_BattleField", (data) => {
+socket.on("Create_BattleField", (roomAddress, players) => {
 
-    console.log("Players LogIn ", data);
-    
-    let colors = [
-        { color: 0xff0000, img: 'red' },
-        { color: 0xffff00, img: 'yellow' },
-        { color: 0x00ff00, img: 'green' },
-        { color: 0xffffff, img: 'white' },
-        { color: 0x0000ff, img: 'blue' },
-        { color: 0xff00ff, img: 'pink' },
-    ];
+    const colors: { [key: string]: number } = {
+        red: 0xff0000,
+        yellow: 0xffff00,
+        green: 0x00ff00,
+        white: 0xffffff,
+        blue: 0x0000ff,
+        pink: 0xff00ff,
+    };
 
-    let roomName = Object.keys(DemoRooms).find((room) => DemoRooms[room].length < players_length);
-
-    if (!roomName) {
-        roomName = `Connected Demo Room ${Object.keys(DemoRooms).length + 1}`;
-        DemoRooms[roomName] = [];
+    // Ensure the room exists
+    if (!DemoRooms[roomAddress]) {
+        DemoRooms[roomAddress] = [];
     }
 
-    // Assigning unique color to each player
-    let availableColors = [...colors]; // Clone the array to avoid modifying the original
+    //If `players` is an object, convert it to an array
+    if (!Array.isArray(players)) {
+        players = [players]; // Convert single player object into an array
+    }
+    
 
-    const demoNames = ["Rainbow ", "Earth ", "DemiGod ", "Hacker ", "Water ", "Fire "]
-
-    if (socket.id) {
-
-        let NewName = demoNames[Math.floor(Math.random() * demoNames.length)] + "_" + socket.id.substring(0, 2);
-
-        console.log("Demo Assign ", NewName)
+    for (let i = 0; i < players.length; i++) {
+        const player = players[i];
+        
+        // Assign a color, defaulting to an available one if not specified
+        let playerColor = colors[player.character.color] || getNextAvailableColor()
 
         let newPlayer: Player = {
-          id: socket.id,
-          lifePoints: 10,
-          name: NewName, // Temporary Names
-          luck: 6,
-          bet: 2000,
-          LM: 0,
-          dpotion: 2,
-          leppot: 4,
-          health_potion: 3,
-          walletBal: 999,
-      };
+            id: player.character.id,
+            lifePoints: 10,
+            name: player.user.username,
+            color: playerColor,
+            luck: player.character.luck,
+            bet: 10,
+            img: player.character.sprite,
+            LM: player.character.luck,
+            dpotion: player.potions.devil,
+            leppot: player.potions.leprechaun,
+            health_potion: player.potions.hp,
+            walletBal: 0,
+        };
 
-      // Assign a unique color if available
-      if (availableColors.length > 0) {
-          let randomIndex = Math.floor(Math.random() * availableColors.length);
-          let chosenColor = availableColors.splice(randomIndex, 1)[0]; // Remove chosen color
-          newPlayer.color = chosenColor.color;
-          newPlayer.img = chosenColor.img;
-      } else {
-          console.log("No more unique colors available!");
-          newPlayer.color = 0x000000; // Default to black if no colors are left
-          newPlayer.img = "default";
-      }
-
-      socket.join(roomName);
-      DemoRooms[roomName].push(newPlayer);
-
-    }    
-
-    io.to(roomName).emit("SetCount", DemoRooms[roomName].length);
-
-    // Start the game when the room is full
-    if (DemoRooms[roomName].length === players_length) {
-        io.to(roomName).emit("InputPlayer", DemoRooms[roomName]);
+        DemoRooms[roomAddress].push(newPlayer);
     }
 
-    io.to(roomName).emit("roomAssign", roomName);
+    socket.join(roomAddress);
+    io.to(roomAddress).emit("SetCount", DemoRooms[roomAddress].length);
+    io.to(roomAddress).emit("roomAssign", roomAddress);
 
-    console.log("Created Demo Rooms ", Object.keys(DemoRooms).length);
+    // Start the game when the room is full
+    if (DemoRooms[roomAddress].length === players_length) {
+        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
+    }
+
+    console.log("Created Demo Rooms: ", Object.keys(DemoRooms).length);
+
+    // Function to get the next available color
+function getNextAvailableColor(): number {
+  let availableColors = Object.values(colors).filter(color => !usedColors.has(color.toString()));
+
+  if (availableColors.length === 0) {
+      usedColors.clear(); // Reset if all colors are used
+      availableColors = Object.values(colors);
+  }
+
+  const assignedColor = availableColors[0]; // Pick the first available color
+  usedColors.set(assignedColor.toString(), assignedColor);
+
+  return assignedColor;
+}
+
+});
 
 
-  })
+socket.once("DevilPotion", (roomID, data) => {
+
+  const RoomTrack = DemoRooms[roomID];
+
+  if (!RoomTrack) return; // Room does not exist
+
+  // Find the player in the room
+  const player = RoomTrack.find(player => player.id === data.id);
+
+  if (!player) return; // Player not found
+
+  if (player.luck >= 1) {
+
+      let randomNumber = getWeightedRandomNumber();
+
+      // Apply the random value to lifePoints (not luck)
+      const Devilresult = Math.max(1, player.luck + randomNumber);
+
+      player.luck = Devilresult
+
+      player.LM = Devilresult
+
+      if (player.dpotion >= 1) {
+          player.dpotion -= 1; // Reduce potion count
+      } else {
+          // Deduct from wallet or notify
+          player.walletBal -= 10; // Example: Deduct 10 from wallet
+          if (player.walletBal < 0) player.walletBal = 0; // Prevent negative balance
+
+          // Send an alert to the player (if needed)
+          io.to(roomID).emit("Notify", { message: "Buy another Devil Potion!" });
+      }
+
+      // Emit the updated player data
+      io.to(roomID).emit("UpdatePlayer", player);
+  }
+
+});
+
+// Function to generate a weighted random number between -2 and 25
+function getWeightedRandomNumber(): number {
+  let rand = Math.random(); // Generates a number between 0 and 1
+
+  if (rand < 0.7) {
+      // 70% chance: Common values (-2 to 5)
+      return Math.floor(Math.random() * 8) - 2; // Random between -2 and 5
+  } else if (rand < 0.9) {
+      // 20% chance: Medium values (6 to 15)
+      return Math.floor(Math.random() * 10) + 6; // Random between 6 and 15
+  } else {
+      // 10% chance: Rare values (16 to 25)
+      return Math.floor(Math.random() * 10) + 16; // Random between 16 and 25
+  }
+}
+
+socket.once("LeppotPotion", (roomID, data) => {
+
+  const RoomTrack = DemoRooms[roomID];
+
+  if (!RoomTrack) return; // Room does not exist
+
+  // Find the player in the room
+  const player = RoomTrack.find(player => player.id === data.id);
+
+  if (!player) return; // Player not found
+
+  if (player.leppot <= 0) return
+
+  player.luck += 2
+  player.LM += 2
+
+})
+
+socket.once("HealthPotion", (roomID, data) => {
+  const RoomTrack = DemoRooms[roomID];
+
+  if (!RoomTrack) return; // Room does not exist
+
+  // Find the player in the room
+  const player = RoomTrack.find(player => player.id === data.id);
+
+  if (!player) return; // Player not found
+
+  if (player.health_potion <= 0) return
+
+  if (player.lifePoints <= 5) {
+
+    player.lifePoints += 2
+
+  }
+
+})
+ 
     
   socket.on("round", (data) => {
         
@@ -427,11 +524,15 @@ io.on("connection", (socket) => {
     
   })
 
+
+
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
         
   socket.on("GenerateColors", (data) => {
 
     console.log("Generating Colors In ", data)
+
+    console.log("Waiting Room: ", playersWaitingRooms)
 
     let roomData = DemoRooms[data];
 
@@ -491,7 +592,7 @@ io.on("connection", (socket) => {
                           // setTimeout(() => {
                           //     this.imageAttack_ani[i].setVisible(false);
                           // }, 1000);
-
+                          
                           io.to(data).emit("Update_Life_P", roomData)
 
                          // this.rotateAttack(i);
@@ -517,7 +618,7 @@ io.on("connection", (socket) => {
                         clearInterval(roomIntervals[data]);
                         delete roomIntervals[data]
                         console.log("Claim Your Prize ", roomData[i])
-                        
+                        io.to(data).emit("ReceiveColor", selectedColor);
                     }
 
                 }
