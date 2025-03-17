@@ -148,6 +148,30 @@ export class WaitingRoom extends Scene {
       this.character,
       this.potions,
     );
+
+    // Request current players immediately after joining
+    // This ensures the joining player gets the current state
+    setTimeout(() => {
+      this.socket.emit(
+        "getUpdatedPlayers",
+        this.roomID,
+        (playerIDs: string[]) => {
+          console.log("Requested current players after joining:", playerIDs);
+
+          // Update connectedPlayers count based on playerIDs
+          this.connectedPlayers = playerIDs.length;
+          console.log(
+            "Updated connected players count:",
+            this.connectedPlayers,
+          );
+
+          // If there are players in the room, request the full room state
+          if (playerIDs.length > 0) {
+            this.socket.emit("getCurrentRoomState", this.roomID);
+          }
+        },
+      );
+    }, 300); // Small delay to ensure join completes first
   }
 
   setupSocketListeners() {
@@ -155,9 +179,12 @@ export class WaitingRoom extends Scene {
     this.socket.on("playerJoinedWaitingRoom", (players: Player[]) => {
       console.log("Players in the room updated: ", players);
       this.connectedPlayers = players.length;
+      console.log("Connected players: ", this.connectedPlayers);
+      console.log("players length: ", players.length);
 
       // Enable skip button if enough players
       if (players.length > 1 && this.uiReady && this.skipButton) {
+        console.log("Enabling skip button for playerJoinedWaitingRoom event");
         this.skipButton.setInteractive();
         this.votesText.setAlpha(1);
       }
@@ -168,8 +195,50 @@ export class WaitingRoom extends Scene {
         this.updatePlayerInfo(players);
         // Update opponents information
         this.updateOpponentInfo(players);
+
+        // Double-check skip button state after updating UI
+        if (players.length > 1 && this.skipButton) {
+          console.log("Double checking skip button interactivity");
+          this.skipButton.setInteractive();
+          this.votesText.setAlpha(1);
+        }
       } else {
         console.log("UI not ready yet, storing player data for later");
+        this.pendingPlayersUpdate = players;
+      }
+    });
+
+    // Listen for current room state (new event handler)
+    // 1. Player joins a room
+    // 2. Player requests the current state of the room
+    // 3. Server responds with complete player information
+    // 4. Client updates UI with all players
+    this.socket.on("currentRoomState", (players: Player[]) => {
+      console.log("Received current room state:", players);
+      this.connectedPlayers = players.length;
+      console.log("currentRoomState connected players:", this.connectedPlayers);
+
+      // Enable skip button if enough players and UI is ready
+      if (players.length > 1 && this.uiReady && this.skipButton) {
+        console.log("Enabling skip button for currentRoomState event");
+        this.skipButton.setInteractive();
+        this.votesText.setAlpha(1);
+      }
+
+      // Update UI with current players
+      if (this.uiReady) {
+        this.updatePlayerInfo(players);
+        this.updateOpponentInfo(players);
+
+        // Double-check skip button state after updating UI
+        if (players.length > 1 && this.skipButton) {
+          console.log(
+            "Double checking skip button interactivity after UI update",
+          );
+          this.skipButton.setInteractive();
+          this.votesText.setAlpha(1);
+        }
+      } else {
         this.pendingPlayersUpdate = players;
       }
     });
@@ -597,6 +666,13 @@ export class WaitingRoom extends Scene {
       .on("pointerout", () => {
         this.skipButton.setFillStyle(0x007bff, 0.2);
       });
+
+    // Initially disable the button until we have multiple players
+    console.log(
+      "Initial button setup - disabling interaction until players join",
+    );
+    this.skipButton.disableInteractive();
+
     const skipText = this.add
       .text(cameraX, this.cameras.main.height - 80, "Skip Waiting", {
         fontFamily: "Arial",
@@ -636,8 +712,19 @@ export class WaitingRoom extends Scene {
       console.log("Processing pending player updates now that UI is ready");
       this.updatePlayerInfo(this.pendingPlayersUpdate);
       this.updateOpponentInfo(this.pendingPlayersUpdate);
+
+      // Check if we should enable the skip button based on the pending player data
+      if (this.pendingPlayersUpdate.length > 1 && this.skipButton) {
+        console.log("Enabling skip button based on pending player data");
+        this.skipButton.setInteractive();
+        this.votesText.setAlpha(1);
+      }
+
       this.pendingPlayersUpdate = null;
     }
+
+    // Request current room state once UI is ready
+    this.socket.emit("getCurrentRoomState", this.roomID);
 
     EventBus.emit("current-scene-ready", this);
   }
