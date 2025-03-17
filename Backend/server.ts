@@ -364,16 +364,8 @@ socket.on("Create_BattleField", (roomAddress, players) => {
     if (!DemoRooms[roomAddress]) {
         DemoRooms[roomAddress] = [];
     }
-
-    //If `players` is an object, convert it to an array
-    // if (!Array.isArray(players)) {
-    //     players = [players]; // Convert single player object into an array
-    // }
     
-
-    for (let i = 0; i < players.length; i++) 
-      {
-        const player = players[i];
+        const player = players[0];
         
         // Assign a color, defaulting to an available one if not specified
         const playerColor = colors[player.character.color] || getNextAvailableColor()
@@ -394,7 +386,7 @@ socket.on("Create_BattleField", (roomAddress, players) => {
         };
 
         DemoRooms[roomAddress].push(newPlayer);
-    }
+    
 
     socket.join(roomAddress);
     io.to(roomAddress).emit("SetCount", DemoRooms[roomAddress].length);
@@ -528,12 +520,10 @@ socket.once("HealthPotion", (roomID, data) => {
 
 
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
-        
-  socket.on("GenerateColors", (data) => {
 
-    console.log("Generating Colors In ", data)
-
-    console.log("Waiting Room: ", playersWaitingRooms)
+socket.once("GenerateColors", (data) => {
+    console.log("Generating Colors In ", data);
+    console.log("Waiting Room: ", playersWaitingRooms);
 
     const roomData = DemoRooms[data];
 
@@ -563,76 +553,56 @@ socket.once("HealthPotion", (roomID, data) => {
         return defaultColor[0];
     }
 
-    //🛑 Stop any existing interval for this room
+    // 🛑 Prevent duplicate intervals by always clearing first
     if (roomIntervals[data]) {
+        console.log("Clearing existing interval for room:", data);
         clearInterval(roomIntervals[data]);
-        delete roomIntervals[data]
+        delete roomIntervals[data];
     }
 
-    if(!roomData) return
+    if (roomData.length !== players_length) return; // Ensure enough players
 
-    if (roomData.length === players_length) {
-      if(!roomIntervals[data]) {
-        roomIntervals[data] = setInterval(() => {
+    console.log("Starting new interval for room:", data);
 
-                const selectedColor = [RandomColors(), RandomColors(), RandomColors()];
-      
+    // ✅ Now, we safely create a single interval
+    roomIntervals[data] = setInterval(() => {
+        const selectedColor = [RandomColors(), RandomColors(), RandomColors()];
+
+        io.to(data).emit("ReceiveColor", selectedColor);
+
+        const totalBet = roomData.reduce((sum, player) => sum + player.bet, 0);
+
+        for (let i = 0; i < roomData.length; i++) {
+            const matchingColors = selectedColor?.filter(box => box.color === roomData[i].color).length ?? 0;
+
+            if (matchingColors > 0) {
+                roomData[i].lifePoints += matchingColors; // Increase life points
+                io.to(data).emit("Update_Life_P", roomData);
+            } else {
+                roomData[i].lifePoints -= 1; // Reduce life points if no match
+                io.to(data).emit("Update_Life_R", roomData);
+            }
+
+            // Winners and Losers  
+            if (roomData[i].lifePoints <= 1) {
+                roomData[i].lifePoints = NaN;
+                roomData[i].luck = 0;
+                roomData[i].name = "Dead";
+            } else if (roomData[i].lifePoints >= 15) {
+                console.log("Congrats To Player: ", roomData[i].name);
+                clearInterval(roomIntervals[data]); // Stop interval when someone wins
+                delete roomIntervals[data];
+                console.log("Claim Your Prize ", roomData[i]);
                 io.to(data).emit("ReceiveColor", selectedColor);
-
-                const totalBet = roomData.reduce((sum, player) => sum + player.bet, 0);
-
-                for (let i = 0; i < roomData.length; i++) {
-
-                  const matchingColors = selectedColor?.filter(box => box.color === roomData[i].color).length ?? 0;
-
-                      if (matchingColors > 0) {
-
-                          roomData[i].lifePoints += matchingColors; // Increase life points based on matches
-
-                          // this.imageAttack_ani[i].setVisible(true);
-                          // setTimeout(() => {
-                          //     this.imageAttack_ani[i].setVisible(false);
-                          // }, 1000);
-                          
-                          io.to(data).emit("Update_Life_P", roomData)
-
-                         // this.rotateAttack(i);
-                      } else {
-                         // setTimeout(() => {
-                              roomData[i].lifePoints -= 1; // Reduce life points if no match
-
-                              io.to(data).emit("Update_Life_R", roomData)
-                             // this.shakeDmg(i);
-                         // }, 700);
-                      }
-
-                      //Winners and Lossers  
-                      if (roomData[i].lifePoints <= 1) {
-          
-                        roomData[i].lifePoints = NaN
-                        roomData[i].luck = 0
-                        roomData[i].name = "Dead"
-        
-                    } else if (roomData[i].lifePoints >= 15) {
-
-                        console.log("Congrats To Player: ", roomData[i].name)
-                        clearInterval(roomIntervals[data]);
-                        delete roomIntervals[data]
-                        console.log("Claim Your Prize ", roomData[i])
-                        io.to(data).emit("ReceiveColor", selectedColor);
-                    }
-
-                }
-
-                setTimeout(() => {
-                    io.to(data).emit("colorHistory", selectedColor);
-                }, 3000);
-            }, 5000); // Runs every 5 seconds
-
+            }
         }
-      }
-    
+
+        setTimeout(() => {
+            io.to(data).emit("colorHistory", selectedColor);
+        }, 3000);
+    }, 5000); // Runs every 5 seconds
 });
+
 
 
   // Track ready players for each room
