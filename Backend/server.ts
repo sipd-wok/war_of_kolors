@@ -462,10 +462,12 @@ io.on("connection", (socket) => {
 
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
 
+  // socket.on("rollDice", (roomID, colorLucks) => {
+
   socket.on("GenerateColors", (data) => {
     console.log("Generating Colors In ", data);
 
-    let roomData = DemoRooms[data];
+    const roomData = DemoRooms[data];
 
     // Look for this room in battleRooms if it exists
     const battleRoom = battleRooms.find((room) => room.roomID === data);

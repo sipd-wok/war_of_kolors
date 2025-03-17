@@ -547,7 +547,92 @@ export class Room extends Scene {
   setupBattleRoomListeners() {
     this.socket.on("ReceiveColor", (data) => {
       this.boxResult = data;
-      // ...existing code for ReceiveColor...
+
+      // If game is closed (we're processing an existing roll), ignore new rolls
+      if (this.closedGame) return;
+
+      // Set closedGame to true to prevent multiple concurrent rolls being processed
+      this.closedGame = true;
+
+      // Stop spinning animation
+      if (this.spinning !== null) {
+        clearInterval(this.spinning);
+        this.spinning = null;
+      }
+
+      // Set the final dice values
+      this.box1?.setTexture(data[0].img);
+      this.box2?.setTexture(data[1].img);
+      this.box3?.setTexture(data[2].img);
+
+      // Stop the bounce animations
+      this.stopBounce(this.box1);
+      this.stopBounce(this.box2);
+      this.stopBounce(this.box3);
+
+      // Update round counter
+      let round = this.round || 0;
+      const round_result = (round += 1);
+      this.round = round;
+      this.socket.emit("round", round_result);
+
+      // Process the results and show effects
+      for (let i = 0; i < this.playersLogs.length; i++) {
+        const matchingColors =
+          this.boxResult?.filter(
+            (box) => box.color === this.playersLogs[i].color,
+          ).length ?? 0;
+
+        if (matchingColors > 0) {
+          this.imageAttack_ani[i].setVisible(true);
+          setTimeout(() => {
+            this.imageAttack_ani[i].setVisible(false);
+          }, 1000);
+
+          this.rotateAttack(i);
+        } else {
+          setTimeout(() => {
+            this.shakeDmg(i);
+          }, 700);
+        }
+      }
+
+      // Check for winners and losers based on server-stored health points
+      this.checkPlayerStatus();
+
+      // After a delay, restart the dice rolling animation for the next round
+      setTimeout(() => {
+        // Reset closedGame to allow new rolls
+        this.closedGame = false;
+
+        this.spinning = setInterval(() => {
+          const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+          const Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+          const Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
+
+          const color1 = this.defaultColor[Value1]?.img;
+          const color2 = this.defaultColor[Value2]?.img;
+          const color3 = this.defaultColor[Value3]?.img;
+
+          if (color1) {
+            this.box1?.setTexture(color1).setVisible(true);
+          }
+          if (color2) {
+            this.box2?.setTexture(color2).setVisible(true);
+          }
+          if (color3) {
+            this.box3?.setTexture(color3).setVisible(true);
+          }
+        }, 100);
+
+        this.restartBounce(this.box1, this.bounceBox);
+        this.restartBounce(this.box2, this.bounceBox);
+        this.restartBounce(this.box3, this.bounceBox);
+      }, 2000);
+    });
+
+    this.socket.on("round_result", (data) => {
+      this.container_countdown_respin.setText("Round " + data);
     });
 
     this.socket.on("colorHistory", (data) => {
@@ -601,6 +686,20 @@ export class Room extends Scene {
       }
 
       this.playersLogs = data;
+
+      // Also update server's stored health points when receiving updates
+      if (this.playersLogs[0] && this.playersLogs[0].id) {
+        this.socket.emit(
+          "updateHealthPoints",
+          this.playersLogs[0].id,
+          this.playersLogs[0].lifePoints,
+          (success: boolean) => {
+            if (success) {
+              console.log("Successfully updated stored health points");
+            }
+          },
+        );
+      }
     });
 
     this.socket.on("Update_Life_R", (data) => {
@@ -622,9 +721,29 @@ export class Room extends Scene {
 
       setTimeout(() => {
         this.playersLogs = data;
+
+        // Update server's stored health points when receiving damage updates
+        if (this.playersLogs[0] && this.playersLogs[0].id) {
+          this.socket.emit(
+            "updateHealthPoints",
+            this.playersLogs[0].id,
+            this.playersLogs[0].lifePoints,
+            (success: boolean) => {
+              if (success) {
+                console.log(
+                  "Successfully updated stored health points after damage",
+                );
+              }
+            },
+          );
+        }
       }, 700);
     });
   }
+
+  // Add closedGame as a class property
+  private closedGame: boolean = false;
+  private round: number = 0;
 
   // Modified loadPlayers method to display character data
   loadPlayers() {
@@ -800,168 +919,10 @@ export class Room extends Scene {
 
     this.imageAttack_ani = [];
 
-    let round = 0;
-
-    let closedGame = true;
-
-    this.socket.on("ReceiveColor", (data) => {
-      this.boxResult = data;
-
-      if (!closedGame) return;
-
-      this.box1?.setTexture(data[0].img);
-      this.box2?.setTexture(data[1].img);
-      this.box3?.setTexture(data[2].img);
-
-      this.stopBounce(this.box1);
-
-      this.stopBounce(this.box2);
-
-      this.stopBounce(this.box3);
-
-      const round_result = (round += 1);
-
-      this.socket.emit("round", round_result);
-
-      this.socket.on("round_result", (data) => {
-        this.container_countdown_respin.setText("Round " + data);
-      });
-
-      this.socket.on("Update_Life_P", (data) => {
-        const players = this.socket.id;
-
-        interface Player {
-          id: string | number;
-        }
-
-        const index = data.findIndex((player: Player) => player.id === players);
-
-        if (index !== -1) {
-          const currentPlayer = data.splice(index, 1)[0];
-
-          if (currentPlayer) {
-            data.unshift(currentPlayer);
-          }
-        }
-
-        this.playersLogs = data;
-
-        // Also update server's stored health points when receiving updates
-        if (this.playersLogs[0] && this.playersLogs[0].id) {
-          this.socket.emit(
-            "updateHealthPoints",
-            this.playersLogs[0].id,
-            this.playersLogs[0].lifePoints,
-            (success: boolean) => {
-              if (success) {
-                console.log("Successfully updated stored health points");
-              }
-            },
-          );
-        }
-      });
-
-      this.socket.on("Update_Life_R", (data) => {
-        const players = this.socket.id;
-
-        interface Player {
-          id: string | number;
-        }
-
-        const index = data.findIndex((player: Player) => player.id === players);
-
-        if (index !== -1) {
-          const currentPlayer = data.splice(index, 1)[0];
-
-          if (currentPlayer) {
-            data.unshift(currentPlayer);
-          }
-        }
-
-        setTimeout(() => {
-          this.playersLogs = data;
-
-          // Update server's stored health points when receiving damage updates
-          if (this.playersLogs[0] && this.playersLogs[0].id) {
-            this.socket.emit(
-              "updateHealthPoints",
-              this.playersLogs[0].id,
-              this.playersLogs[0].lifePoints,
-              (success: boolean) => {
-                if (success) {
-                  console.log(
-                    "Successfully updated stored health points after damage",
-                  );
-                }
-              },
-            );
-          }
-        }, 700);
-      });
-
-      for (let i = 0; i < this.playersLogs.length; i++) {
-        const matchingColors =
-          this.boxResult?.filter(
-            (box) => box.color === this.playersLogs[i].color,
-          ).length ?? 0;
-
-        if (matchingColors > 0) {
-          this.imageAttack_ani[i].setVisible(true);
-          setTimeout(() => {
-            this.imageAttack_ani[i].setVisible(false);
-          }, 1000);
-
-          this.rotateAttack(i);
-        } else {
-          setTimeout(() => {
-            this.shakeDmg(i);
-          }, 700);
-        }
-      }
-
-      // Check for winners and losers based on server-stored health points
-      this.checkPlayerStatus();
-
-      if (this.spinning !== null) {
-        clearInterval(this.spinning); //Bugging
-      }
-
-      setTimeout(() => {
-        this.spinning = setInterval(() => {
-          const Value1 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-          const Value2 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-          const Value3 = Phaser.Math.Between(0, this.defaultColor.length - 1);
-
-          const color1 = this.defaultColor[Value1]?.img;
-          const color2 = this.defaultColor[Value2]?.img;
-          const color3 = this.defaultColor[Value3]?.img;
-
-          if (color1) {
-            this.box1?.setTexture(color1).setVisible(true);
-          }
-          if (color2) {
-            this.box2?.setTexture(color2).setVisible(true);
-          }
-          if (color3) {
-            this.box3?.setTexture(color3).setVisible(true);
-          }
-        }, 100);
-
-        this.restartBounce(this.box1, this.bounceBox);
-
-        this.restartBounce(this.box2, this.bounceBox);
-
-        this.restartBounce(this.box3, this.bounceBox);
-      }, 2000);
-    });
-
-    this.socket.on("colorHistory", (data) => {
-      this.box1h?.setTexture(data[0].img);
-
-      this.box2h?.setTexture(data[1].img);
-
-      this.box3h?.setTexture(data[2].img);
-    });
+    // No longer need this code - moved to setupBattleRoomListeners
+    // let round = 0;
+    // let closedGame = false;
+    // this.socket.on("ReceiveColor", ...
 
     //Other Player
     //Position
