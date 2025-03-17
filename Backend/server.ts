@@ -378,7 +378,7 @@ socket.on("Create_BattleField", (roomAddress, players) => {
         let playerColor = colors[player.character.color] || getNextAvailableColor()
 
         let newPlayer: Player = {
-            id: player.character.id,
+            id: socket.id,
             lifePoints: 10,
             name: player.user.username,
             color: playerColor,
@@ -401,7 +401,7 @@ socket.on("Create_BattleField", (roomAddress, players) => {
 
     // Start the game when the room is full
     if (DemoRooms[roomAddress].length === players_length) {
-        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
+        io.to(roomAddress).emit("InputPlayer", socket.id);
     }
 
     console.log("Created Demo Rooms: ", Object.keys(DemoRooms).length);
