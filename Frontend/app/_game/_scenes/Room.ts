@@ -111,13 +111,16 @@ export class Room extends Scene {
     }
 
     this.roomID = data.room.roomID
-
-    data.room.players.shift()
-
-    this.character = data.room.players[0]
     
     // Use the shared socket service
     this.socket = socketService.getSocket();
+
+    interface playerID {
+        socketID: string
+    }
+
+    this.character = data.room.players.find((player: playerID) => player.socketID === this.socket.id);
+
 
     if(this.socket.connected) {
 
@@ -151,9 +154,11 @@ export class Room extends Scene {
 
         console.log("✅ All assets loaded! Emitting event...");
 
-            
+            if(this.character) {
 
-            this.socket.emit("Create_BattleField", this.roomID, this.character)
+                this.socket.emit("Create_BattleField", this.roomID, this.character)
+
+            }
         
     });
 
