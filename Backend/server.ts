@@ -112,7 +112,7 @@ instrument(io, {
 io.on("connection", (socket) => {
   console.log("A user connected! " + socket.id);
   
-  const players_length = 2 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
+  const players_length = 1 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
 
   function cleanAndListRooms() {
     const roomList = [];
@@ -349,7 +349,19 @@ interface Room {
 const DemoRooms: Room = {} as Room
 const usedColors = new Map<string, number>();
 
+const emittedRooms = new Set<string>(); // Store rooms that have been handled
+
+const emittedPlayer = new Set<string>(); // Store rooms that have been handled
+
 socket.on("Create_BattleField", (roomAddress, players) => {
+
+  if (emittedPlayer.has(roomAddress)) {
+
+    return
+
+  } 
+
+  emittedPlayer.add(roomAddress);
 
     const colors: { [key: string]: number } = {
         red: 0xff0000,
@@ -393,6 +405,9 @@ socket.on("Create_BattleField", (roomAddress, players) => {
             ...DemoRooms[roomAddress][existingPlayerIndex],
             ...newPlayer,
         };
+
+        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
+
     } else {
         // Add new player
         DemoRooms[roomAddress].push(newPlayer);
@@ -406,11 +421,10 @@ socket.join(roomAddress);
 
     // Start the game when the room is full
     if (DemoRooms[roomAddress].length === players_length) {
-      setTimeout(() => {
-        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
-      }, 1500)
-    }
 
+        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
+     
+    }
     console.log("Created Demo Rooms: ", Object.keys(DemoRooms).length);
 
     // Function to get the next available color
@@ -535,7 +549,16 @@ socket.once("HealthPotion", (roomID, data) => {
 
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
 
-io.on("GenerateColors", (data) => {
+socket.on("GenerateColors", (data) => {
+
+  if (emittedRooms.has(data)) {
+
+    return
+
+  } 
+
+  emittedRooms.add(data);
+
     console.log("Generating Colors In ", data);
     console.log("Waiting Room: ", playersWaitingRooms);
 
