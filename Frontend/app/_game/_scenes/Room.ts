@@ -120,7 +120,7 @@ export class Room extends Scene {
         socketID: string
     }
 
-    this.character = data.room.players.find((player: playerID) => player.socketID === this.socket.id);
+    this.character = data.room.players
 
 
     if(this.socket.connected) {
@@ -955,8 +955,7 @@ this.defaultColor = [
                 
                 roomText.setText(data)
 
-               
-
+            
             })
                 
             this.socket.on("InputPlayer", (data) => {
