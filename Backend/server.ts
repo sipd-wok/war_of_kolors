@@ -366,12 +366,13 @@ socket.on("Create_BattleField", (roomAddress, players) => {
     }
 
     //If `players` is an object, convert it to an array
-    if (!Array.isArray(players)) {
-        players = [players]; // Convert single player object into an array
-    }
+    // if (!Array.isArray(players)) {
+    //     players = [players]; // Convert single player object into an array
+    // }
     
 
-    for (let i = 0; i < players.length; i++) {
+    for (let i = 0; i < players.length; i++) 
+      {
         const player = players[i];
         
         // Assign a color, defaulting to an available one if not specified
@@ -401,7 +402,7 @@ socket.on("Create_BattleField", (roomAddress, players) => {
 
     // Start the game when the room is full
     if (DemoRooms[roomAddress].length === players_length) {
-        io.to(roomAddress).emit("InputPlayer", socket.id);
+        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
     }
 
     console.log("Created Demo Rooms: ", Object.keys(DemoRooms).length);
