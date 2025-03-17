@@ -343,54 +343,65 @@ io.on("connection", (socket) => {
 }
 
 interface Room {
-    [key: string]: Player[];
+    [key: string | number]: Player[]
 }
 
-const DemoRooms: Room = {}
+const DemoRooms: Room = {} as Room
 const usedColors = new Map<string, number>();
 
 socket.on("Create_BattleField", (roomAddress, players) => {
 
-    socket.emit("debug", players)
+    if (players.socketID !== socket.id) return
 
     const colors: { [key: string]: number } = {
         red: 0xff0000,
         yellow: 0xffff00,
-        green: 0x00ff00,
+         green: 0x00ff00,
         white: 0xffffff,
         blue: 0x0000ff,
         pink: 0xff00ff,
     };
 
-    // Ensure the room exists
     if (!DemoRooms[roomAddress]) {
-        DemoRooms[roomAddress] = [];
-    }
+      DemoRooms[roomAddress] = [];
+  }
         
-        
-        // Assign a color, defaulting to an available one if not specified
-        const playerColor = colors[players.character.color] || getNextAvailableColor()
+  for (let i = 0; i < players.length; i++) {
 
-        const newPlayer: Player = {
-            id: socket.id,
-            lifePoints: 10,
-            name: players.user.username,
-            color: playerColor,
-            luck: players.character.luck,
-            bet: 10,
-            img: players.character.sprite,
-            LM: players.character.luck,
-            dpotion: players.potions.devil,
-            leppot: players.potions.leprechaun,
-            health_potion: players.potions.hp,
-            walletBal: 0,
+    const player = players[i];
+    
+    const existingPlayerIndex = DemoRooms[roomAddress].findIndex(p => p.id === player.socketID);
+
+    const playerColor = colors[player.character.color as keyof typeof colors] || getNextAvailableColor();
+
+    const newPlayer: Player = {
+        id: player.socketID,
+        lifePoints: 10,
+        name: player.user.username,
+        color: playerColor,
+        luck: player.character.luck,
+        bet: 10,
+        img: player.character.sprite,
+        LM: player.character.luck,
+        dpotion: player.potions.devil,
+        leppot: player.potions.leprechaun,
+        health_potion: player.potions.hp,
+        walletBal: 0,
+    };
+
+    if (existingPlayerIndex !== -1) {
+        // Update existing player
+        DemoRooms[roomAddress][existingPlayerIndex] = {
+            ...DemoRooms[roomAddress][existingPlayerIndex],
+            ...newPlayer,
         };
+    } else {
+        // Add new player
+        DemoRooms[roomAddress].push(newPlayer);
+    }
+}
 
-        socket.join(roomAddress);
-
-        if (players) {
-          DemoRooms[roomAddress].push(newPlayer);
-        }
+socket.join(roomAddress);
     
     io.to(roomAddress).emit("SetCount", DemoRooms[roomAddress].length);
     io.to(roomAddress).emit("roomAssign", roomAddress);
