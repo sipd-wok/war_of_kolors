@@ -1,3 +1,5 @@
+// Frontend/WaitingRoom.ts
+
 import { GameObjects, Scene } from "phaser";
 import { Socket } from "socket.io-client";
 import { EventBus } from "../EventBus";
@@ -33,6 +35,7 @@ export class WaitingRoom extends Scene {
   roomID!: string;
 
   skipButton!: GameObjects.Rectangle;
+  skipButtonText!: GameObjects.Text;
   opponents: GameObjects.Rectangle[] = [];
 
   connectedPlayers!: number;
@@ -43,6 +46,10 @@ export class WaitingRoom extends Scene {
   private uiReady: boolean = false;
   // Store players data until UI is ready
   private pendingPlayersUpdate: Player[] | null = null;
+
+  // Add property to track if current player has voted
+  private hasVoted: boolean = false;
+  private requiredVotes: number = 0;
 
   // players
   characterName!: GameObjects.Text;
@@ -148,6 +155,30 @@ export class WaitingRoom extends Scene {
       this.character,
       this.potions,
     );
+
+    // Request current players immediately after joining
+    // This ensures the joining player gets the current state
+    setTimeout(() => {
+      this.socket.emit(
+        "getUpdatedPlayers",
+        this.roomID,
+        (playerIDs: string[]) => {
+          console.log("Requested current players after joining:", playerIDs);
+
+          // Update connectedPlayers count based on playerIDs
+          this.connectedPlayers = playerIDs.length;
+          console.log(
+            "Updated connected players count:",
+            this.connectedPlayers,
+          );
+
+          // If there are players in the room, request the full room state
+          if (playerIDs.length > 0) {
+            this.socket.emit("getCurrentRoomState", this.roomID);
+          }
+        },
+      );
+    }, 300); // Small delay to ensure join completes first
   }
 
   setupSocketListeners() {
@@ -155,11 +186,25 @@ export class WaitingRoom extends Scene {
     this.socket.on("playerJoinedWaitingRoom", (players: Player[]) => {
       console.log("Players in the room updated: ", players);
       this.connectedPlayers = players.length;
+      console.log("Connected players: ", this.connectedPlayers);
+      console.log("players length: ", players.length);
 
-      // Enable skip button if enough players
-      if (players.length > 1 && this.uiReady && this.skipButton) {
+      // Enable skip button if there are multiple players
+      if (
+        players.length > 1 &&
+        this.uiReady &&
+        this.skipButton &&
+        !this.hasVoted
+      ) {
+        console.log("Enabling skip button for playerJoinedWaitingRoom event");
         this.skipButton.setInteractive();
         this.votesText.setAlpha(1);
+
+        // Update required votes calculation to match server-side logic
+        this.requiredVotes = Math.max(2, Math.ceil(players.length / 2));
+        this.votesText.setText(
+          `Need ${0}/${this.requiredVotes} votes to start game`,
+        );
       }
 
       // Store players data or update UI if ready
@@ -168,8 +213,61 @@ export class WaitingRoom extends Scene {
         this.updatePlayerInfo(players);
         // Update opponents information
         this.updateOpponentInfo(players);
+
+        // Double-check skip button state after updating UI
+        if (players.length > 1 && this.skipButton) {
+          console.log("Double checking skip button interactivity");
+          this.skipButton.setInteractive();
+          this.votesText.setAlpha(1);
+        }
       } else {
         console.log("UI not ready yet, storing player data for later");
+        this.pendingPlayersUpdate = players;
+      }
+    });
+
+    // Listen for current room state (new event handler)
+    // 1. Player joins a room
+    // 2. Player requests the current state of the room
+    // 3. Server responds with complete player information
+    // 4. Client updates UI with all players
+    this.socket.on("currentRoomState", (players: Player[]) => {
+      console.log("Received current room state:", players);
+      this.connectedPlayers = players.length;
+      console.log("currentRoomState connected players:", this.connectedPlayers);
+
+      // Enable skip button if enough players and UI is ready
+      if (
+        players.length > 1 &&
+        this.uiReady &&
+        this.skipButton &&
+        !this.hasVoted
+      ) {
+        console.log("Enabling skip button for currentRoomState event");
+        this.skipButton.setInteractive();
+        this.votesText.setAlpha(1);
+
+        // Update required votes calculation to match server-side logic
+        this.requiredVotes = Math.max(2, Math.ceil(players.length / 2));
+        this.votesText.setText(
+          `Need ${0}/${this.requiredVotes} votes to start game`,
+        );
+      }
+
+      // Update UI with current players
+      if (this.uiReady) {
+        this.updatePlayerInfo(players);
+        this.updateOpponentInfo(players);
+
+        // Double-check skip button state after updating UI
+        if (players.length > 1 && this.skipButton) {
+          console.log(
+            "Double checking skip button interactivity after UI update",
+          );
+          this.skipButton.setInteractive();
+          this.votesText.setAlpha(1);
+        }
+      } else {
         this.pendingPlayersUpdate = players;
       }
     });
@@ -198,9 +296,55 @@ export class WaitingRoom extends Scene {
       },
     );
 
-    this.socket.on("proceedToGame", (room: string) => {
-      console.log("Proceeding to game room...");
-      this.scene.start("Room", { room });
+    this.socket.on("proceedToGame", (room: any) => {
+      console.log("Proceeding to game room...", room);
+
+      // Show a "Starting Game..." message before transitioning
+      const startingText = this.add
+        .text(
+          this.cameras.main.width / 2,
+          this.cameras.main.height / 2,
+          "Starting Game...",
+          {
+            fontFamily: "Arial",
+            fontSize: "32px",
+            color: "#ffffff",
+            backgroundColor: "#000000",
+            padding: { x: 20, y: 10 },
+          },
+        )
+        .setOrigin(0.5, 0.5)
+        .setDepth(100); // Ensure it shows on top
+
+      // Add a short delay for the message to be visible
+      this.time.delayedCall(1000, () => {
+        // Pass the complete room object with all player data to the Room scene
+        this.scene.start("Room", { room });
+      });
+    });
+
+    // Add handler for maxPlayersReached event
+    this.socket.on("maxPlayersReached", () => {
+      console.log(
+        "Room has reached maximum capacity. Starting game automatically.",
+      );
+
+      // Update UI to show that game is starting due to max capacity
+      if (this.skipButton && this.skipButtonText) {
+        this.skipButton.disableInteractive();
+        this.skipButton.fillColor = 0x28a745;
+        this.skipButton.alpha = 0.6;
+        this.skipButtonText.setText("Room Full");
+      }
+
+      // Update the vote text to indicate auto-start
+      if (this.votesText) {
+        this.votesText.setText("Maximum players reached! Starting game...");
+        this.votesText.setColor("#00ff00");
+        this.votesText.setAlpha(1);
+      }
+
+      // We don't need to start the Room scene here, as it will be handled by the proceedToGame event
     });
 
     this.socket.on("updateVotes", (votes: number) => {
@@ -214,10 +358,21 @@ export class WaitingRoom extends Scene {
     // Add listener for playerVotedSkip event from server
     this.socket.on("playerVotedSkip", (votes: number) => {
       console.log("Received playerVotedSkip event with votes: ", votes);
-      this.neededVotes = this.connectedPlayers || 2;
+
+      // Update required votes calculation to match server-side logic
+      this.requiredVotes = Math.max(2, Math.ceil(this.connectedPlayers / 2));
+
       this.votesText.setText(
-        `Need ${votes}/${this.neededVotes} to skip waiting.`,
+        `Need ${votes}/${this.requiredVotes} votes to start game`,
       );
+
+      // Make sure vote count is visible
+      this.votesText.setAlpha(1);
+
+      // Change text color when getting close to required votes
+      if (votes >= this.requiredVotes - 1) {
+        this.votesText.setColor("#00ff00"); // Green when close or reached
+      }
     });
   }
 
@@ -580,41 +735,79 @@ export class WaitingRoom extends Scene {
       .on("pointerdown", () => {
         console.log("Ready button clicked by: " + this.socket.id);
 
+        // Mark as voted and disable button
+        this.hasVoted = true;
+        this.skipButton.disableInteractive();
+        this.skipButton.fillColor = 0x28a745; // Change color to green to indicate voted
+        this.skipButton.alpha = 0.6;
+
+        if (this.skipButtonText) {
+          this.skipButtonText.setText("Voted ✓");
+        }
+
         this.socket.emit("playerVotedSkip", this.roomID, (votes: number) => {
           console.log("Votes to skip now: ", votes);
-          this.neededVotes = this.connectedPlayers || 2;
-          this.votesText.setText(
-            `Need ${votes}/${this.neededVotes} to skip waiting.`,
+          // Update required votes calculation to match server-side logic
+          this.requiredVotes = Math.max(
+            2,
+            Math.ceil(this.connectedPlayers / 2),
           );
+
+          this.votesText.setText(
+            `Need ${votes}/${this.requiredVotes} votes to start game`,
+          );
+
+          // Change text color when getting close to required votes
+          if (votes >= this.requiredVotes - 1) {
+            this.votesText.setColor("#00ff00"); // Green when close or reached
+          }
         });
 
-        this.skipButton.destroy();
-        skipText.destroy();
+        // Do not destroy skip button, just visually indicate the vote
       })
       .on("pointerover", () => {
-        this.skipButton.setFillStyle(0x007bff, 0.5);
+        if (!this.hasVoted) {
+          this.skipButton.setFillStyle(0x007bff, 0.5);
+        }
       })
       .on("pointerout", () => {
-        this.skipButton.setFillStyle(0x007bff, 0.2);
+        if (!this.hasVoted) {
+          this.skipButton.setFillStyle(0x007bff, 0.2);
+        }
       });
-    const skipText = this.add
-      .text(cameraX, this.cameras.main.height - 80, "Skip Waiting", {
-        fontFamily: "Arial",
-        color: "#ffffff",
-        fontSize: "18px",
-      })
-      .setOrigin(0.5);
-    const votesToSkip = 0;
-    const neededVotes = this.connectedPlayers || 2;
-    this.votesText = this.add
+
+    // Initially disable the button until we have multiple players
+    console.log(
+      "Initial button setup - disabling interaction until players join",
+    );
+    this.skipButton.disableInteractive();
+
+    this.skipButtonText = this.add
       .text(
-        canvasWidth / 2,
-        canvasHeight - 120,
-        `Need ${votesToSkip}/${neededVotes} to skip waiting.`,
+        this.cameras.main.width / 2,
+        this.cameras.main.height - 80,
+        "Vote to Start",
         {
           fontFamily: "Arial",
-          fontSize: "14px",
           color: "#ffffff",
+          fontSize: "18px",
+        },
+      )
+      .setOrigin(0.5);
+
+    const votesToSkip = 0;
+    this.requiredVotes = Math.max(2, Math.ceil(this.connectedPlayers / 2));
+
+    this.votesText = this.add
+      .text(
+        this.cameras.main.width / 2,
+        this.cameras.main.height - 120,
+        `Need ${votesToSkip}/${this.requiredVotes} votes to start game`,
+        {
+          fontFamily: "Arial",
+          fontSize: "16px",
+          color: "#ffffff",
+          fontStyle: "bold",
         },
       )
       .setOrigin(0.5, 0.5)
@@ -628,6 +821,20 @@ export class WaitingRoom extends Scene {
       })
       .setOrigin(0.5, 0.5);
 
+    // Add status text to indicate the max player count
+    this.add
+      .text(
+        canvasWidth / 2,
+        cameraY - 270,
+        "Game starts automatically when 6 players join",
+        {
+          fontFamily: "Arial",
+          fontSize: "16px",
+          color: "#ADADAD",
+        },
+      )
+      .setOrigin(0.5, 0.5);
+
     // Mark UI as ready
     this.uiReady = true;
 
@@ -636,8 +843,19 @@ export class WaitingRoom extends Scene {
       console.log("Processing pending player updates now that UI is ready");
       this.updatePlayerInfo(this.pendingPlayersUpdate);
       this.updateOpponentInfo(this.pendingPlayersUpdate);
+
+      // Check if we should enable the skip button based on the pending player data
+      if (this.pendingPlayersUpdate.length > 1 && this.skipButton) {
+        console.log("Enabling skip button based on pending player data");
+        this.skipButton.setInteractive();
+        this.votesText.setAlpha(1);
+      }
+
       this.pendingPlayersUpdate = null;
     }
+
+    // Request current room state once UI is ready
+    this.socket.emit("getCurrentRoomState", this.roomID);
 
     EventBus.emit("current-scene-ready", this);
   }
