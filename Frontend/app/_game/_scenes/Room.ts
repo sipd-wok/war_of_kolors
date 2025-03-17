@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import { Socket } from "socket.io-client";
 //import { EventBus } from "../EventBus";
 import { socketService } from "../SocketService";
+import { debug } from "console";
 
 export class Room extends Scene {
 
@@ -153,12 +154,15 @@ export class Room extends Scene {
     this.load.on('complete', () => {
 
         console.log("✅ All assets loaded! Emitting event...");
+        
+            this.socket.emit("Create_BattleField", this.roomID, this.character)
 
-            if(this.character) {
+            this.socket.on("debug", (data) => {
+                
+                console.log("DEBUG Socket: ", data)
 
-                this.socket.emit("Create_BattleField", this.roomID, this.character)
-
-            }
+            })
+            
         
     });
 
