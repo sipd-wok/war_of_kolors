@@ -25,12 +25,12 @@ export const mintNFT = async (walletAddress: string, metadataURI: string) => {
 export const transferNFT = async (
   from: string,
   to: string,
-  tokenId: string
+  tokenId: string,
 ): Promise<boolean> => {
   try {
-    console.log(from,to,tokenId)
+    console.log(from, to, tokenId);
     const signer = await getSigner();
-    const contract = getNFTContract(signer); 
+    const contract = getNFTContract(signer);
     const tx = await contract["safeTransferFrom"](from, to, tokenId);
     await tx.wait();
 
