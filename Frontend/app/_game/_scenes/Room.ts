@@ -101,7 +101,7 @@ export class Room extends Scene {
   constructor() {
     super("Room");
   }
-
+/* eslint-disable */
   async init(data: any) {
 
         // Check if data.room exists
