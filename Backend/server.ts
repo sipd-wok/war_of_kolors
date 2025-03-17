@@ -1,3 +1,5 @@
+// Backend/server.ts
+
 import express, { Request, Response } from "express";
 import { Server } from "socket.io";
 import cors from "cors";
@@ -106,7 +108,7 @@ instrument(io, {
 io.on("connection", (socket) => {
   console.log("A user connected! " + socket.id);
 
-  const players_length = 2; //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++
+  const players_length = 6; // Maximum players per room - set to 6 for production
 
   function cleanAndListRooms() {
     const roomList = [];
@@ -236,9 +238,11 @@ io.on("connection", (socket) => {
     callback(roomID, colorRepresentativesIndex);
   });
 
-  //Current Players
-
   socket.on("joinWaitingRoom", (roomID, socketID, user, character, potions) => {
+    // This handler adds a player to the room and checks if the room has reached the maximum capacity of 6 players.
+    // If room.players.length >= 6, it emits "proceedToGame".
+    // With only 2 players, this condition should not trigger, as 2 is less than 6.
+
     const room = playersWaitingRooms.find((room) => room.roomID === roomID);
 
     if (room) {
@@ -276,6 +280,7 @@ io.on("connection", (socket) => {
           id: "unknown",
           devil: 0,
           leprechaun: 0,
+          hp: 0,
         };
 
         // Only add the player if they're not already in the room
@@ -296,17 +301,28 @@ io.on("connection", (socket) => {
 
       // Emit the updated players list to all clients in the room
       io.to(roomID).emit("playerJoinedWaitingRoom", room.players);
-      socket.to(roomID).emit("playerVotedSkip", room?.votesToStart);
+
+      // Automatically start the game if room has reached maximum capacity (6 players)
+      const MAX_PLAYERS = 6;
+      if (room.players.length >= MAX_PLAYERS) {
+        console.log(
+          `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes`,
+        );
+        io.to(roomID).emit("proceedToGame", room);
+        io.to(roomID).emit("maxPlayersReached");
+      } else {
+        console.log(
+          `Room ${roomID} updated: ${room.players.length} players, ${room.votesToStart} votes`,
+        );
+      }
+
       console.log(
-        `Emitting updated players list for room ${roomID}:`,
-        room.players,
+        `Players in room ${roomID}:`,
+        room.players.map((p) => p.socketID),
       );
 
-      if (room.players.length >= players_length) {
-        io.to(roomID).emit("proceedToGame", room);
-
-        io.to(roomID).emit("roomAssign", "Connected");
-      }
+      // Do not automatically proceed when room is not full
+      // We'll only proceed when enough votes are collected or room is full
     } else {
       console.log("Room not found: ", roomID);
     }
@@ -526,21 +542,55 @@ io.on("connection", (socket) => {
   socket.on("playerVotedSkip", (roomID, callback) => {
     const room = playersWaitingRooms.find((room) => room.roomID === roomID);
     if (room) {
-      room.votesToStart++;
+      // Check if player already voted
+      if (!roomReadyPlayers[roomID]) {
+        roomReadyPlayers[roomID] = [];
+      }
+
+      if (!roomReadyPlayers[roomID].includes(socket.id)) {
+        roomReadyPlayers[roomID].push(socket.id);
+        room.votesToStart++;
+
+        console.log(
+          `Player ${socket.id} voted to skip in room ${roomID}. Total votes: ${room.votesToStart}`,
+        );
+
+        // Notify everyone in the room about the updated vote count
+        io.to(roomID).emit("playerVotedSkip", room.votesToStart);
+
+        // Define the maximum player count to match joinWaitingRoom handler
+        const MAX_PLAYERS = 6;
+
+        // If all players have voted or if we have enough votes (e.g., majority)
+        // Determine required votes based on room size
+        const requiredVotes = Math.max(2, Math.ceil(room.players.length / 2));
+
+        // Check if the room is full or has enough votes
+        if (room.players.length >= MAX_PLAYERS) {
+          console.log(
+            `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes`,
+          );
+          io.to(roomID).emit("proceedToGame", room);
+        } else if (room.votesToStart >= requiredVotes) {
+          console.log(
+            `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes (needed ${requiredVotes})`,
+          );
+          io.to(roomID).emit("proceedToGame", room);
+        } else {
+          console.log(
+            `Vote recorded for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes (needed ${requiredVotes})`,
+          );
+        }
+      } else {
+        console.log(`Player ${socket.id} already voted to skip`);
+      }
 
       // Check if callback is a function before calling it
       if (typeof callback === "function") {
-        socket.to(roomID).emit("playerVotedSkip", room?.votesToStart);
         callback(room ? room.votesToStart : 0);
       }
     }
-
-    if (room && room.votesToStart === room.players.length) {
-      io.to(roomID).emit("proceedToGame");
-    }
   });
-
-  // Add these handlers in your server.ts file inside the io.on("connection") handler:
 
   socket.on("checkIfPlayerWasReady", (roomID, playerID, callback) => {
     const wasReady = roomReadyPlayers[roomID]?.includes(playerID) || false;
