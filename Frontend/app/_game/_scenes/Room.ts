@@ -112,7 +112,9 @@ export class Room extends Scene {
 
     this.roomID = data.room.roomID
 
-    this.character = data.room.players
+    data.room.players.shift()
+
+    this.character = data.room.players[0]
     
     // Use the shared socket service
     this.socket = socketService.getSocket();
@@ -146,11 +148,12 @@ export class Room extends Scene {
     });
 
     this.load.on('complete', () => {
+
         console.log("✅ All assets loaded! Emitting event...");
 
-        setTimeout(() => {
+            
+
             this.socket.emit("Create_BattleField", this.roomID, this.character)
-        }, 5000)
         
     });
 
@@ -943,7 +946,7 @@ this.defaultColor = [
                 
                 roomText.setText(data)
 
-                this.socket.emit("GenerateColors", data)
+               
 
             })
                 
@@ -980,6 +983,8 @@ this.defaultColor = [
             setTimeout(() => {
             
             this.updateFunction = true
+
+            this.socket.emit("GenerateColors", this.roomID)
             
             }, 5000)
             
