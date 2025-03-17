@@ -112,7 +112,7 @@ instrument(io, {
 io.on("connection", (socket) => {
   console.log("A user connected! " + socket.id);
   
-  const players_length = 1 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
+  const players_length = 2 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
 
   function cleanAndListRooms() {
     const roomList = [];
@@ -350,8 +350,6 @@ const DemoRooms: Room = {} as Room
 const usedColors = new Map<string, number>();
 
 socket.on("Create_BattleField", (roomAddress, players) => {
-
-    if (players.socketID !== socket.id) return
 
     const colors: { [key: string]: number } = {
         red: 0xff0000,
