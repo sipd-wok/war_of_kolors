@@ -1,11 +1,13 @@
-// Backend/server.ts
-
 import express, { Request, Response } from "express";
 import { Server } from "socket.io";
 import cors from "cors";
 import http from "http";
 import { v4 as uuidv4 } from "uuid";
 import { instrument } from "@socket.io/admin-ui";
+import { Socket } from "dgram";
+import { stringToBytes } from "uuid/dist/cjs/v35";
+import { callbackify } from "util";
+import { console } from "inspector";
 
 interface GuestRoom {
   roomID: string;
@@ -55,7 +57,6 @@ interface BattleRoom {
       id: string;
       devil: number;
       leprechaun: number;
-      hp: number;
     };
     character: {
       id: number;
@@ -68,7 +69,6 @@ interface BattleRoom {
     };
     stats: {
       lifepoints: number;
-      currentHP?: number; // Add currentHP to store the current health points
     };
   }[];
   entryBet: number;
@@ -86,6 +86,7 @@ interface BattleRoom {
 const guestWaitingRooms: GuestRoom[] = [];
 const playersWaitingRooms: PlayerRoom[] = [];
 const battleRooms: BattleRoom[] = [];
+
 
 // Create express app
 const app = express();
@@ -107,14 +108,15 @@ instrument(io, {
   auth: false,
 });
 
+
 io.on("connection", (socket) => {
   console.log("A user connected! " + socket.id);
-
-  const players_length = 6; // Maximum players per room - set to 6 for production
+  
+  const players_length = 1 //Change this For Testing <+++++++++++++++++++++++++++++++++++++++++++++++++++ 
 
   function cleanAndListRooms() {
     const roomList = [];
-
+    
     // Create a copy of the array to safely remove items during iteration
     const roomsToCheck = [...playersWaitingRooms, ...battleRooms];
 
@@ -170,7 +172,7 @@ io.on("connection", (socket) => {
   // add ang new room sa guest rooms
   socket.on("createPlayerRoom", (callback) => {
     console.log("All Player Rooms: ", playersWaitingRooms.length);
-
+    
     console.log("Available Guest Rooms: ", cleanAndListRooms());
 
     const roomId = uuidv4(); // Generate a unique room ID
@@ -241,10 +243,9 @@ io.on("connection", (socket) => {
     callback(roomID, colorRepresentativesIndex);
   });
 
+  //Current Players
+
   socket.on("joinWaitingRoom", (roomID, socketID, user, character, potions) => {
-    // This handler adds a player to the room and checks if the room has reached the maximum capacity of 6 players.
-    // If room.players.length >= 6, it emits "proceedToGame".
-    // With only 2 players, this condition should not trigger, as 2 is less than 6.
 
     const room = playersWaitingRooms.find((room) => room.roomID === roomID);
 
@@ -283,7 +284,6 @@ io.on("connection", (socket) => {
           id: "unknown",
           devil: 0,
           leprechaun: 0,
-          hp: 0,
         };
 
         // Only add the player if they're not already in the room
@@ -292,9 +292,10 @@ io.on("connection", (socket) => {
           user: sanitizedUser,
           character: sanitizedCharacter,
           potions: sanitizedPotions,
-        });
-
+        });   
+        
         console.log(`Room joined: ${roomID} by ${socketID}`);
+
       } else {
         console.log(`Player ${socketID} already in room ${roomID}`);
       }
@@ -304,50 +305,26 @@ io.on("connection", (socket) => {
 
       // Emit the updated players list to all clients in the room
       io.to(roomID).emit("playerJoinedWaitingRoom", room.players);
-
-      // Automatically start the game if room has reached maximum capacity (6 players)
-      const MAX_PLAYERS = 6;
-      if (room.players.length >= MAX_PLAYERS) {
-        console.log(
-          `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes`,
-        );
-
-        // Create a battle room from the waiting room
-        const battleRoom: BattleRoom = {
-          roomID: room.roomID,
-          players: room.players.map((player) => ({
-            ...player,
-            stats: {
-              lifepoints: 5, // Default life points
-              currentHP: 5, // Initialize current HP
-            },
-          })),
-          entryBet: room.entryBet,
-          totalBet: room.totalBet,
-          colorRepresentatives: room.colorRepresentatives,
-        };
-
-        battleRooms.push(battleRoom);
-
-        io.to(roomID).emit("proceedToGame", battleRoom);
-        io.to(roomID).emit("maxPlayersReached");
-      } else {
-        console.log(
-          `Room ${roomID} updated: ${room.players.length} players, ${room.votesToStart} votes`,
-        );
-      }
-
+      socket.to(roomID).emit("playerVotedSkip", room?.votesToStart);
       console.log(
-        `Players in room ${roomID}:`,
-        room.players.map((p) => p.socketID),
+        `Emitting updated players list for room ${roomID}:`,
+        room.players,
       );
 
-      // Do not automatically proceed when room is not full
-      // We'll only proceed when enough votes are collected or room is full
-    } else {
-      console.log("Room not found: ", roomID);
-    }
+      if (room.players.length === players_length) {
+
+        io.to(roomID).emit("proceedToGame", room);
+        
+      }
+
+        } else {
+
+          console.log("Room not found: ", roomID);
+
+        }
+
   });
+
 
   //This Code Structure To make in game
   interface Player {
@@ -362,309 +339,300 @@ io.on("connection", (socket) => {
     dpotion: number;
     leppot: number;
     health_potion: number;
-    walletBal: number | null;
-  }
+    walletBal: number;
+}
 
-  interface Room {
+interface Room {
     [key: string]: Player[];
-  }
+}
 
-  // Storage for player health points to persist across sessions/reconnects
-  const playerHealthPoints: { [socketId: string]: number } = {};
+const DemoRooms: Room = {}
+const usedColors = new Map<string, number>();
 
-  const DemoRooms: Room = {};
+socket.on("Create_BattleField", (roomAddress, players) => {
 
-  socket.on("Create_BattleField", (data) => {
-    console.log("Players LogIn ", data);
+    const colors: { [key: string]: number } = {
+        red: 0xff0000,
+        yellow: 0xffff00,
+        green: 0x00ff00,
+        white: 0xffffff,
+        blue: 0x0000ff,
+        pink: 0xff00ff,
+    };
 
-    let colors = [
-      { color: 0xff0000, img: "red" },
-      { color: 0xffff00, img: "yellow" },
-      { color: 0x00ff00, img: "green" },
-      { color: 0xffffff, img: "white" },
-      { color: 0x0000ff, img: "blue" },
-      { color: 0xff00ff, img: "pink" },
-    ];
-
-    let roomName = Object.keys(DemoRooms).find(
-      (room) => DemoRooms[room].length < players_length,
-    );
-
-    if (!roomName) {
-      roomName = `Connected Demo Room ${Object.keys(DemoRooms).length + 1}`;
-      DemoRooms[roomName] = [];
+    // Ensure the room exists
+    if (!DemoRooms[roomAddress]) {
+        DemoRooms[roomAddress] = [];
     }
 
-    // Assigning unique color to each player
-    let availableColors = [...colors]; // Clone the array to avoid modifying the original
+    //If `players` is an object, convert it to an array
+    if (!Array.isArray(players)) {
+        players = [players]; // Convert single player object into an array
+    }
+    
 
-    const demoNames = [
-      "Rainbow ",
-      "Earth ",
-      "DemiGod ",
-      "Hacker ",
-      "Water ",
-      "Fire ",
-    ];
+    for (let i = 0; i < players.length; i++) {
+        const player = players[i];
+        
+        // Assign a color, defaulting to an available one if not specified
+        let playerColor = colors[player.character.color] || getNextAvailableColor()
 
-    if (socket.id) {
-      let NewName =
-        demoNames[Math.floor(Math.random() * demoNames.length)] +
-        "_" +
-        socket.id.substring(0, 2);
+        let newPlayer: Player = {
+            id: player.character.id,
+            lifePoints: 10,
+            name: player.user.username,
+            color: playerColor,
+            luck: player.character.luck,
+            bet: 10,
+            img: player.character.sprite,
+            LM: player.character.luck,
+            dpotion: player.potions.devil,
+            leppot: player.potions.leprechaun,
+            health_potion: player.potions.hp,
+            walletBal: 0,
+        };
 
-      console.log("Demo Assign ", NewName);
-
-      // Assign a random color first
-      let randomIndex = Math.floor(Math.random() * availableColors.length);
-      let chosenColor = availableColors.splice(randomIndex, 1)[0]; // Remove chosen color
-
-      // Check if player already has stored health points
-      const storedHP = playerHealthPoints[socket.id] || 10;
-
-      let newPlayer: Player = {
-        id: socket.id,
-        lifePoints: storedHP, // Use stored health points if available
-        name: NewName, // Temporary Names
-        luck: 6,
-        bet: 2000,
-        LM: 0,
-        dpotion: 2,
-        leppot: 4,
-        health_potion: 3,
-        walletBal: 999,
-        color: chosenColor.color, // Initialize color property
-        img: chosenColor.img, // Initialize img property
-      };
-
-      socket.join(roomName);
-      DemoRooms[roomName].push(newPlayer);
-
-      // Store player's health points
-      playerHealthPoints[socket.id] = storedHP;
+        DemoRooms[roomAddress].push(newPlayer);
     }
 
-    io.to(roomName).emit("SetCount", DemoRooms[roomName].length);
+    socket.join(roomAddress);
+    io.to(roomAddress).emit("SetCount", DemoRooms[roomAddress].length);
+    io.to(roomAddress).emit("roomAssign", roomAddress);
 
     // Start the game when the room is full
-    if (DemoRooms[roomName].length === players_length) {
-      io.to(roomName).emit("InputPlayer", DemoRooms[roomName]);
+    if (DemoRooms[roomAddress].length === players_length) {
+        io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
     }
 
-    io.to(roomName).emit("roomAssign", roomName);
+    console.log("Created Demo Rooms: ", Object.keys(DemoRooms).length);
 
-    console.log("Created Demo Rooms ", Object.keys(DemoRooms).length);
-  });
+    // Function to get the next available color
+function getNextAvailableColor(): number {
+  let availableColors = Object.values(colors).filter(color => !usedColors.has(color.toString()));
 
+  if (availableColors.length === 0) {
+      usedColors.clear(); // Reset if all colors are used
+      availableColors = Object.values(colors);
+  }
+
+  const assignedColor = availableColors[0]; // Pick the first available color
+  usedColors.set(assignedColor.toString(), assignedColor);
+
+  return assignedColor;
+}
+
+});
+
+
+socket.once("DevilPotion", (roomID, data) => {
+
+  const RoomTrack = DemoRooms[roomID];
+
+  if (!RoomTrack) return; // Room does not exist
+
+  // Find the player in the room
+  const player = RoomTrack.find(player => player.id === data.id);
+
+  if (!player) return; // Player not found
+
+  if (player.luck >= 1) {
+
+      let randomNumber = getWeightedRandomNumber();
+
+      // Apply the random value to lifePoints (not luck)
+      const Devilresult = Math.max(1, player.luck + randomNumber);
+
+      player.luck = Devilresult
+
+      player.LM = Devilresult
+
+      if (player.dpotion >= 1) {
+          player.dpotion -= 1; // Reduce potion count
+      } else {
+          // Deduct from wallet or notify
+          player.walletBal -= 10; // Example: Deduct 10 from wallet
+          if (player.walletBal < 0) player.walletBal = 0; // Prevent negative balance
+
+          // Send an alert to the player (if needed)
+          io.to(roomID).emit("Notify", { message: "Buy another Devil Potion!" });
+      }
+
+      // Emit the updated player data
+      io.to(roomID).emit("UpdatePlayer", player);
+  }
+
+});
+
+// Function to generate a weighted random number between -2 and 25
+function getWeightedRandomNumber(): number {
+  let rand = Math.random(); // Generates a number between 0 and 1
+
+  if (rand < 0.7) {
+      // 70% chance: Common values (-2 to 5)
+      return Math.floor(Math.random() * 8) - 2; // Random between -2 and 5
+  } else if (rand < 0.9) {
+      // 20% chance: Medium values (6 to 15)
+      return Math.floor(Math.random() * 10) + 6; // Random between 6 and 15
+  } else {
+      // 10% chance: Rare values (16 to 25)
+      return Math.floor(Math.random() * 10) + 16; // Random between 16 and 25
+  }
+}
+
+socket.once("LeppotPotion", (roomID, data) => {
+
+  const RoomTrack = DemoRooms[roomID];
+
+  if (!RoomTrack) return; // Room does not exist
+
+  // Find the player in the room
+  const player = RoomTrack.find(player => player.id === data.id);
+
+  if (!player) return; // Player not found
+
+  if (player.leppot <= 0) return
+
+  player.luck += 2
+  player.LM += 2
+
+})
+
+socket.once("HealthPotion", (roomID, data) => {
+  const RoomTrack = DemoRooms[roomID];
+
+  if (!RoomTrack) return; // Room does not exist
+
+  // Find the player in the room
+  const player = RoomTrack.find(player => player.id === data.id);
+
+  if (!player) return; // Player not found
+
+  if (player.health_potion <= 0) return
+
+  if (player.lifePoints <= 5) {
+
+    player.lifePoints += 2
+
+  }
+
+})
+ 
+    
   socket.on("round", (data) => {
-    io.emit("round_result", data);
-  });
+        
+    io.emit("round_result", data)
+    
+  })
+
+
 
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
-
-  // socket.on("rollDice", (roomID, colorLucks) => {
-
+        
   socket.on("GenerateColors", (data) => {
-    console.log("Generating Colors In ", data);
 
-    const roomData = DemoRooms[data];
+    console.log("Generating Colors In ", data)
 
-    // Look for this room in battleRooms if it exists
-    const battleRoom = battleRooms.find((room) => room.roomID === data);
+    console.log("Waiting Room: ", playersWaitingRooms)
+
+    let roomData = DemoRooms[data];
 
     if (!roomData || roomData.length === 0) return; // Avoid errors
 
     let totalLuck = roomData.reduce((sum, player) => sum + player.luck, 0);
 
     let defaultColor = [
-      { color: 0xff0000, img: "redDice" },
-      { color: 0xffff00, img: "yellowDice" },
-      { color: 0x00ff00, img: "greenDice" },
-      { color: 0xffffff, img: "whiteDice" },
-      { color: 0x0000ff, img: "blueDice" },
-      { color: 0xff00ff, img: "pinkDice" },
+        { color: 0xff0000, img: "redDice" },
+        { color: 0xffff00, img: "yellowDice" },
+        { color: 0x00ff00, img: "greenDice" },
+        { color: 0xffffff, img: "whiteDice" },
+        { color: 0x0000ff, img: "blueDice" },
+        { color: 0xff00ff, img: "pinkDice" },
     ];
 
     function RandomColors() {
-      let random = Math.random() * 100;
-      let cumu = 0;
+        let random = Math.random() * 100;
+        let cumu = 0;
 
-      for (let i = 0; i < roomData.length; i++) {
-        cumu += (roomData[i].luck / totalLuck) * 100;
-        if (random < cumu) {
-          return defaultColor[i];
+        for (let i = 0; i < roomData.length; i++) {
+            cumu += (roomData[i].luck / totalLuck) * 100;
+            if (random < cumu) {
+                return defaultColor[i];
+            }
         }
-      }
-      return defaultColor[0];
+        return defaultColor[0];
     }
 
     //🛑 Stop any existing interval for this room
     if (roomIntervals[data]) {
-      clearInterval(roomIntervals[data]);
-      delete roomIntervals[data];
+        clearInterval(roomIntervals[data]);
+        delete roomIntervals[data]
     }
 
-    if (!roomData) return;
+    if(!roomData) return
 
     if (roomData.length === players_length) {
-      if (!roomIntervals[data]) {
-        roomIntervals[data] = setInterval(() => {
-          let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
+      if(!roomIntervals[data]) {
+       roomIntervals[data] = setInterval(() => {
 
-          io.to(data).emit("ReceiveColor", selectedColor);
+                let selectedColor = [RandomColors(), RandomColors(), RandomColors()];
+      
+                io.to(data).emit("ReceiveColor", selectedColor);
 
-          const totalBet = roomData.reduce(
-            (sum, player) => sum + player.bet,
-            0,
-          );
+                const totalBet = roomData.reduce((sum, player) => sum + player.bet, 0);
 
-          for (let i = 0; i < roomData.length; i++) {
-            const matchingColors =
-              selectedColor?.filter((box) => box.color === roomData[i].color)
-                .length ?? 0;
+                for (let i = 0; i < roomData.length; i++) {
 
-            if (matchingColors > 0) {
-              // Increase life points based on matches
-              roomData[i].lifePoints += matchingColors;
+                  const matchingColors = selectedColor?.filter(box => box.color === roomData[i].color).length ?? 0;
 
-              // Store player's updated health points
-              if (roomData[i].id) {
-                playerHealthPoints[roomData[i].id] = roomData[i].lifePoints;
-              }
+                      if (matchingColors > 0) {
 
-              // If this room exists in battleRooms, update the player's health there too
-              if (battleRoom) {
-                const playerInBattle = battleRoom.players.find(
-                  (p) => p.socketID === roomData[i].id,
-                );
-                if (playerInBattle) {
-                  playerInBattle.stats.currentHP = roomData[i].lifePoints;
+                          roomData[i].lifePoints += matchingColors; // Increase life points based on matches
+
+                          // this.imageAttack_ani[i].setVisible(true);
+                          // setTimeout(() => {
+                          //     this.imageAttack_ani[i].setVisible(false);
+                          // }, 1000);
+                          
+                          io.to(data).emit("Update_Life_P", roomData)
+
+                         // this.rotateAttack(i);
+                      } else {
+                         // setTimeout(() => {
+                              roomData[i].lifePoints -= 1; // Reduce life points if no match
+
+                              io.to(data).emit("Update_Life_R", roomData)
+                             // this.shakeDmg(i);
+                         // }, 700);
+                      }
+
+                      //Winners and Lossers  
+                      if (roomData[i].lifePoints <= 1) {
+          
+                        roomData[i].lifePoints = NaN
+                        roomData[i].luck = 0
+                        roomData[i].name = "Dead"
+        
+                    } else if (roomData[i].lifePoints >= 15) {
+
+                        console.log("Congrats To Player: ", roomData[i].name)
+                        clearInterval(roomIntervals[data]);
+                        delete roomIntervals[data]
+                        console.log("Claim Your Prize ", roomData[i])
+                        io.to(data).emit("ReceiveColor", selectedColor);
+                    }
+
                 }
-              }
 
-              io.to(data).emit("Update_Life_P", roomData);
-            } else {
-              // Reduce life points if no match
-              roomData[i].lifePoints -= 1;
+                setTimeout(() => {
+                    io.to(data).emit("colorHistory", selectedColor);
+                }, 3000);
+            }, 5000); // Runs every 5 seconds
 
-              // Store player's updated health points
-              if (roomData[i].id) {
-                playerHealthPoints[roomData[i].id] = roomData[i].lifePoints;
-              }
-
-              // If this room exists in battleRooms, update the player's health there too
-              if (battleRoom) {
-                const playerInBattle = battleRoom.players.find(
-                  (p) => p.socketID === roomData[i].id,
-                );
-                if (playerInBattle) {
-                  playerInBattle.stats.currentHP = roomData[i].lifePoints;
-                }
-              }
-
-              io.to(data).emit("Update_Life_R", roomData);
-            }
-
-            //Winners and Lossers
-            if (roomData[i].lifePoints <= 1) {
-              roomData[i].lifePoints = NaN;
-              roomData[i].luck = 0;
-              roomData[i].name = "Dead";
-
-              // Store NaN health state
-              if (roomData[i].id) {
-                playerHealthPoints[roomData[i].id] = 0; // Store as 0 for dead players
-              }
-
-              // If this room exists in battleRooms, update the player's health there too
-              if (battleRoom) {
-                const playerInBattle = battleRoom.players.find(
-                  (p) => p.socketID === roomData[i].id,
-                );
-                if (playerInBattle) {
-                  playerInBattle.stats.currentHP = 0;
-                }
-              }
-            } else if (roomData[i].lifePoints >= 15) {
-              console.log("Congrats To Player: ", roomData[i].name);
-
-              // Store the winner's health
-              if (roomData[i].id) {
-                playerHealthPoints[roomData[i].id] = 15;
-              }
-
-              // If this room exists in battleRooms, update the player's health there too
-              if (battleRoom) {
-                const playerInBattle = battleRoom.players.find(
-                  (p) => p.socketID === roomData[i].id,
-                );
-                if (playerInBattle) {
-                  playerInBattle.stats.currentHP = 15;
-                }
-              }
-
-              clearInterval(roomIntervals[data]);
-              delete roomIntervals[data];
-              console.log("Claim Your Prize ", roomData[i]);
-            }
-          }
-
-          setTimeout(() => {
-            io.to(data).emit("colorHistory", selectedColor);
-          }, 3000);
-        }, 5000); // Runs every 5 seconds
+        }
       }
-    }
-  });
+    
+});
 
-  // New endpoint to get player's stored health points
-  socket.on("getStoredHealthPoints", (playerId, callback) => {
-    const storedHP = playerHealthPoints[playerId] || 10; // Default to 10 if not found
-    callback(storedHP);
-  });
-
-  // New endpoint to update player's stored health points manually
-  socket.on("updateHealthPoints", (playerId, newHP, callback) => {
-    playerHealthPoints[playerId] = newHP;
-    console.log(`Updated health points for player ${playerId}: ${newHP}`);
-
-    // Update in battleRooms if the player is in one
-    for (const room of battleRooms) {
-      const player = room.players.find((p) => p.socketID === playerId);
-      if (player) {
-        player.stats.currentHP = newHP;
-        console.log(
-          `Updated health in battle room ${room.roomID} for player ${playerId}`,
-        );
-        break;
-      }
-    }
-
-    callback(true);
-  });
-
-  // Socket event to handle shared character data from clients
-  socket.on("shareCharacterData", (data) => {
-    // Validate the incoming data
-    if (data && data.roomID && data.characterId && data.characterData) {
-      console.log(
-        `Player ${socket.id} sharing character data for ID: ${data.characterId} in room ${data.roomID}`,
-      );
-
-      // Broadcast to all OTHER players in the room
-      socket.to(data.roomID).emit("receivedCharacterData", {
-        characterId: data.characterId,
-        characterData: data.characterData,
-      });
-    } else {
-      console.error("Invalid character data shared:", data);
-    }
-  });
-
-  socket.on("getStoredHealthPoints", (playerId, callback) => {
-    const storedHP = playerHealthPoints[playerId] || 10; // Default to 10 if not found
-    callback(storedHP);
-  });
 
   // Track ready players for each room
   const roomReadyPlayers: { [roomID: string]: string[] } = {};
@@ -672,91 +640,22 @@ io.on("connection", (socket) => {
   socket.on("playerVotedSkip", (roomID, callback) => {
     const room = playersWaitingRooms.find((room) => room.roomID === roomID);
     if (room) {
-      // Check if player already voted
-      if (!roomReadyPlayers[roomID]) {
-        roomReadyPlayers[roomID] = [];
-      }
-
-      if (!roomReadyPlayers[roomID].includes(socket.id)) {
-        roomReadyPlayers[roomID].push(socket.id);
-        room.votesToStart++;
-
-        console.log(
-          `Player ${socket.id} voted to skip in room ${roomID}. Total votes: ${room.votesToStart}`,
-        );
-
-        // Notify everyone in the room about the updated vote count
-        io.to(roomID).emit("playerVotedSkip", room.votesToStart);
-
-        // Define the maximum player count to match joinWaitingRoom handler
-        const MAX_PLAYERS = 6;
-
-        // If all players have voted or if we have enough votes (e.g., majority)
-        // Determine required votes based on room size
-        const requiredVotes = Math.max(2, Math.ceil(room.players.length / 2));
-
-        // Check if the room is full or has enough votes
-        if (room.players.length >= MAX_PLAYERS) {
-          console.log(
-            `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes`,
-          );
-
-          // Create a battle room from the waiting room
-          const battleRoom: BattleRoom = {
-            roomID: room.roomID,
-            players: room.players.map((player) => ({
-              ...player,
-              stats: {
-                lifepoints: 5, // Default life points
-                currentHP: 5, // Initialize current HP
-              },
-            })),
-            entryBet: room.entryBet,
-            totalBet: room.totalBet,
-            colorRepresentatives: room.colorRepresentatives,
-          };
-
-          battleRooms.push(battleRoom);
-
-          io.to(roomID).emit("proceedToGame", battleRoom);
-        } else if (room.votesToStart >= requiredVotes) {
-          console.log(
-            `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes (needed ${requiredVotes})`,
-          );
-
-          // Create a battle room from the waiting room
-          const battleRoom: BattleRoom = {
-            roomID: room.roomID,
-            players: room.players.map((player) => ({
-              ...player,
-              stats: {
-                lifepoints: 5, // Default life points
-                currentHP: 5, // Initialize current HP
-              },
-            })),
-            entryBet: room.entryBet,
-            totalBet: room.totalBet,
-            colorRepresentatives: room.colorRepresentatives,
-          };
-
-          battleRooms.push(battleRoom);
-
-          io.to(roomID).emit("proceedToGame", battleRoom);
-        } else {
-          console.log(
-            `Vote recorded for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes (needed ${requiredVotes})`,
-          );
-        }
-      } else {
-        console.log(`Player ${socket.id} already voted to skip`);
-      }
+      room.votesToStart++;
 
       // Check if callback is a function before calling it
       if (typeof callback === "function") {
+        socket.to(roomID).emit("playerVotedSkip", room?.votesToStart);
         callback(room ? room.votesToStart : 0);
       }
     }
+
+    if (room && room.votesToStart === room.players.length) {
+      io.to(roomID).emit("proceedToGame");
+
+    }
   });
+
+  // Add these handlers in your server.ts file inside the io.on("connection") handler:
 
   socket.on("checkIfPlayerWasReady", (roomID, playerID, callback) => {
     const wasReady = roomReadyPlayers[roomID]?.includes(playerID) || false;
@@ -778,24 +677,6 @@ io.on("connection", (socket) => {
       );
     } else {
       callback([]);
-    }
-  });
-
-  socket.on("getCurrentRoomState", (roomID) => {
-    console.log(
-      `Socket ${socket.id} requested current state of room ${roomID}`,
-    );
-    const room = playersWaitingRooms.find((room) => room.roomID === roomID);
-
-    if (room) {
-      // Emit the current room state back to the requesting client only
-      socket.emit("currentRoomState", room.players);
-      console.log(
-        `Sent current state of room ${roomID} to socket ${socket.id}`,
-      );
-    } else {
-      console.log(`Room ${roomID} not found when requesting current state`);
-      socket.emit("currentRoomState", []);
     }
   });
 
@@ -861,9 +742,8 @@ io.on("connection", (socket) => {
       );
 
       if (socketIndex !== -1) {
-        // Don't remove the player completely to preserve their health points,
-        // but mark them as disconnected if you want to
-        const player = room.players[socketIndex];
+        // Remove socket from room's players array
+        room.players.splice(socketIndex, 1);
 
         // Notify remaining players that someone left
         const numOfPlayers =
@@ -876,12 +756,11 @@ io.on("connection", (socket) => {
         );
 
         console.log(
-          `Socket ${socket.id} disconnected from battle room ${room.roomID}, ${numOfPlayers} players remaining`,
+          `Socket ${socket.id} removed from battle room ${room.roomID}, ${numOfPlayers} players remaining`,
         );
       }
     }
 
-    // Don't delete health points on disconnect so players can reconnect with saved health
     // Clean up empty rooms
     cleanAndListRooms();
   });
