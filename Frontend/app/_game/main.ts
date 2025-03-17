@@ -39,12 +39,12 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const StartGame = (
   parent: string,
-  shopPayment: (amount: string) => Promise<void>,
+  shopPayment: (amount: string) => Promise<{ message: string }>,
   buyAndmint: (
     amount: string,
     walletAddress: string,
     metadataURI: string,
-  ) => Promise<void>,
+  ) =>Promise<{ message: string, tokenId: string }>,
   walletAddress: string | null,
   balance: string | null,
 ) => {

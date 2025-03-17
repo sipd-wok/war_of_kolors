@@ -22,20 +22,6 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
   function PhaserGame({ currentActiveScene }, ref) {
     const game = useRef<Phaser.Game | null>(null!);
     const { shopPayment, buyAndmint, walletAddress, balance } = useWallet();
-
-    // Create wrapper that returns void to match the expected type
-    const buyAndmintWrapper = useCallback(
-      async (
-        amount: string,
-        walletAddress: string,
-        metadataURI: string,
-      ): Promise<void> => {
-        await buyAndmint(amount, walletAddress, metadataURI);
-        // Void return, discarding the message
-      },
-      [buyAndmint],
-    );
-
     useLayoutEffect(() => {
       if (game.current === null) {
         try {
@@ -45,7 +31,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           game.current = StartGame(
             containerId,
             shopPayment || null,
-            buyAndmintWrapper,
+            buyAndmint,
             walletAddress || "",
             balance || "0",
           );
@@ -69,7 +55,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           }
         }
       };
-    }, [ref, shopPayment, buyAndmintWrapper, walletAddress, balance]);
+    }, [ref, shopPayment,buyAndmint, walletAddress, balance]);
 
     useEffect(() => {
       EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {

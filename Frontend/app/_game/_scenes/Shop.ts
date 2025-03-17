@@ -543,7 +543,6 @@ export class Shop extends Scene {
     }
 
     this.character.luck = luckBonus;
-    console.log("Devil's Potion Purchased!");
     // Implement purchase logic
     // For example, add the potion to the player's inventory
   }
@@ -551,7 +550,6 @@ export class Shop extends Scene {
   private buyLeprechaunsPotion(): void {
     const luckBonus = 0.2;
     this.character.luck = luckBonus;
-    console.log("Leprechaun's Potion Purchased!");
     // Implement purchase logic
     // For example, add the potion to the player's inventory
   }
@@ -559,7 +557,6 @@ export class Shop extends Scene {
   private buyHealthPotion(): void {
     const heal = 2;
     this.character.hp = heal;
-    console.log("Leprechaun's Potion Purchased!");
     // Implement purchase logic
     // For example, add the potion to the player's inventory
   }
@@ -653,7 +650,6 @@ export class Shop extends Scene {
       return null;
     }
     const formData = new FormData();
-    console.log(file);
     formData.append("file", file, file.name);
 
     try {
@@ -698,13 +694,15 @@ export class Shop extends Scene {
 
       // 🔹 Mint NFT with metadataURI
       try {
-        const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
-
-        if (buyandmint.message === "TSFailed") {
+          const buyandmint = await buyAndmint(price, walletAddress, metadataURI);
+        if (!buyandmint) {
+          console.error("buyAndmint returned undefined!");
+          return null;}
+        if (buyandmint?.message === "TSFailed") {
           this.transactionFail = true;
           await this.cancelUploads(imageData.IpfsHash, metadataData.IpfsHash);
           return null;
-        } else {
+        }else{
           // Save character using API endpoint
 
           const newMetadata = {
@@ -721,7 +719,6 @@ export class Shop extends Scene {
               },
               body: JSON.stringify(newMetadata),
             });
-            console.log(newMetadata);
             if (!response.ok) {
               const errorData = await response.json();
               console.error("Failed to save character:", errorData);
@@ -861,8 +858,6 @@ export class Shop extends Scene {
       );
     });
 
-    console.log(spriteOptions);
-
     const possibleSprites = spriteOptions[this.character.color];
     const randomIndex = this.getRandomInt(0, possibleSprites.length - 1);
     this.character.sprite = `characterSprite${possibleSprites[randomIndex]}`;
@@ -890,7 +885,7 @@ export class Shop extends Scene {
     if (this.transactionFail === false) {
       this.showCharacterModal();
     } else {
-      console.log("transaction failed.");
+     alert('Transaction Failed.')
     }
     return this.character.sprite;
   }

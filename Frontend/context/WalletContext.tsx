@@ -33,8 +33,9 @@ interface WalletContextType {
   buyAndmint: (
     amount: string,
     walletAddress: string,
-    metadataURI: string,
-  ) => Promise<{ message: string }>;
+    metadataURI: string
+  ) => Promise<{ message: string; tokenId: string | null }>;
+  
   transferNFT: (from: string, to: string, tokenId: string) => Promise<void>;
   fetchBalance: (address: string) => Promise<void>;
 }
@@ -138,10 +139,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const buyAndmint = useCallback(
-    (amount: string, walletAddress: string, metadataURI: string) =>
-      BuyandMint(amount, walletAddress!, metadataURI, fetchBalance),
+    (amount: string, walletAddress: string, metadataURI: string): Promise<{ message: string; tokenId: string | null }> =>
+      BuyandMint(amount, walletAddress, metadataURI, fetchBalance),
     [fetchBalance],
   );
+  
 
   return (
     <WalletContext.Provider
