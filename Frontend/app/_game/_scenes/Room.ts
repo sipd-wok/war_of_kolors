@@ -15,6 +15,7 @@ export class Room extends Scene {
     color: number;
     img: string;
   }> = [];
+  private loadingText!: Phaser.GameObjects.Text;
 
   //Players Arrays
   private playersLogs: Array<{

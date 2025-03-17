@@ -196,6 +196,7 @@ io.on("connection", (socket) => {
     const createdRoom = playersWaitingRooms.find(
       (room) => room.roomID === roomId,
     );
+
     if (createdRoom) {
       console.log(`Room created: ${createdRoom.roomID}`);
     } else {
@@ -329,15 +330,14 @@ io.on("connection", (socket) => {
   });
 
   //This Code Structure To make in game
-
   interface Player {
-    id: string;
+    id: any;
     lifePoints: number;
     name: string;
-    color?: number;
+    color: any;
     luck: number;
     bet: number;
-    img?: string;
+    img: string;
     LM: number;
     dpotion: number;
     leppot: number;
