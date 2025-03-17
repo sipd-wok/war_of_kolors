@@ -86,5 +86,3 @@ export const buyAndMintCharacter = async (
     return { message: "TSFailed", tokenId: null };
   }
 };
-
-

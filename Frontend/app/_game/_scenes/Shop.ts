@@ -291,16 +291,17 @@ export class Shop extends Scene {
 
   preload(): void {
     // Doors
-    this.load.image("BronzeDoor", "assets/bronzedoor.png");
-    this.load.image("SilverDoor", "assets/silverdoor.png");
-    this.load.image("GoldDoor", "assets/golddoor.png");
-    this.load.image("RainbowDoor", "assets/rainbowdoor.png");
+    this.load.image("BronzeDoorLocked", "assets/bronzedoorlocked.png");
+    this.load.image("BronzeDoorUnlocked", "assets/bronzedoorunlocked.png");
 
-    // Characters
-    // 💬[vincent]: gn move ko sa preloader.ts
-    //   for (let i = 1; i <= 104; i++) {
-    //     this.load.image(`characterSprite${i}`, `assets/char_${i}.png`);
-    // }
+    this.load.image("SilverDoorLocked", "assets/silverdoorlocked.png");
+    this.load.image("SilverDoorUnlocked", "assets/silverdoorunlocked.png");
+
+    this.load.image("GoldDoorLocked", "assets/goldDoorlocked.png");
+    this.load.image("GoldDoorUnlocked", "assets/goldDoorunlocked.png");
+
+    this.load.image("RainbowDoorLocked", "assets/rainbowdoor.png");
+    this.load.image("RainbowDoorUnlocked", "assets/rainbowdoor.png");
   }
 
   create(): void {
@@ -572,7 +573,7 @@ export class Shop extends Scene {
     price: number,
   ): void {
     const door = this.add
-      .image(x, y, `${tier}Door`)
+      .image(x, y, `${tier}DoorLocked`)
       .setInteractive()
       .setDisplaySize(100, 150);
     this.add
@@ -589,6 +590,14 @@ export class Shop extends Scene {
         color: "#000000",
       })
       .setOrigin(0.5);
+
+    door.on("pointerover", () => {
+      door.setTexture(`${tier}DoorUnlocked`);
+    });
+
+    door.on("pointerout", () => {
+      door.setTexture(`${tier}DoorLocked`);
+    });
 
     door.on("pointerdown", async () => {
       await this.assignCharacter(tier, minLuck, maxLuck, price.toString());

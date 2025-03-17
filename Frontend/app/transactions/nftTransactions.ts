@@ -25,7 +25,7 @@ export const mintNFT = async (walletAddress: string, metadataURI: string) => {
 export const transferNFT = async (
   from: string,
   to: string,
-  tokenId: string
+  tokenId: string,
 ): Promise<boolean> => {
   try {
     console.log("Transfer Request:", { from, to, tokenId });

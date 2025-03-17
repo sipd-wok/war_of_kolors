@@ -11,50 +11,65 @@ const wallet = new ethers.Wallet(privateKey, provider);
 const erc20ABI = [
   "function balanceOf(address account) external view returns (uint256)", // ✅ Add this
   "function mint(address to, uint256 amount) external",
-  "function transfer(address to, uint256 amount) external returns (bool)"
+  "function transfer(address to, uint256 amount) external returns (bool)",
 ];
 
-const devWallet = process.env.NEXT_PUBLIC_WALLET_ADDRESS
+const devWallet = process.env.NEXT_PUBLIC_WALLET_ADDRESS;
 const wokContract = new ethers.Contract(
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!,
   erc20ABI,
-  wallet
+  wallet,
 );
 
 export async function POST(request: Request) {
   try {
-    const { type,recipient, amount } = await request.json();
-    if (type === 'mint'){
+    const { type, recipient, amount } = await request.json();
+    if (type === "mint") {
       const mintAmount = "100000000000";
       const mintTx = await wokContract.mint(
-      wallet.address, 
-      ethers.parseUnits(mintAmount, 18), 
-    );
-    await mintTx.wait();
-    return NextResponse.json({ success: true, message: 'Mint Successful' });
+        wallet.address,
+        ethers.parseUnits(mintAmount, 18),
+      );
+      await mintTx.wait();
+      return NextResponse.json({ success: true, message: "Mint Successful" });
     }
-    if (type === 'transfer'){
+    if (type === "transfer") {
       const transferAmount = "1000000";
-      const transferTx = await wokContract.transfer(recipient, ethers.parseUnits(transferAmount, 18));
+      const transferTx = await wokContract.transfer(
+        recipient,
+        ethers.parseUnits(transferAmount, 18),
+      );
       await transferTx.wait();
-      return NextResponse.json({ success: true, message: 'Tranfer Success' });
+      return NextResponse.json({ success: true, message: "Tranfer Success" });
     }
     if (type === "payment") {
       const balance = await wokContract.balanceOf(recipient);
-      console.log(balance)
+      console.log(balance);
       if (balance < ethers.parseUnits(amount, 18)) {
         console.log("Balance is insufficient");
-        return NextResponse.json({ success: false, message: "Insufficient balance" });
+        return NextResponse.json({
+          success: false,
+          message: "Insufficient balance",
+        });
       }
-  
-      const paymentTx = await wokContract.transfer(devWallet, ethers.parseUnits(amount, 18));
+
+      const paymentTx = await wokContract.transfer(
+        devWallet,
+        ethers.parseUnits(amount, 18),
+      );
       await paymentTx.wait();
       return NextResponse.json({ success: true, message: "Payment Success" });
     }
-    return NextResponse.json({ error: "Invalid transaction type" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid transaction type" },
+      { status: 400 },
+    );
   } catch (error) {
     console.error("Transaction error:", error);
-    return NextResponse.json({ error: "Failed to send transaction" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to send transaction" },
+      { status: 500 },
+    );
   }
 }
 export async function GET(request: Request) {
@@ -63,16 +78,25 @@ export async function GET(request: Request) {
     const recipient = searchParams.get("recipient");
 
     if (!recipient) {
-      return NextResponse.json({ error: "Recipient is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Recipient is required" },
+        { status: 400 },
+      );
     }
 
     const rawBalance = await wokContract.balanceOf(recipient);
-    const formattedBalance = ethers.formatUnits(rawBalance, 18); 
+    const formattedBalance = ethers.formatUnits(rawBalance, 18);
     const formattedWithCommas = Number(formattedBalance).toLocaleString();
 
-    return NextResponse.json({ success: true, balance: formattedWithCommas.toLocaleString() });
+    return NextResponse.json({
+      success: true,
+      balance: formattedWithCommas.toLocaleString(),
+    });
   } catch (error) {
     console.error("Fetching Balance failed:", error);
-    return NextResponse.json({ error: "Failed to fetch balance" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch balance" },
+      { status: 500 },
+    );
   }
 }

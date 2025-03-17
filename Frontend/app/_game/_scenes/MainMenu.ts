@@ -583,46 +583,52 @@ export class MainMenu extends Scene {
     });
 
     // GET WOK TOKEN BUTTON
-    this.getWok = this.add
-    .text(cameraX + 250, cameraY - 350 , "Get Free Wok", {
+    this.getWok = this.add.text(cameraX + 250, cameraY - 350, "Get Free Wok", {
       fontFamily: "Arial",
       fontSize: 32,
       color: "#ffffff",
       backgroundColor: "#4e342e",
       padding: { x: 10, y: 20 },
-    })
-    this.getWok.on("pointerdown",async()=>{
+    });
+    this.getWok.on("pointerdown", async () => {
       const walletAddress = this.game.registry.get("walletAddress");
-      try{
-        const response = await fetch(`/api/requestWok/${walletAddress}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
+      try {
+        const response = await fetch(
+          `/api/requestWok?address=${walletAddress}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
           },
-        });
+        );
         const data = await response.json();
         console.log(data);
-        if(response.status == 429){
-          alert(data.error)
+        if (response.status == 429) {
+          alert(data.error);
+          return null;
+        } else {
+          alert(data.message);
           return null;
         }
-        else{
-          alert(data.message); return null;
-        }
+      } catch (err) {
+        console.log(err);
       }
-      catch(err){
-        console.log(err)
-      }
-    })
-    // --- Open Profile Button ---
-    const profileButton = this.add
-      .image(cameraX - 530, cameraY - 310, "profile")
-      .setInteractive({ useHandCursor: true })
-      .setDisplaySize(100, 100);
-
-    profileButton.on("pointerdown", () => {
-      this.scene.start("Profile");
     });
+    // --- Open Profile Button ---
+    this.add
+      .image(cameraX - 480, cameraY - 310, "profile")
+      .setDisplaySize(100, 100) // Fix the display size
+      .setInteractive()
+      .on("pointerdown", () => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("go-to-profile", {
+              detail: "profile",
+            }),
+          );
+        }
+      });
 
     this.getUsername().then((username) => {
       this.add.text(cameraX - 430, cameraY - 320, `${username}`, {

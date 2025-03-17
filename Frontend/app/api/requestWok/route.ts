@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import supabase from "@/lib/db/db";
 import { ethers } from "ethers";
-const WOK_REWARD_AMOUNT = "1000000"; 
-export async function GET(
-  request: Request,
-  { params }: { params: { walletaddress: string } },
-) {
+const WOK_REWARD_AMOUNT = "1000000";
+
+// Using proper Next.js App Router route handler pattern
+export async function GET(request: NextRequest) {
   try {
-    // api/requestWok/[walletaddress]
-    // ma kwa ya na dayun ang wallet address halin sa url
-    const walletAddress = params.walletaddress;
+    // Get wallet address from query parameter
+    const { searchParams } = new URL(request.url);
+    const walletAddress = searchParams.get("address");
 
     if (!walletAddress) {
       return NextResponse.json(

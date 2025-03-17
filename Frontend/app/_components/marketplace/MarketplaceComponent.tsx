@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "@mui/material/Modal";
-import React,{ useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import CharacterDetailsComponent from "./CharacterDetailsComponent";
 import {
   ShoppingBag,
@@ -69,6 +69,12 @@ export class WOKCharacter {
   }
 }
 
+interface User {
+  id: string;
+  user_id: string;
+  username: string;
+}
+
 // Helper functions
 function getColorClass(color: string) {
   switch (color.toLowerCase()) {
@@ -110,7 +116,7 @@ function getTierBadgeClass(tier: string) {
 }
 
 const MarketplaceComponent = () => {
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<User>();
   const [nfts, setNfts] = useState<WOKCharacter[]>([]);
   const [ownedCharacters, setOwnedCharacters] = useState<WOKCharacter[]>([]);
   const [selectedCharacter, setSelectedCharacter] =
@@ -379,7 +385,7 @@ const MarketplaceComponent = () => {
                     ) : (
                       <div className="bg-gray-800 bg-opacity-70 text-white text-xs px-2 py-1 rounded-full flex items-center">
                         <Bookmark className="h-3 w-3 mr-1" />
-                        Not   
+                        Not
                       </div>
                     )}
                   </div>
@@ -624,7 +630,13 @@ const MarketplaceComponent = () => {
                     </div>
                   </div>
                   <div className="flex justify-between items-center mt-4">
-                    <button onClick={()=> buyNft(nft.owner_wallet, userInfo.user_id, nft.token_id)}  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                    <button
+                      onClick={() =>
+                        userInfo &&
+                        buyNft(nft.owner_wallet, userInfo.user_id, nft.token_id)
+                      }
+                      className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center"
+                    >
                       <ShoppingBag className="h-3 w-3 mr-1" /> Buy Now
                     </button>
                     <button className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">
@@ -644,29 +656,35 @@ const MarketplaceComponent = () => {
           </div>
         </div>
       </div>
-      {showReceipt && 
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-96">
-        <h2 className="text-xl font-semibold text-green-600">Transaction Successful!</h2>
-        <p className="text-gray-700 dark:text-gray-300 mt-2">Your NFT has been minted successfully.</p>
-        
-        <div className="mt-4">
-          <p className="text-sm text-gray-500">📜 Contract Address:</p>
-          <p className="font-mono text-sm break-all text-gray-900 dark:text-gray-200">0x7f9a6Ae21981fBa73450eF15CF27C5b1000fDBB1</p>
-          
-          <p className="text-sm text-gray-500 mt-2">🏷 Token ID:</p>
-          <p className="font-mono text-lg text-blue-600">{token}</p>
-        </div>
+      {showReceipt && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-96">
+            <h2 className="text-xl font-semibold text-green-600">
+              Transaction Successful!
+            </h2>
+            <p className="text-gray-700 dark:text-gray-300 mt-2">
+              Your NFT has been minted successfully.
+            </p>
 
-        <button
-          onClick={()=>setReceipt(false)}
-          className="mt-6 w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-      }
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">📜 Contract Address:</p>
+              <p className="font-mono text-sm break-all text-gray-900 dark:text-gray-200">
+                0x7f9a6Ae21981fBa73450eF15CF27C5b1000fDBB1
+              </p>
+
+              <p className="text-sm text-gray-500 mt-2">🏷 Token ID:</p>
+              <p className="font-mono text-lg text-blue-600">{tokenId}</p>
+            </div>
+
+            <button
+              onClick={() => setReceipt(false)}
+              className="mt-6 w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
