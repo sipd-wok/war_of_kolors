@@ -349,7 +349,7 @@ interface Room {
 const DemoRooms: Room = {}
 const usedColors = new Map<string, number>();
 
-socket.on("Create_BattleField", (roomAddress, players) => {
+io.on("Create_BattleField", (roomAddress, players) => {
 
     const colors: { [key: string]: number } = {
         red: 0xff0000,
@@ -364,37 +364,40 @@ socket.on("Create_BattleField", (roomAddress, players) => {
     if (!DemoRooms[roomAddress]) {
         DemoRooms[roomAddress] = [];
     }
-    
-        const player = players;
+        
         
         // Assign a color, defaulting to an available one if not specified
-        const playerColor = colors[player.character.color] || getNextAvailableColor()
+        const playerColor = colors[players.character.color] || getNextAvailableColor()
 
         const newPlayer: Player = {
             id: socket.id,
             lifePoints: 10,
-            name: player.user.username,
+            name: players.user.username,
             color: playerColor,
-            luck: player.character.luck,
+            luck: players.character.luck,
             bet: 10,
-            img: player.character.sprite,
-            LM: player.character.luck,
-            dpotion: player.potions.devil,
-            leppot: player.potions.leprechaun,
-            health_potion: player.potions.hp,
+            img: players.character.sprite,
+            LM: players.character.luck,
+            dpotion: players.potions.devil,
+            leppot: players.potions.leprechaun,
+            health_potion: players.potions.hp,
             walletBal: 0,
         };
 
-        DemoRooms[roomAddress].push(newPlayer);
-    
+        socket.join(roomAddress);
 
-    socket.join(roomAddress);
+        if (players) {
+          DemoRooms[roomAddress].push(newPlayer);
+        }
+    
     io.to(roomAddress).emit("SetCount", DemoRooms[roomAddress].length);
     io.to(roomAddress).emit("roomAssign", roomAddress);
 
     // Start the game when the room is full
     if (DemoRooms[roomAddress].length === players_length) {
+      setTimeout(() => {
         io.to(roomAddress).emit("InputPlayer", DemoRooms[roomAddress]);
+      }, 1500)
     }
 
     console.log("Created Demo Rooms: ", Object.keys(DemoRooms).length);
@@ -521,7 +524,7 @@ socket.once("HealthPotion", (roomID, data) => {
 
   const roomIntervals: Record<string, NodeJS.Timeout> = {};
 
-socket.once("GenerateColors", (data) => {
+io.on("GenerateColors", (data) => {
     console.log("Generating Colors In ", data);
     console.log("Waiting Room: ", playersWaitingRooms);
 
