@@ -55,6 +55,7 @@ interface BattleRoom {
       id: string;
       devil: number;
       leprechaun: number;
+      hp: number;
     };
     character: {
       id: number;
@@ -67,6 +68,7 @@ interface BattleRoom {
     };
     stats: {
       lifepoints: number;
+      currentHP?: number; // Add currentHP to store the current health points
     };
   }[];
   entryBet: number;
@@ -309,7 +311,25 @@ io.on("connection", (socket) => {
         console.log(
           `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes`,
         );
-        io.to(roomID).emit("proceedToGame", room);
+
+        // Create a battle room from the waiting room
+        const battleRoom: BattleRoom = {
+          roomID: room.roomID,
+          players: room.players.map((player) => ({
+            ...player,
+            stats: {
+              lifepoints: 5, // Default life points
+              currentHP: 5, // Initialize current HP
+            },
+          })),
+          entryBet: room.entryBet,
+          totalBet: room.totalBet,
+          colorRepresentatives: room.colorRepresentatives,
+        };
+
+        battleRooms.push(battleRoom);
+
+        io.to(roomID).emit("proceedToGame", battleRoom);
         io.to(roomID).emit("maxPlayersReached");
       } else {
         console.log(
@@ -348,6 +368,9 @@ io.on("connection", (socket) => {
   interface Room {
     [key: string]: Player[];
   }
+
+  // Storage for player health points to persist across sessions/reconnects
+  const playerHealthPoints: { [socketId: string]: number } = {};
 
   const DemoRooms: Room = {};
 
@@ -396,9 +419,12 @@ io.on("connection", (socket) => {
       let randomIndex = Math.floor(Math.random() * availableColors.length);
       let chosenColor = availableColors.splice(randomIndex, 1)[0]; // Remove chosen color
 
+      // Check if player already has stored health points
+      const storedHP = playerHealthPoints[socket.id] || 10;
+
       let newPlayer: Player = {
         id: socket.id,
-        lifePoints: 10,
+        lifePoints: storedHP, // Use stored health points if available
         name: NewName, // Temporary Names
         luck: 6,
         bet: 2000,
@@ -413,6 +439,9 @@ io.on("connection", (socket) => {
 
       socket.join(roomName);
       DemoRooms[roomName].push(newPlayer);
+
+      // Store player's health points
+      playerHealthPoints[socket.id] = storedHP;
     }
 
     io.to(roomName).emit("SetCount", DemoRooms[roomName].length);
@@ -437,6 +466,9 @@ io.on("connection", (socket) => {
     console.log("Generating Colors In ", data);
 
     let roomData = DemoRooms[data];
+
+    // Look for this room in battleRooms if it exists
+    const battleRoom = battleRooms.find((room) => room.roomID === data);
 
     if (!roomData || roomData.length === 0) return; // Avoid errors
 
@@ -490,23 +522,45 @@ io.on("connection", (socket) => {
                 .length ?? 0;
 
             if (matchingColors > 0) {
-              roomData[i].lifePoints += matchingColors; // Increase life points based on matches
+              // Increase life points based on matches
+              roomData[i].lifePoints += matchingColors;
 
-              // this.imageAttack_ani[i].setVisible(true);
-              // setTimeout(() => {
-              //     this.imageAttack_ani[i].setVisible(false);
-              // }, 1000);
+              // Store player's updated health points
+              if (roomData[i].id) {
+                playerHealthPoints[roomData[i].id] = roomData[i].lifePoints;
+              }
+
+              // If this room exists in battleRooms, update the player's health there too
+              if (battleRoom) {
+                const playerInBattle = battleRoom.players.find(
+                  (p) => p.socketID === roomData[i].id,
+                );
+                if (playerInBattle) {
+                  playerInBattle.stats.currentHP = roomData[i].lifePoints;
+                }
+              }
 
               io.to(data).emit("Update_Life_P", roomData);
-
-              // this.rotateAttack(i);
             } else {
-              // setTimeout(() => {
-              roomData[i].lifePoints -= 1; // Reduce life points if no match
+              // Reduce life points if no match
+              roomData[i].lifePoints -= 1;
+
+              // Store player's updated health points
+              if (roomData[i].id) {
+                playerHealthPoints[roomData[i].id] = roomData[i].lifePoints;
+              }
+
+              // If this room exists in battleRooms, update the player's health there too
+              if (battleRoom) {
+                const playerInBattle = battleRoom.players.find(
+                  (p) => p.socketID === roomData[i].id,
+                );
+                if (playerInBattle) {
+                  playerInBattle.stats.currentHP = roomData[i].lifePoints;
+                }
+              }
 
               io.to(data).emit("Update_Life_R", roomData);
-              // this.shakeDmg(i);
-              // }, 700);
             }
 
             //Winners and Lossers
@@ -514,8 +568,39 @@ io.on("connection", (socket) => {
               roomData[i].lifePoints = NaN;
               roomData[i].luck = 0;
               roomData[i].name = "Dead";
+
+              // Store NaN health state
+              if (roomData[i].id) {
+                playerHealthPoints[roomData[i].id] = 0; // Store as 0 for dead players
+              }
+
+              // If this room exists in battleRooms, update the player's health there too
+              if (battleRoom) {
+                const playerInBattle = battleRoom.players.find(
+                  (p) => p.socketID === roomData[i].id,
+                );
+                if (playerInBattle) {
+                  playerInBattle.stats.currentHP = 0;
+                }
+              }
             } else if (roomData[i].lifePoints >= 15) {
               console.log("Congrats To Player: ", roomData[i].name);
+
+              // Store the winner's health
+              if (roomData[i].id) {
+                playerHealthPoints[roomData[i].id] = 15;
+              }
+
+              // If this room exists in battleRooms, update the player's health there too
+              if (battleRoom) {
+                const playerInBattle = battleRoom.players.find(
+                  (p) => p.socketID === roomData[i].id,
+                );
+                if (playerInBattle) {
+                  playerInBattle.stats.currentHP = 15;
+                }
+              }
+
               clearInterval(roomIntervals[data]);
               delete roomIntervals[data];
               console.log("Claim Your Prize ", roomData[i]);
@@ -528,6 +613,55 @@ io.on("connection", (socket) => {
         }, 5000); // Runs every 5 seconds
       }
     }
+  });
+
+  // New endpoint to get player's stored health points
+  socket.on("getStoredHealthPoints", (playerId, callback) => {
+    const storedHP = playerHealthPoints[playerId] || 10; // Default to 10 if not found
+    callback(storedHP);
+  });
+
+  // New endpoint to update player's stored health points manually
+  socket.on("updateHealthPoints", (playerId, newHP, callback) => {
+    playerHealthPoints[playerId] = newHP;
+    console.log(`Updated health points for player ${playerId}: ${newHP}`);
+
+    // Update in battleRooms if the player is in one
+    for (const room of battleRooms) {
+      const player = room.players.find((p) => p.socketID === playerId);
+      if (player) {
+        player.stats.currentHP = newHP;
+        console.log(
+          `Updated health in battle room ${room.roomID} for player ${playerId}`,
+        );
+        break;
+      }
+    }
+
+    callback(true);
+  });
+
+  // Socket event to handle shared character data from clients
+  socket.on("shareCharacterData", (data) => {
+    // Validate the incoming data
+    if (data && data.roomID && data.characterId && data.characterData) {
+      console.log(
+        `Player ${socket.id} sharing character data for ID: ${data.characterId} in room ${data.roomID}`,
+      );
+
+      // Broadcast to all OTHER players in the room
+      socket.to(data.roomID).emit("receivedCharacterData", {
+        characterId: data.characterId,
+        characterData: data.characterData,
+      });
+    } else {
+      console.error("Invalid character data shared:", data);
+    }
+  });
+
+  socket.on("getStoredHealthPoints", (playerId, callback) => {
+    const storedHP = playerHealthPoints[playerId] || 10; // Default to 10 if not found
+    callback(storedHP);
   });
 
   // Track ready players for each room
@@ -564,12 +698,48 @@ io.on("connection", (socket) => {
           console.log(
             `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes`,
           );
-          io.to(roomID).emit("proceedToGame", room);
+
+          // Create a battle room from the waiting room
+          const battleRoom: BattleRoom = {
+            roomID: room.roomID,
+            players: room.players.map((player) => ({
+              ...player,
+              stats: {
+                lifepoints: 5, // Default life points
+                currentHP: 5, // Initialize current HP
+              },
+            })),
+            entryBet: room.entryBet,
+            totalBet: room.totalBet,
+            colorRepresentatives: room.colorRepresentatives,
+          };
+
+          battleRooms.push(battleRoom);
+
+          io.to(roomID).emit("proceedToGame", battleRoom);
         } else if (room.votesToStart >= requiredVotes) {
           console.log(
             `Starting game for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes (needed ${requiredVotes})`,
           );
-          io.to(roomID).emit("proceedToGame", room);
+
+          // Create a battle room from the waiting room
+          const battleRoom: BattleRoom = {
+            roomID: room.roomID,
+            players: room.players.map((player) => ({
+              ...player,
+              stats: {
+                lifepoints: 5, // Default life points
+                currentHP: 5, // Initialize current HP
+              },
+            })),
+            entryBet: room.entryBet,
+            totalBet: room.totalBet,
+            colorRepresentatives: room.colorRepresentatives,
+          };
+
+          battleRooms.push(battleRoom);
+
+          io.to(roomID).emit("proceedToGame", battleRoom);
         } else {
           console.log(
             `Vote recorded for room ${roomID}: ${room.players.length} players, ${room.votesToStart} votes (needed ${requiredVotes})`,
@@ -689,8 +859,9 @@ io.on("connection", (socket) => {
       );
 
       if (socketIndex !== -1) {
-        // Remove socket from room's players array
-        room.players.splice(socketIndex, 1);
+        // Don't remove the player completely to preserve their health points,
+        // but mark them as disconnected if you want to
+        const player = room.players[socketIndex];
 
         // Notify remaining players that someone left
         const numOfPlayers =
@@ -703,11 +874,12 @@ io.on("connection", (socket) => {
         );
 
         console.log(
-          `Socket ${socket.id} removed from battle room ${room.roomID}, ${numOfPlayers} players remaining`,
+          `Socket ${socket.id} disconnected from battle room ${room.roomID}, ${numOfPlayers} players remaining`,
         );
       }
     }
 
+    // Don't delete health points on disconnect so players can reconnect with saved health
     // Clean up empty rooms
     cleanAndListRooms();
   });

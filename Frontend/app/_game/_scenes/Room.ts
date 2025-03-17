@@ -41,34 +41,6 @@ export class Room extends Scene {
   // Store fetched character details
   private characterDetails: Record<string, WOKCharacter> = {};
 
-  // Add tier-based effect modifiers
-  private tierModifiers = {
-    Bronze: {
-      attackMultiplier: 1.0,
-      defenseMultiplier: 1.0,
-      healingMultiplier: 1.0,
-      luckBonus: 0,
-    },
-    Silver: {
-      attackMultiplier: 1.2,
-      defenseMultiplier: 1.1,
-      healingMultiplier: 1.2,
-      luckBonus: 1,
-    },
-    Gold: {
-      attackMultiplier: 1.5,
-      defenseMultiplier: 1.3,
-      healingMultiplier: 1.5,
-      luckBonus: 2,
-    },
-    Rainbow: {
-      attackMultiplier: 2.0,
-      defenseMultiplier: 1.5,
-      healingMultiplier: 2.0,
-      luckBonus: 3,
-    },
-  };
-
   //Game Effects
   private imageDead: Phaser.GameObjects.Image[] = [];
   private skull: Phaser.GameObjects.Image[] = [];
@@ -208,9 +180,13 @@ export class Room extends Scene {
 
           const colorValue = colorMap[player.character?.color || "default"];
 
+          // Use currentHP from server if available (stored health)
+          const health =
+            player.stats?.currentHP ?? player.stats?.lifepoints ?? 5;
+
           return {
             id: player.socketID,
-            lifePoints: player.stats?.lifepoints || 10,
+            lifePoints: health,
             name: player.user ? player.user.username : "Unknown",
             color: colorValue,
             luck: player.character?.luck || 6,
@@ -230,6 +206,22 @@ export class Room extends Scene {
 
         // Fetch detailed character data for each player
         this.fetchCharacterData();
+      }
+    }
+
+    // Fetch player's stored health points if we have socket ID but no initial data
+    if (!this.playersLogs.length && socketService.getSocket().connected) {
+      const socketId = socketService.getSocket().id;
+      if (socketId) {
+        socketService
+          .getSocket()
+          .emit("getStoredHealthPoints", socketId, (storedHP: number) => {
+            console.log(`Retrieved stored health points: ${storedHP}`);
+            // Store for future use
+            if (this.playersLogs[0]) {
+              this.playersLogs[0].lifePoints = storedHP;
+            }
+          });
       }
     }
   }
@@ -253,6 +245,7 @@ export class Room extends Scene {
           })
           .then((data) => {
             if (data.character && data.character[0]) {
+              // Store character data
               this.characterDetails[player.characterId] = data.character[0];
               console.log(
                 `Fetched character data for ${player.name}:`,
@@ -261,6 +254,15 @@ export class Room extends Scene {
 
               // Update player stats based on character attributes
               this.updatePlayerWithCharacterData(player, data.character[0]);
+
+              // Broadcast this character data to all other players in the room
+              if (this.socket && this.roomID) {
+                this.socket.emit("shareCharacterData", {
+                  roomID: this.roomID,
+                  characterId: player.characterId,
+                  characterData: data.character[0],
+                });
+              }
             }
           })
           .catch((error) => {
@@ -385,6 +387,27 @@ export class Room extends Scene {
       } else {
         // Otherwise, fall back to the old flow
         this.socket.emit("Create_BattleField", "Successfully Create Demo");
+      }
+
+      // Request stored health points for this player
+      if (this.socket.id) {
+        this.socket.emit(
+          "getStoredHealthPoints",
+          this.socket.id,
+          (storedHP: number) => {
+            console.log(
+              `Retrieved stored health points on connection: ${storedHP}`,
+            );
+            if (this.playersLogs[0]) {
+              this.playersLogs[0].lifePoints = storedHP;
+
+              // Update UI if it exists
+              if (this.updateFunction && this.mainplayerinfo_text) {
+                this.updateMainPlayerInfoText();
+              }
+            }
+          },
+        );
       }
     });
 
@@ -531,6 +554,33 @@ export class Room extends Scene {
       this.box1h?.setTexture(data[0].img);
       this.box2h?.setTexture(data[1].img);
       this.box3h?.setTexture(data[2].img);
+    });
+
+    // Listen for character data shared by other players
+    this.socket.on("receivedCharacterData", (data) => {
+      if (data.characterId && data.characterData) {
+        // Store the character data if we don't already have it
+        if (!this.characterDetails[data.characterId]) {
+          console.log(
+            `Received character data for ID: ${data.characterId}`,
+            data.characterData,
+          );
+          this.characterDetails[data.characterId] = data.characterData;
+
+          // Find the player with this characterId and update their stats
+          const playerWithCharacter = this.playersLogs.find(
+            (player) => player.characterId === data.characterId,
+          );
+
+          if (playerWithCharacter) {
+            this.updatePlayerWithCharacterData(
+              playerWithCharacter,
+              data.characterData,
+            );
+            this.updatePlayerDisplays();
+          }
+        }
+      }
     });
 
     this.socket.on("Update_Life_P", (data) => {
@@ -795,6 +845,20 @@ export class Room extends Scene {
         }
 
         this.playersLogs = data;
+
+        // Also update server's stored health points when receiving updates
+        if (this.playersLogs[0] && this.playersLogs[0].id) {
+          this.socket.emit(
+            "updateHealthPoints",
+            this.playersLogs[0].id,
+            this.playersLogs[0].lifePoints,
+            (success: boolean) => {
+              if (success) {
+                console.log("Successfully updated stored health points");
+              }
+            },
+          );
+        }
       });
 
       this.socket.on("Update_Life_R", (data) => {
@@ -816,6 +880,22 @@ export class Room extends Scene {
 
         setTimeout(() => {
           this.playersLogs = data;
+
+          // Update server's stored health points when receiving damage updates
+          if (this.playersLogs[0] && this.playersLogs[0].id) {
+            this.socket.emit(
+              "updateHealthPoints",
+              this.playersLogs[0].id,
+              this.playersLogs[0].lifePoints,
+              (success: boolean) => {
+                if (success) {
+                  console.log(
+                    "Successfully updated stored health points after damage",
+                  );
+                }
+              },
+            );
+          }
         }, 700);
       });
 
@@ -837,66 +917,10 @@ export class Room extends Scene {
             this.shakeDmg(i);
           }, 700);
         }
-
-        //Winners and Lossers
-        if (this.playersLogs[i].lifePoints <= 1) {
-          this.imageDead[i].setVisible(false);
-          this.skull[i].setTexture("skull").setVisible(true);
-          this.imageAttack_ani[i].destroy();
-        } else if (this.playersLogs[i].lifePoints >= 15) {
-          setTimeout(() => {
-            closedGame = false;
-
-            setTimeout(() => {
-              this.add.rectangle(
-                this.cameraX,
-                this.cameraY,
-                560,
-                310,
-                0x000000,
-              );
-
-              this.add.rectangle(
-                this.cameraX,
-                this.cameraY,
-                550,
-                300,
-                0xffffff,
-              );
-
-              this.add
-                .text(
-                  this.cameraX,
-                  this.cameraY - 100,
-                  ["TOTAL PRIZE = " + prizeWOK + " Wok"],
-                  {
-                    fontSize: "28px",
-                    color: text_color,
-                    fontStyle: "bold",
-                  },
-                )
-                .setOrigin(0.5);
-
-              this.add
-                .text(
-                  this.cameraX,
-                  this.cameraY + 100,
-                  ["The Winner is " + this.playersLogs[i].name],
-                  {
-                    fontSize: "28px",
-                    color: text_color,
-                    fontStyle: "bold",
-                  },
-                )
-                .setOrigin(0.5);
-
-              this.add
-                .image(this.cameraX, this.cameraY, this.playersLogs[i].img)
-                .setDisplaySize(120, 120);
-            }, 1000);
-          }, 2000);
-        }
       }
+
+      // Check for winners and losers based on server-stored health points
+      this.checkPlayerStatus();
 
       if (this.spinning !== null) {
         clearInterval(this.spinning); //Bugging
@@ -1385,6 +1409,22 @@ export class Room extends Scene {
 
         // Apply visual feedback
         this.shakeDmg(i);
+
+        // Update server health points for the damaged player
+        if (this.socket && this.playersLogs[i].id) {
+          this.socket.emit(
+            "updateHealthPoints",
+            this.playersLogs[i].id,
+            this.playersLogs[i].lifePoints,
+            (success: boolean) => {
+              if (success) {
+                console.log(
+                  `Updated player ${this.playersLogs[i].name}'s health points on server`,
+                );
+              }
+            },
+          );
+        }
       }
 
       // Emit updated player data
@@ -1396,6 +1436,9 @@ export class Room extends Scene {
       if (this.playersLogs[0].dpotion > 0) {
         this.playersLogs[0].dpotion--;
       }
+
+      // Check if any player died from the damage
+      this.checkPlayerStatus();
     }
   }
 
@@ -1474,6 +1517,20 @@ export class Room extends Scene {
       // Visual feedback - create healing effect
       this.createHealingEffect(0, healAmount);
 
+      // Update server with new health points
+      if (this.socket && this.playersLogs[0].id) {
+        this.socket.emit(
+          "updateHealthPoints",
+          this.playersLogs[0].id,
+          this.playersLogs[0].lifePoints,
+          (success: boolean) => {
+            if (success) {
+              console.log(`Updated health points after healing on server`);
+            }
+          },
+        );
+      }
+
       // Socket emit to broadcast the healing
       if (this.socket && this.roomID) {
         this.socket.emit("Update_Life_P", this.playersLogs);
@@ -1482,6 +1539,11 @@ export class Room extends Scene {
       // Decrement potion count
       if (this.playersLogs[0].health_potion > 0) {
         this.playersLogs[0].health_potion--;
+      }
+
+      // Check if player won by healing to 15
+      if (this.playersLogs[0].lifePoints >= 15) {
+        this.handlePlayerWin(0);
       }
     }
   }
@@ -1598,6 +1660,121 @@ export class Room extends Scene {
     EventBus.emit("current-scene-ready", this);
   }
 
+  // New method to check player status for wins/losses
+  checkPlayerStatus() {
+    for (let i = 0; i < this.playersLogs.length; i++) {
+      // Check for eliminated players (server health ≤ 0)
+      if (this.playersLogs[i].lifePoints <= 1) {
+        this.handlePlayerElimination(i);
+      }
+      // Check for winners (server health ≥ 15)
+      else if (this.playersLogs[i].lifePoints >= 15) {
+        this.handlePlayerWin(i);
+      }
+    }
+  }
+
+  // Handle player elimination
+  handlePlayerElimination(playerIndex: number) {
+    if (
+      !this.imageDead[playerIndex] ||
+      !this.skull[playerIndex] ||
+      !this.imageAttack_ani[playerIndex]
+    ) {
+      return; // Safety check
+    }
+
+    this.imageDead[playerIndex].setVisible(false);
+    this.skull[playerIndex].setTexture("skull").setVisible(true);
+    this.imageAttack_ani[playerIndex].destroy();
+
+    // Notify server about elimination
+    if (this.socket && this.playersLogs[playerIndex].id) {
+      this.socket.emit(
+        "updateHealthPoints",
+        this.playersLogs[playerIndex].id,
+        0, // Store as 0 for dead players
+        (success: boolean) => {
+          if (success) {
+            console.log(
+              `Player ${this.playersLogs[playerIndex].name} marked as eliminated on server`,
+            );
+          }
+        },
+      );
+    }
+
+    // Update local state
+    this.playersLogs[playerIndex].lifePoints = NaN;
+    this.playersLogs[playerIndex].luck = 0;
+  }
+
+  // Handle player win
+  handlePlayerWin(playerIndex: number) {
+    const prizeWOK = this.playersLogs.reduce(
+      (sum, player) => sum + player.bet,
+      0,
+    );
+    const text_color = "#000";
+
+    // Set the winning player's health points to exactly 15
+    this.playersLogs[playerIndex].lifePoints = 15;
+
+    // Notify server about win
+    if (this.socket && this.playersLogs[playerIndex].id) {
+      this.socket.emit(
+        "updateHealthPoints",
+        this.playersLogs[playerIndex].id,
+        15, // Store as 15 for winning players
+        (success: boolean) => {
+          if (success) {
+            console.log(
+              `Player ${this.playersLogs[playerIndex].name} marked as winner on server`,
+            );
+          }
+        },
+      );
+    }
+
+    // Display win screen
+    setTimeout(() => {
+      // Create win screen
+      this.add.rectangle(this.cameraX, this.cameraY, 560, 310, 0x000000);
+
+      this.add.rectangle(this.cameraX, this.cameraY, 550, 300, 0xffffff);
+
+      this.add
+        .text(
+          this.cameraX,
+          this.cameraY - 100,
+          ["TOTAL PRIZE = " + prizeWOK + " Wok"],
+          {
+            fontSize: "28px",
+            color: text_color,
+            fontStyle: "bold",
+          },
+        )
+        .setOrigin(0.5);
+
+      this.add
+        .text(
+          this.cameraX,
+          this.cameraY + 100,
+          ["The Winner is " + this.playersLogs[playerIndex].name],
+          {
+            fontSize: "28px",
+            color: text_color,
+            fontStyle: "bold",
+          },
+        )
+        .setOrigin(0.5);
+
+      this.add
+        .image(this.cameraX, this.cameraY, this.playersLogs[playerIndex].img)
+        .setDisplaySize(120, 120);
+    }, 1000);
+  }
+
   update() {
     if (!this.updateFunction) {
       return;
@@ -1618,16 +1795,42 @@ export class Room extends Scene {
       }
     }
 
-    // Check for game over conditions (anyone reached 15 LP or all others dead)
+    // Check for game over conditions using server-stored health points
     let alivePlayers = this.playersLogs.filter(
       (player) => !isNaN(player.lifePoints) && player.lifePoints > 0,
     );
+
+    // If only one player left alive, they win
     if (alivePlayers.length === 1 && this.playersLogs.length > 1) {
-      // Only one player left - they win automatically
       const winner = alivePlayers[0];
+
+      // Only force win if they haven't already won
       if (winner.lifePoints < 15) {
         // Force win condition
         winner.lifePoints = 15;
+
+        // Update server
+        if (this.socket && winner.id) {
+          this.socket.emit(
+            "updateHealthPoints",
+            winner.id,
+            winner.lifePoints,
+            (success: boolean) => {
+              if (success) {
+                console.log(
+                  `Last player standing ${winner.name} marked as winner on server`,
+                );
+                // Show win screen
+                const winnerIndex = this.playersLogs.findIndex(
+                  (p) => p.id === winner.id,
+                );
+                if (winnerIndex !== -1) {
+                  this.handlePlayerWin(winnerIndex);
+                }
+              }
+            },
+          );
+        }
       }
     }
   }
