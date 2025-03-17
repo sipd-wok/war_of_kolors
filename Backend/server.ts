@@ -365,7 +365,7 @@ socket.on("Create_BattleField", (roomAddress, players) => {
         DemoRooms[roomAddress] = [];
     }
     
-        const player = players[0];
+        const player = players;
         
         // Assign a color, defaulting to an available one if not specified
         const playerColor = colors[player.character.color] || getNextAvailableColor()
