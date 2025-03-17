@@ -300,8 +300,8 @@ export class Shop extends Scene {
     this.load.image("GoldDoorLocked", "assets/goldDoorlocked.png");
     this.load.image("GoldDoorUnlocked", "assets/goldDoorunlocked.png");
 
-    this.load.image("RainbowDoorLocked", "assets/rainbowdoor.png");
-    this.load.image("RainbowDoorUnlocked", "assets/rainbowdoor.png");
+    this.load.image("RainbowDoorLocked", "assets/rainbowdoorlocked.png");
+    this.load.image("RainbowDoorUnlocked", "assets/rainbowdoorunlocked.png");
   }
 
   create(): void {
