@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 //import { EventBus } from "../EventBus";
-//import { socketService } from "../SocketService";
+import { socketService } from "../SocketService";
 
 export class Room extends Scene {
 
@@ -14,6 +14,7 @@ export class Room extends Scene {
     color: number,
     img: string
   }> = [];
+  private loadingText!: Phaser.GameObjects.Text;
 
   //Players Arrays
   private playersLogs: Array<{
@@ -76,7 +77,7 @@ export class Room extends Scene {
   private tempRoom: Array<{id: string & number}> | null = null
 
   socket!: Socket;
-    roomID!: string;
+  roomID!: string | number;
 
   //  player information
   user!: { id: string; user_id: string; username: string };
@@ -100,18 +101,63 @@ export class Room extends Scene {
   constructor() {
     super("Room");
   }
+
+  async init(data: any) {
+
+        // Check if data.room exists
+    if (!data.room) {
+        console.error("❌ Error: data.room is undefined!");
+        return;
+    }
+
+    this.roomID = data.room.roomID
+
+    this.character = data.room.players
+    
+    // Use the shared socket service
+    this.socket = socketService.getSocket();
+
+    if(this.socket.connected) {
+
+        console.log("✅ Connected to server:", this.roomID);
+
+    }
+
+    console.log("Players", this.character)
+    console.log("Room", this.roomID)
+
+  }
+
   
+
   preload() {
 
     this.load.setPath("assets");
-        
+
+    // Add loading text
+    this.loadingText = this.add.text(this.cameraX + 550, this.cameraY + 440, "Fetching Characters: 0%", {
+        fontSize: "24px",
+        color: "#000"
+    }).setOrigin(0.5);
+
+    this.load.on("progress", (value: number) => {
+        const percent = Math.round(value * 100);
+        this.loadingText.setText(`Fetching Characters: ${percent}%`);
+    });
+
+    this.load.on('complete', () => {
+        console.log("✅ All assets loaded! Emitting event...");
+        this.socket.emit("Create_BattleField", this.roomID, this.character)
+    });
+
     //Characters
-    this.load.image('blue', 'img/blue.png')
-    this.load.image('yellow', 'img/yellow.png')
-    this.load.image('pink', 'img/boky.png')
-    this.load.image('white', 'img/white.png')
-    this.load.image('red', 'img/red.png')
-    this.load.image('green', 'img/green.png')
+    for (let i = 1; i <= 203; i++) {
+        this.load.image(`characterSrite${i}`, `char_${i}.png`)
+    }
+
+    // const characters = Array.from({ length: 203 }, (_, i) => `char_${i + 1}`);
+    // characters.forEach(key => this.load.image(`characterSprite${key}`, `${key}.png`));
+
 
     //Wok Accessories
     this.load.image('wok_coins', 'img/WokCoin.png')
@@ -135,46 +181,32 @@ export class Room extends Scene {
     this.load.image('yellowDice', 'img/yellowDice.png')
     this.load.image('loadDice', 'img/load.png')
 
+    // Show progress percentage
+    
+
 }
 
-// async init(data: any) {
-
-//     this.roomID = data.roomID
-
-//     console.log("ROOM ID", this.roomID)
-
-//     // this.socket = socketService.getSocket();
-
-//     // if (this.socket.connected) {
-//     //     this.socket.emit("Create_BattleField", "Successfully Create Demo")
-//     // }
-
-// } 
-
- create() {
+ async create() {
 
     this.scale.resize(1296, 926)
     
-    this.socket = io("http://127.0.0.1:3000/")
-
-    this.socket.on("connect", () => {
-        console.log("✅ Connected to server:", this.socket.id);
-        this.socket.emit("Create_BattleField", "Successfully Create Demo")
-        
-    });
-
     
-    this.socket.on("connect_error", (err) => {
-        console.error("❌ Connection error:", err.message);
-        alert("Connection Time Out Or Server Error")
-    });
+
+    //this.socket = io("http://127.0.0.1:3000/")
+
+    // this.socket.on("connect", () => {
+    //     console.log("✅ Connected to server:", this.socket.id);
+    //     this.socket.emit("Create_BattleField", this.roomID, this.character)
+    // });
+    // this.socket.on("connect_error", (err) => {
+    //     console.error("❌ Connection error:", err.message);
+    //     alert("Connection Time Out Or Server Error")
+    // });
 
    //Responsive
    this.cameraX = this.cameras.main.width / 2
 
    this.cameraY = this.cameras.main.height / 2
-
-
 
    //Players Logs || Waiting Other Player Logs
   //Just change for main session to index 0 as main character in their Own Devices
@@ -222,7 +254,7 @@ this.defaultColor = [
     //     this.socket.emit("Exporting_Data", this.socket.id)
     // }, 1000)
     
-    this.tempRoom = []
+    
 
     const loadPlayers = () => {
             
@@ -742,7 +774,7 @@ this.defaultColor = [
              .setVisible(false)
              
              potion_img1.on('pointerdown', () => {
-                this.buttonClick1();
+                this.socket.emit("DevilPotion", this.roomID, this.playersLogs[0].id)
             });
            
             const potion_name_1 = this.add.text(
@@ -779,22 +811,9 @@ this.defaultColor = [
     
             potion_img2.on('pointerdown', () => {
                 
-                potion_img2.disableInteractive()
+                this.socket.emit("LeppotPotion", this.roomID, this.playersLogs[0].id)
     
-              if (isNaN(this.playersLogs[0].lifePoints) || this.playersLogs[0].lifePoints >= 15 || 
-                    this.playersLogs[1].lifePoints >= 15 || this.playersLogs[2].lifePoints >= 15 || 
-                    this.playersLogs[3].lifePoints >= 15 || this.playersLogs[4].lifePoints >= 15 || 
-                    this.playersLogs[5].lifePoints >= 15) {
-    
-                    potion_img2.disableInteractive()
-    
-                } else {
-    
-                    this.buttonClick2();
-    
-                }  
-    
-            });
+             });
             
                 this.leppot = this.add.text(
                 this.cameraX + 290,
@@ -837,7 +856,7 @@ this.defaultColor = [
              .setVisible(false)
              
              potion_img3.on('pointerdown', () => {
-                this.buttonClick3();
+                this.socket.emit("HealthPotion", this.roomID, this.playersLogs[0].id)
             });
            
             const potion_name_3 = this.add.text(
@@ -900,19 +919,14 @@ this.defaultColor = [
             
             }
 
-            const waiting = this.add.text(this.cameraX, this.cameraY, "Connecting...", {
-                font: '34px',
-                color: '#000',
-                fontStyle: 'bold'
-            }).setOrigin(0.5, 0.5)
             
             this.socket.on("SetCount", (data) => {
                 
-                waiting.setText("Waiting For Others Players " + data + "/6")
+                this.loadingText.setText("Waiting For Others Players " + data + "/6")
                 
             })
             
-            const roomText = this.add.text(this.cameraX, this.cameraY - 440, "-----", {
+            const roomText = this.add.text(this.cameraX, this.cameraY + 440, "-----", {
                 font: '23px',
                 color: '#000',
                 fontStyle: 'bold'
@@ -928,7 +942,7 @@ this.defaultColor = [
                 
             this.socket.on("InputPlayer", (data) => {
             
-            waiting.destroy()
+            this.loadingText.destroy()
             
             const players = this.socket.id
 
@@ -965,23 +979,6 @@ this.defaultColor = [
             this.updateFunction = false
     
  }
-
-  buttonClick1() {
-         
-
-         
-   }
-   
-   buttonClick2() {
-         
-            
-         
-   } 
- 
-   buttonClick3() {
-
-
-   }
 
  rotateBounce(box: Phaser.GameObjects.Image | null, bounceBox: boolean) {
  
