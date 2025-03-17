@@ -355,13 +355,13 @@ const emittedPlayer = new Set<string>(); // Store rooms that have been handled
 
 socket.on("Create_BattleField", (roomAddress, players) => {
 
-  if (emittedPlayer.has(roomAddress)) {
+  if (emittedPlayer.has(String(roomAddress))) {
 
-    return
+    return false
 
   } 
 
-  emittedPlayer.add(roomAddress);
+  emittedPlayer.add(String(roomAddress));
 
     const colors: { [key: string]: number } = {
         red: 0xff0000,
@@ -551,13 +551,13 @@ socket.once("HealthPotion", (roomID, data) => {
 
 socket.on("GenerateColors", (data) => {
 
-  if (emittedRooms.has(data)) {
+  if (emittedRooms.has(String(data))) {
 
-    return
+    return false
 
   } 
 
-  emittedRooms.add(data);
+  emittedRooms.add(String(data));
 
     console.log("Generating Colors In ", data);
     console.log("Waiting Room: ", playersWaitingRooms);
