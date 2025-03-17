@@ -349,7 +349,9 @@ interface Room {
 const DemoRooms: Room = {}
 const usedColors = new Map<string, number>();
 
-io.on("Create_BattleField", (roomAddress, players) => {
+socket.on("Create_BattleField", (roomAddress, players) => {
+
+    socket.emit("debug", players)
 
     const colors: { [key: string]: number } = {
         red: 0xff0000,
