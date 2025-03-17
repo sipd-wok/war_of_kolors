@@ -21,7 +21,7 @@ const MarketplaceComponent = dynamic(
   },
 );
 const ProfileComponent = dynamic(
-  () => import("../_components/marketplace/ProfileComponent"),  
+  () => import("../_components/marketplace/ProfileComponent"),
   {
     ssr: false,
   },

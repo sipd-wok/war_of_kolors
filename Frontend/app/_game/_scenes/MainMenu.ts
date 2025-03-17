@@ -617,27 +617,26 @@ export class MainMenu extends Scene {
     });
     // --- Open Profile Button ---
     this.add
-    .image(cameraX - 480, cameraY - 310, "profile")
-    .setDisplaySize(100, 100) // Fix the display size
-    .setInteractive()
-    .on("pointerdown", () => {
-      if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("go-to-profile", {
-        detail: "profile",
-        }),
-      );
-      }
-    });
-  
-  this.getUsername().then((username) => {
-    this.add
-      .text(cameraX - 430, cameraY - 320, `${username}`, {
+      .image(cameraX - 480, cameraY - 310, "profile")
+      .setDisplaySize(100, 100) // Fix the display size
+      .setInteractive()
+      .on("pointerdown", () => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("go-to-profile", {
+              detail: "profile",
+            }),
+          );
+        }
+      });
+
+    this.getUsername().then((username) => {
+      this.add.text(cameraX - 430, cameraY - 320, `${username}`, {
         fontFamily: "Arial",
         fontSize: 24,
         color: "#000000",
       });
-  });
+    });
 
     EventBus.emit("current-scene-ready", this);
   }

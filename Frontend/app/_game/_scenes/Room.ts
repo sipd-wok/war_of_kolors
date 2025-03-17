@@ -4,6 +4,7 @@ import { Scene } from "phaser";
 import { Socket } from "socket.io-client";
 import { EventBus } from "../EventBus";
 import { socketService } from "../SocketService";
+import { WOKCharacter } from "@/lib/typescriptInterfaces";
 
 export class Room extends Scene {
   //Responsive
@@ -31,7 +32,42 @@ export class Room extends Scene {
     leppot: number;
     health_potion: number;
     walletBal: number;
+    characterId?: string; // Added to store character ID for fetching details
+    attackPower: number; // Will be set based on character data
+    defense: number; // Will be set based on character data
+    tier: string; // Default to Bronze tier
   }> = [];
+
+  // Store fetched character details
+  private characterDetails: Record<string, WOKCharacter> = {};
+
+  // Add tier-based effect modifiers
+  private tierModifiers = {
+    Bronze: {
+      attackMultiplier: 1.0,
+      defenseMultiplier: 1.0,
+      healingMultiplier: 1.0,
+      luckBonus: 0,
+    },
+    Silver: {
+      attackMultiplier: 1.2,
+      defenseMultiplier: 1.1,
+      healingMultiplier: 1.2,
+      luckBonus: 1,
+    },
+    Gold: {
+      attackMultiplier: 1.5,
+      defenseMultiplier: 1.3,
+      healingMultiplier: 1.5,
+      luckBonus: 2,
+    },
+    Rainbow: {
+      attackMultiplier: 2.0,
+      defenseMultiplier: 1.5,
+      healingMultiplier: 2.0,
+      luckBonus: 3,
+    },
+  };
 
   //Game Effects
   private imageDead: Phaser.GameObjects.Image[] = [];
@@ -185,9 +221,146 @@ export class Room extends Scene {
             leppot: player.potions?.leprechaun || 4,
             health_potion: player.potions?.hp || 3,
             walletBal: 999, // Default value
+            characterId: player.character?.id?.toString(), // Store character ID
+            attackPower: 0, // Will be set based on character data
+            defense: 0, // Will be set based on character data
+            tier: player.character?.tier || "Bronze", // Default to Bronze tier
           };
         });
+
+        // Fetch detailed character data for each player
+        this.fetchCharacterData();
       }
+    }
+  }
+
+  // Enhanced method to fetch character data for all players
+  async fetchCharacterData() {
+    const fetchPromises = [];
+
+    for (const player of this.playersLogs) {
+      if (player.characterId) {
+        const promise = fetch(
+          `/api/WOKCharacter/getCharacterByID?characterID=${player.characterId}`,
+        )
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(
+                `Failed to fetch character data for ID: ${player.characterId}`,
+              );
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (data.character && data.character[0]) {
+              this.characterDetails[player.characterId] = data.character[0];
+              console.log(
+                `Fetched character data for ${player.name}:`,
+                data.character[0],
+              );
+
+              // Update player stats based on character attributes
+              this.updatePlayerWithCharacterData(player, data.character[0]);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching character data:", error);
+          });
+
+        fetchPromises.push(promise);
+      }
+    }
+
+    // Wait for all fetch requests to complete
+    await Promise.all(fetchPromises);
+
+    // Update the UI with the new character data
+    this.updatePlayerDisplays();
+  }
+
+  // Method to update UI elements once character data has been loaded
+  updatePlayerDisplays() {
+    // If the UI has already been created, update it
+    if (this.updateFunction) {
+      // Force an update of all text displays
+      for (let i = 1; i < this.playersLogs.length; i++) {
+        if (this.text_value[i - 1]) {
+          this.updatePlayerInfoText(i);
+        }
+      }
+
+      // Update main player text
+      if (this.mainplayerinfo_text) {
+        this.updateMainPlayerInfoText();
+      }
+    }
+  }
+
+  // Enhanced method to update player stats based on character data
+  updatePlayerWithCharacterData(player: any, character: WOKCharacter) {
+    // Base stats from character data
+    if (character.hp && character.hp > 0) {
+      player.lifePoints = character.hp;
+    }
+
+    if (character.luck !== undefined) {
+      // Use character luck directly from the database (0-0.15 range)
+      player.luck = character.luck;
+
+      // Set LM directly to the luck value from the database
+      player.LM = character.luck;
+    }
+
+    // Update player appearance if image exists
+    if (character.sprite && character.sprite !== "") {
+      player.img = character.sprite;
+
+      // Also preload the character sprite if it doesn't match our default colors
+      if (
+        !["red", "blue", "yellow", "green", "pink", "white"].includes(
+          character.sprite,
+        )
+      ) {
+        this.loadCharacterSprite(character.sprite);
+      }
+    }
+
+    // Update combat stats directly from character data without multipliers
+    if (character.atk) {
+      player.attackPower = character.atk;
+    }
+
+    if (character.def) {
+      player.defense = character.def;
+    }
+
+    // Store tier for reference (visual purposes only, no stat impact)
+    player.tier = character.tier;
+  }
+
+  // Helper method to get tier-based bonuses
+  getTierBonus(
+    tier: string,
+    bonusType: keyof typeof this.tierModifiers.Bronze,
+  ): number {
+    const normalizedTier =
+      tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
+    const tierData =
+      this.tierModifiers[normalizedTier as keyof typeof this.tierModifiers] ||
+      this.tierModifiers.Bronze;
+    return tierData[bonusType];
+  }
+
+  // Method to dynamically load character sprites
+  loadCharacterSprite(spriteName: string) {
+    if (!this.textures.exists(spriteName)) {
+      // Attempt to load from assets/img/characters/ first
+      this.load.image(spriteName, `assets/img/characters/${spriteName}.png`);
+      // If that fails, fall back to trying the exact name as the path
+      this.load.image(spriteName, spriteName);
+
+      // Start the load queue
+      this.load.start();
     }
   }
 
@@ -403,7 +576,7 @@ export class Room extends Scene {
     });
   }
 
-  // Extract loadPlayers as a method that can be called from multiple places
+  // Modified loadPlayers method to display character data
   loadPlayers() {
     //Text, Elements, Colors, and prizes
 
@@ -439,6 +612,43 @@ export class Room extends Scene {
         },
       )
       .setOrigin(0.5);
+
+    // Display main player's character information if available
+    if (
+      this.playersLogs[0].characterId &&
+      this.characterDetails[this.playersLogs[0].characterId]
+    ) {
+      const charData = this.characterDetails[this.playersLogs[0].characterId];
+      const tierColor = this.getTierColor(charData.tier);
+
+      this.add
+        .text(
+          this.cameraX + 450,
+          this.cameraY - 380,
+          `${charData.name} (${charData.tier})`,
+          {
+            fontSize: "20px",
+            color: tierColor,
+            fontStyle: "bold",
+          },
+        )
+        .setOrigin(0.5);
+
+      // Add stats display
+      this.add
+        .text(
+          this.cameraX + 450,
+          this.cameraY - 350,
+          `ATK: ${Math.round(charData.atk || 0)} | DEF: ${Math.round(
+            charData.def || 0,
+          )} | HP: ${charData.hp || 10}`,
+          {
+            fontSize: "16px",
+            color: "#fff",
+          },
+        )
+        .setOrigin(0.5);
+    }
 
     this.add
       .image(this.cameraX + 300, this.cameraY - 430, "wok_coins")
@@ -752,29 +962,56 @@ export class Room extends Scene {
     this.text_value = [];
 
     for (let i = 1; i < this.playersLogs.length; i++) {
-      const info_text = this.add.text(
-        this.player_info_p[i].x,
-        this.player_info_p[i].y,
-
-        this.playersLogs[i].name +
-          "\n" +
-          "LM - " +
-          this.playersLogs[i].LM +
-          "\n" +
-          "LP - " +
-          this.playersLogs[i].lifePoints,
-
-        {
-          fontSize: "24px",
-          color: text_color,
-          fontStyle: "bold",
-        },
-      );
-
-      this.text_value.push(info_text);
+      // Create player info text with enhanced formatting
+      this.updatePlayerInfoText(i);
     }
 
     for (let i = 0; i < this.playersLogs.length; i++) {
+      // Add tier-based border effect based on character data
+      let borderColor = this.playersLogs[i].color;
+      let borderWidth = 4;
+
+      if (
+        this.playersLogs[i].characterId &&
+        this.characterDetails[this.playersLogs[i].characterId]
+      ) {
+        const charData = this.characterDetails[this.playersLogs[i].characterId];
+
+        // Make higher tier characters have more impressive borders
+        switch (charData.tier.toLowerCase()) {
+          case "gold":
+            borderWidth = 6;
+            borderColor = 0xffd700;
+            break;
+          case "silver":
+            borderWidth = 5;
+            borderColor = 0xc0c0c0;
+            break;
+          case "rainbow":
+            borderWidth = 8;
+            borderColor = 0xff00ff;
+            // Add animated rainbow effect for rainbow tier
+            this.tweens.add({
+              targets: this.add
+                .rectangle(
+                  this.player_ar[i].x,
+                  this.player_ar[i].y,
+                  160,
+                  160,
+                  0xffffff,
+                  0,
+                )
+                .setStrokeStyle(borderWidth, borderColor),
+              alpha: { from: 0.7, to: 1 },
+              duration: 1000,
+              repeat: -1,
+              yoyo: true,
+            });
+            break;
+        }
+      }
+
+      // Create the character display with appropriate styling
       this.add
         .rectangle(
           this.player_ar[i].x,
@@ -784,7 +1021,7 @@ export class Room extends Scene {
           0xffffff,
           0,
         )
-        .setStrokeStyle(4, this.playersLogs[i].color);
+        .setStrokeStyle(borderWidth, borderColor);
 
       const dead = this.add
         .image(
@@ -1014,11 +1251,281 @@ export class Room extends Scene {
     });
   }
 
-  buttonClick1() {}
+  // Helper method to update player info text
+  updatePlayerInfoText(playerIndex: number) {
+    const player = this.playersLogs[playerIndex];
+    let playerInfoText =
+      player.name +
+      "\n" +
+      "LM - " +
+      player.LM.toFixed(2) +
+      "\n" +
+      "LP - " +
+      player.lifePoints;
 
-  buttonClick2() {}
+    // Add character tier and stats if available
+    if (player.characterId && this.characterDetails[player.characterId]) {
+      const charData = this.characterDetails[player.characterId];
 
-  buttonClick3() {}
+      // Show tier and important stats
+      playerInfoText += `\nTier: ${charData.tier}`;
+
+      if (charData.atk) {
+        playerInfoText += ` | ATK: ${Math.round(charData.atk)}`;
+      }
+
+      if (charData.def) {
+        playerInfoText += ` | DEF: ${Math.round(charData.def)}`;
+      }
+    }
+
+    // Create or update the text object
+    if (this.text_value[playerIndex - 1]) {
+      this.text_value[playerIndex - 1].setText(playerInfoText);
+    } else {
+      const textColor = "#000";
+      const info_text = this.add.text(
+        this.player_info_p[playerIndex].x,
+        this.player_info_p[playerIndex].y,
+        playerInfoText,
+        {
+          fontSize: "24px",
+          color: textColor,
+          fontStyle: "bold",
+        },
+      );
+      this.text_value.push(info_text);
+    }
+  }
+
+  // Helper method to get color for tier
+  getTierColor(tier: string): string {
+    switch (tier.toLowerCase()) {
+      case "rainbow":
+        return "#ff00ff";
+      case "gold":
+        return "#ffd700";
+      case "silver":
+        return "#c0c0c0";
+      case "bronze":
+        return "#cd7f32";
+      default:
+        return "#ffffff";
+    }
+  }
+
+  // Update the main player's info text
+  updateMainPlayerInfoText() {
+    let mainPlayerText =
+      this.playersLogs[0].name +
+      "\nLUCK - " +
+      this.playersLogs[0].LM.toFixed(2) +
+      "\nLIFE POINTS - " +
+      this.playersLogs[0].lifePoints;
+
+    // Add character info if available
+    if (
+      this.playersLogs[0].characterId &&
+      this.characterDetails[this.playersLogs[0].characterId]
+    ) {
+      const charData = this.characterDetails[this.playersLogs[0].characterId];
+      mainPlayerText += `\nTier: ${charData.tier} | Games Won: ${
+        charData.games_won || 0
+      }`;
+
+      if (charData.atk && charData.def) {
+        mainPlayerText += `\nATK: ${Math.round(charData.atk)} | DEF: ${Math.round(
+          charData.def,
+        )}`;
+      }
+    }
+
+    this.mainplayerinfo_text.setText([mainPlayerText]);
+  }
+
+  buttonClick1() {
+    // Devil potion effect based on character stats without tier multipliers
+    if (
+      this.playersLogs[0].characterId &&
+      this.characterDetails[this.playersLogs[0].characterId]
+    ) {
+      const charData = this.characterDetails[this.playersLogs[0].characterId];
+      console.log(`Devil potion used by ${charData.name} (${charData.tier})`);
+
+      // Use base damage value - no tier multipliers
+      const baseDamage = 2;
+
+      // Apply damage to all other players
+      for (let i = 1; i < this.playersLogs.length; i++) {
+        // Skip players who are already eliminated
+        if (isNaN(this.playersLogs[i].lifePoints)) continue;
+
+        // Apply damage reduction based on target's defense if they have character data
+        let damageReduction = 0;
+        if (
+          this.playersLogs[i].characterId &&
+          this.characterDetails[this.playersLogs[i].characterId]
+        ) {
+          const targetCharData =
+            this.characterDetails[this.playersLogs[i].characterId];
+          if (targetCharData.def) {
+            // Defense reduces damage by percentage based on raw defense value
+            damageReduction = targetCharData.def / 50; // Max 50% damage reduction at 25 defense
+          }
+        }
+
+        // Calculate final damage after reduction (minimum 1)
+        const finalDamage = Math.max(
+          1,
+          Math.round(baseDamage * (1 - damageReduction)),
+        );
+
+        // Apply damage and show effect
+        this.playersLogs[i].lifePoints -= finalDamage;
+
+        // Apply visual feedback
+        this.shakeDmg(i);
+      }
+
+      // Emit updated player data
+      if (this.socket && this.roomID) {
+        this.socket.emit("Update_Life_R", this.playersLogs);
+      }
+
+      // Decrement potion count
+      if (this.playersLogs[0].dpotion > 0) {
+        this.playersLogs[0].dpotion--;
+      }
+    }
+  }
+
+  buttonClick2() {
+    // Leprechaun potion effect based on character luck without tier multipliers
+    if (
+      this.playersLogs[0].characterId &&
+      this.characterDetails[this.playersLogs[0].characterId]
+    ) {
+      const charData = this.characterDetails[this.playersLogs[0].characterId];
+      console.log(
+        `Leprechaun potion used by ${charData.name} (${charData.tier})`,
+      );
+
+      // Fixed luck boost without tier modifiers
+      const luckBoost = 0.03; // Boost luck by a fixed amount
+
+      // Apply luck boost temporarily
+      const originalLuck = this.playersLogs[0].luck;
+      this.playersLogs[0].luck += luckBoost;
+      this.playersLogs[0].LM = this.playersLogs[0].luck;
+
+      // Visual feedback
+      const luckText = this.add
+        .text(this.cameraX, this.cameraY - 200, `LUCK BOOST: +${luckBoost}`, {
+          fontSize: "32px",
+          color: "#ffd700",
+          fontStyle: "bold",
+          stroke: "#000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5);
+
+      // Make the text float up and fade out
+      this.tweens.add({
+        targets: luckText,
+        y: this.cameraY - 300,
+        alpha: 0,
+        duration: 2000,
+        onComplete: () => {
+          luckText.destroy();
+
+          // Remove luck boost after 3 rounds (15 seconds)
+          setTimeout(() => {
+            this.playersLogs[0].luck = originalLuck;
+            this.playersLogs[0].LM = originalLuck;
+          }, 15000);
+        },
+      });
+
+      // Decrement potion count
+      if (this.playersLogs[0].leppot > 0) {
+        this.playersLogs[0].leppot--;
+      }
+    }
+  }
+
+  buttonClick3() {
+    // Health potion effect without tier-based healing
+    if (
+      this.playersLogs[0].characterId &&
+      this.characterDetails[this.playersLogs[0].characterId]
+    ) {
+      const charData = this.characterDetails[this.playersLogs[0].characterId];
+      console.log(`Health potion used by ${charData.name} (${charData.tier})`);
+
+      // Fixed healing amount without tier bonuses
+      const healAmount = 2;
+
+      // Update lifePoints with healing (cap at 15)
+      this.playersLogs[0].lifePoints = Math.min(
+        15,
+        this.playersLogs[0].lifePoints + healAmount,
+      );
+
+      // Visual feedback - create healing effect
+      this.createHealingEffect(0, healAmount);
+
+      // Socket emit to broadcast the healing
+      if (this.socket && this.roomID) {
+        this.socket.emit("Update_Life_P", this.playersLogs);
+      }
+
+      // Decrement potion count
+      if (this.playersLogs[0].health_potion > 0) {
+        this.playersLogs[0].health_potion--;
+      }
+    }
+  }
+
+  // Create visual healing effect
+  createHealingEffect(playerIndex: number, healAmount: number) {
+    if (!this.player_ar[playerIndex]) return;
+
+    // Create healing particles
+    const x = this.player_ar[playerIndex].x;
+    const y = this.player_ar[playerIndex].y;
+
+    // Add healing text that floats up
+    const healText = this.add
+      .text(x, y, `+${healAmount} HP`, {
+        fontSize: "24px",
+        color: "#00ff00",
+        fontStyle: "bold",
+        stroke: "#000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5);
+
+    // Make the text float up and fade out
+    this.tweens.add({
+      targets: healText,
+      y: y - 80,
+      alpha: 0,
+      duration: 1500,
+      onComplete: () => healText.destroy(),
+    });
+
+    // Add a green glow effect around the character
+    const healGlow = this.add.circle(x, y, 75, 0x00ff00, 0.4);
+
+    // Make the glow pulse and fade
+    this.tweens.add({
+      targets: healGlow,
+      alpha: 0,
+      scale: 1.5,
+      duration: 1000,
+      onComplete: () => healGlow.destroy(),
+    });
+  }
 
   rotateBounce(box: Phaser.GameObjects.Image | null, bounceBox: boolean) {
     if (!box || !bounceBox) return;
@@ -1096,29 +1603,31 @@ export class Room extends Scene {
       return;
     }
 
-    this.mainplayerinfo_text.setText([
-      this.playersLogs[0].name +
-        "\nLUCK Multiplayer - " +
-        this.playersLogs[0].LM +
-        "\nLIFE POINTS - " +
-        this.playersLogs[0].lifePoints,
-    ]);
+    // Update main player info text
+    this.updateMainPlayerInfoText();
 
+    // Update potion counts
     this.dpotion.setText(this.playersLogs[0].dpotion + "x");
-
     this.leppot.setText(this.playersLogs[0].leppot + "x");
+    this.healthPotion?.setText(this.playersLogs[0].health_potion + "x");
 
+    // Update other players' info
     for (let i = 1; i < this.playersLogs.length; i++) {
       if (this.text_value[i - 1]) {
-        this.text_value[i - 1].setText(
-          this.playersLogs[i].name +
-            "\n" +
-            "LM - " +
-            this.playersLogs[i].LM +
-            "\n" +
-            "LP - " +
-            this.playersLogs[i].lifePoints,
-        );
+        this.updatePlayerInfoText(i);
+      }
+    }
+
+    // Check for game over conditions (anyone reached 15 LP or all others dead)
+    let alivePlayers = this.playersLogs.filter(
+      (player) => !isNaN(player.lifePoints) && player.lifePoints > 0,
+    );
+    if (alivePlayers.length === 1 && this.playersLogs.length > 1) {
+      // Only one player left - they win automatically
+      const winner = alivePlayers[0];
+      if (winner.lifePoints < 15) {
+        // Force win condition
+        winner.lifePoints = 15;
       }
     }
   }
